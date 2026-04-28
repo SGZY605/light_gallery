@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-light_gallery}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/light_gallery?schema=public}
+      SESSION_SECRET: ${SESSION_SECRET:-replace-with-a-long-random-secret}
+      SEED_OWNER_EMAIL: ${SEED_OWNER_EMAIL:-owner@example.com}
+      SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:-change-me}
+      OSS_REGION: ${OSS_REGION:-cn-shanghai}
+      OSS_BUCKET: ${OSS_BUCKET:-light-gallery}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-your-access-key-id}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-your-access-key-secret}
+      OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:-https://light-gallery.oss-cn-shanghai.aliyuncs.com}
+      OSS_UPLOAD_BASE_URL: ${OSS_UPLOAD_BASE_URL:-https://light-gallery.oss-cn-shanghai.aliyuncs.com}
+      OSS_MAX_UPLOAD_BYTES: ${OSS_MAX_UPLOAD_BYTES:-26214400}
+      OSS_POLICY_EXPIRES_SECONDS: ${OSS_POLICY_EXPIRES_SECONDS:-300}
+    ports:
+      - "3000:3000"
+    command: sh -c "npx prisma db push && npm run start"
+
+volumes:
+  postgres-data:
