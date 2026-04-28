@@ -1,0 +1,273 @@
+import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
+import { requireUser } from "@/lib/auth/session";
+import { normalizeTagName, slugifyTagName } from "@/lib/tags";
+
+export const dynamic = "force-dynamic";
+
+async function renameTagAction(formData: FormData) {
+  "use server";
+
+  await requireUser();
+
+  const tagId = String(formData.get("tagId") ?? "");
+  const nextName = normalizeTagName(String(formData.get("name") ?? ""));
+
+  if (!tagId || !nextName) {
+    return;
+  }
+
+  const nextSlug = slugifyTagName(nextName);
+  const existingTag = await db.tag.findUnique({
+    where: {
+      slug: nextSlug
+    }
+  });
+
+  if (existingTag && existingTag.id !== tagId) {
+    return;
+  }
+
+  await db.tag.update({
+    where: {
+      id: tagId
+    },
+    data: {
+      name: nextName,
+      slug: nextSlug
+    }
+  });
+
+  revalidatePath("/dashboard/tags");
+  revalidatePath("/dashboard/library");
+  revalidatePath("/dashboard/shares");
+}
+
+async function mergeTagsAction(formData: FormData) {
+  "use server";
+
+  await requireUser();
+
+  const sourceTagId = String(formData.get("sourceTagId") ?? "");
+  const targetTagId = String(formData.get("targetTagId") ?? "");
+
+  if (!sourceTagId || !targetTagId || sourceTagId === targetTagId) {
+    return;
+  }
+
+  await db.$transaction(async (tx) => {
+    const [sourceTag, targetTag] = await Promise.all([
+      tx.tag.findUnique({ where: { id: sourceTagId } }),
+      tx.tag.findUnique({ where: { id: targetTagId } })
+    ]);
+
+    if (!sourceTag || !targetTag) {
+      return;
+    }
+
+    const [sourceImageLinks, targetImageLinks, sourceShareLinks, targetShareLinks] = await Promise.all([
+      tx.imageTag.findMany({
+        where: {
+          tagId: sourceTagId
+        },
+        select: {
+          imageId: true
+        }
+      }),
+      tx.imageTag.findMany({
+        where: {
+          tagId: targetTagId
+        },
+        select: {
+          imageId: true
+        }
+      }),
+      tx.shareTag.findMany({
+        where: {
+          tagId: sourceTagId
+        },
+        select: {
+          shareId: true
+        }
+      }),
+      tx.shareTag.findMany({
+        where: {
+          tagId: targetTagId
+        },
+        select: {
+          shareId: true
+        }
+      })
+    ]);
+
+    const targetImageIds = new Set(targetImageLinks.map((link) => link.imageId));
+    const targetShareIds = new Set(targetShareLinks.map((link) => link.shareId));
+    const imageRowsToCreate = sourceImageLinks
+      .filter((link) => !targetImageIds.has(link.imageId))
+      .map((link) => ({
+        imageId: link.imageId,
+        tagId: targetTagId
+      }));
+    const shareRowsToCreate = sourceShareLinks
+      .filter((link) => !targetShareIds.has(link.shareId))
+      .map((link) => ({
+        shareId: link.shareId,
+        tagId: targetTagId
+      }));
+
+    if (imageRowsToCreate.length) {
+      await tx.imageTag.createMany({
+        data: imageRowsToCreate
+      });
+    }
+
+    if (shareRowsToCreate.length) {
+      await tx.shareTag.createMany({
+        data: shareRowsToCreate
+      });
+    }
+
+    await Promise.all([
+      tx.imageTag.deleteMany({
+        where: {
+          tagId: sourceTagId
+        }
+      }),
+      tx.shareTag.deleteMany({
+        where: {
+          tagId: sourceTagId
+        }
+      })
+    ]);
+
+    await tx.tag.delete({
+      where: {
+        id: sourceTagId
+      }
+    });
+  });
+
+  revalidatePath("/dashboard/tags");
+  revalidatePath("/dashboard/library");
+  revalidatePath("/dashboard/shares");
+}
+
+export default async function DashboardTagsPage() {
+  const tags = await db.tag.findMany({
+    orderBy: {
+      name: "asc"
+    },
+    include: {
+      _count: {
+        select: {
+          images: true,
+          shares: true
+        }
+      }
+    }
+  });
+
+  return (
+    <div className="space-y-8">
+      <section className="rounded-[32px] border border-slate-200 bg-white px-7 py-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">标签</p>
+        <h2 className="mt-3 text-3xl font-semibold text-slate-950">保持标签体系精简，让图库始终易于筛选。</h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+          你可以直接重命名标签，或把重复概念合并成一个标准标签。合并会在删除源标签前先更新图片关系和动态分享。
+        </p>
+      </section>
+
+      <section className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <div className="grid gap-4">
+          {tags.map((tag) => (
+            <form
+              key={tag.id}
+              action={renameTagAction}
+              className="grid gap-4 rounded-[28px] border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]"
+            >
+              <input type="hidden" name="tagId" value={tag.id} />
+              <label className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">标签名称</span>
+                <input
+                  name="name"
+                  defaultValue={tag.name}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                />
+              </label>
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">图片</span>
+                <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
+                  {tag._count.images}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">分享</span>
+                <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
+                  {tag._count.shares}
+                </p>
+              </div>
+              <button
+                type="submit"
+                className="self-end rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                重命名
+              </button>
+            </form>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <div className="max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">合并</p>
+          <h3 className="mt-2 text-2xl font-semibold text-slate-950">把重复标签合并到同一个目标标签。</h3>
+        </div>
+
+        <form action={mergeTagsAction} className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">源标签</span>
+            <select
+              name="sourceTagId"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                选择源标签
+              </option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">目标标签</span>
+            <select
+              name="targetTagId"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                选择目标标签
+              </option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            type="submit"
+            className="self-end rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+          >
+            合并标签
+          </button>
+        </form>
+      </section>
+    </div>
+  );
+}

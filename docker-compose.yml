@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-light_gallery}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/light_gallery?schema=public}
+      SESSION_SECRET: ${SESSION_SECRET:-replace-with-a-long-random-secret}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin}
+      RUN_DB_SEED: ${RUN_DB_SEED:-true}
+      DB_INIT_MAX_ATTEMPTS: ${DB_INIT_MAX_ATTEMPTS:-30}
+      DB_INIT_RETRY_DELAY_SECONDS: ${DB_INIT_RETRY_DELAY_SECONDS:-2}
+      OSS_REGION: ${OSS_REGION:-cn-shanghai}
+      OSS_BUCKET: ${OSS_BUCKET:-light-gallery}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-your-access-key-id}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-your-access-key-secret}
+      OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:-https://light-gallery.oss-cn-shanghai.aliyuncs.com}
+      OSS_UPLOAD_BASE_URL: ${OSS_UPLOAD_BASE_URL:-https://light-gallery.oss-cn-shanghai.aliyuncs.com}
+      OSS_MAX_UPLOAD_BYTES: ${OSS_MAX_UPLOAD_BYTES:-26214400}
+      OSS_POLICY_EXPIRES_SECONDS: ${OSS_POLICY_EXPIRES_SECONDS:-300}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:

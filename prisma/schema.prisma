@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum ShareMatchMode {
+  ALL
+  ANY
+}
+
+enum UploadStatus {
+  PENDING
+  UPLOADING
+  COMPLETE
+  FAILED
+}
+
+enum AuditAction {
+  USER_CREATED
+  USER_UPDATED
+  IMAGE_CREATED
+  IMAGE_UPDATED
+  IMAGE_DELETED
+  IMAGE_LOCATION_UPDATED
+  TAG_CREATED
+  TAG_UPDATED
+  TAG_DELETED
+  SHARE_CREATED
+  SHARE_UPDATED
+  SHARE_REVOKED
+  UPLOAD_STARTED
+  UPLOAD_COMPLETED
+  UPLOAD_FAILED
+}
+
+model User {
+  id              String                  @id @default(cuid())
+  email           String                  @unique
+  name            String
+  passwordHash    String
+  role            UserRole                @default(MEMBER)
+  images          Image[]
+  tags            Tag[]
+  shares          Share[]
+  uploads         UploadSession[]
+  locationUpdates ImageLocationOverride[]
+  auditLogs       AuditLog[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+}
+
+model Image {
+  id          String                 @id @default(cuid())
+  objectKey   String                 @unique
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  width       Int?
+  height      Int?
+  description String?
+  featured    Boolean                @default(false)
+  deletedAt   DateTime?
+  uploaderId  String
+  uploader    User                   @relation(fields: [uploaderId], references: [id])
+  exif        ImageExif?
+  location    ImageLocationOverride?
+  tags        ImageTag[]
+  uploadItems UploadItem[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@index([uploaderId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model ImageExif {
+  id           String    @id @default(cuid())
+  imageId      String    @unique
+  image        Image     @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  cameraMake   String?
+  cameraModel  String?
+  lensModel    String?
+  focalLength  Float?
+  fNumber      Float?
+  exposureTime String?
+  iso          Int?
+  takenAt      DateTime?
+  width        Int?
+  height       Int?
+  orientation  Int?
+  latitude     Float?
+  longitude    Float?
+  raw          Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model ImageLocationOverride {
+  id          String   @id @default(cuid())
+  imageId     String   @unique
+  image       Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  label       String?
+  source      String?
+  updatedById String
+  updatedBy   User     @relation(fields: [updatedById], references: [id])
+  updatedAt   DateTime @updatedAt
+
+  @@index([updatedById])
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  color     String?
+  creatorId String?
+  creator   User?      @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  images    ImageTag[]
+  shares    ShareTag[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([creatorId])
+}
+
+model ImageTag {
+  imageId   String
+  tagId     String
+  image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([imageId, tagId])
+  @@index([tagId])
+}
+
+model Share {
+  id            String         @id @default(cuid())
+  token         String         @unique
+  title         String
+  description   String?
+  matchMode     ShareMatchMode @default(ALL)
+  expiresAt     DateTime?
+  revoked       Boolean        @default(false)
+  revokedAt     DateTime?
+  allowDownload Boolean        @default(false)
+  creatorId     String
+  creator       User           @relation(fields: [creatorId], references: [id])
+  tags          ShareTag[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([creatorId])
+  @@index([creatorId, revoked, expiresAt])
+  @@index([expiresAt])
+  @@index([revoked])
+}
+
+model ShareTag {
+  shareId   String
+  tagId     String
+  share     Share    @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([shareId, tagId])
+  @@index([tagId])
+}
+
+model UploadSession {
+  id        String       @id @default(cuid())
+  status    UploadStatus @default(PENDING)
+  creatorId String
+  creator   User         @relation(fields: [creatorId], references: [id])
+  items     UploadItem[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
+}
+
+model UploadItem {
+  id           String        @id @default(cuid())
+  sessionId    String
+  session      UploadSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  imageId      String?
+  image        Image?        @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  filename     String
+  objectKey    String?
+  status       UploadStatus  @default(PENDING)
+  errorMessage String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([sessionId])
+  @@index([imageId])
+  @@index([objectKey])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  actorId    String?
+  actor      User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     AuditAction
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
