@@ -3,7 +3,7 @@ import { createSessionCookie } from "@/lib/auth/session";
 import { normalizeEmail, verifyPassword } from "@/lib/auth/password";
 import { db } from "@/lib/db";
 
-const INVALID_CREDENTIALS = "Invalid email or password.";
+const INVALID_CREDENTIALS = "邮箱或密码错误。";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -31,10 +31,6 @@ export async function POST(request: Request) {
   const validPassword = await verifyPassword(password, user.passwordHash);
 
   if (!validPassword) {
-    return NextResponse.json({ error: INVALID_CREDENTIALS }, { status: 401 });
-  }
-
-  if (user.status === "DISABLED") {
     return NextResponse.json({ error: INVALID_CREDENTIALS }, { status: 401 });
   }
 

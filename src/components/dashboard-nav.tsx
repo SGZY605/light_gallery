@@ -26,14 +26,14 @@ type NavigationItem = {
 };
 
 const navigationItems: NavigationItem[] = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/library", label: "Library", icon: Grid2x2 },
-  { href: "/dashboard/upload", label: "Upload", icon: UploadCloud },
-  { href: "/dashboard/tags", label: "Tags", icon: Tags },
-  { href: "/dashboard/shares", label: "Shares", icon: Share2 },
-  { href: "/dashboard/map", label: "Map", icon: MapPinned },
-  { href: "/dashboard/users", label: "Users", icon: Users, requiresManager: true },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings }
+  { href: "/dashboard", label: "概览", icon: LayoutDashboard },
+  { href: "/dashboard/library", label: "图库", icon: Grid2x2 },
+  { href: "/dashboard/upload", label: "上传", icon: UploadCloud },
+  { href: "/dashboard/tags", label: "标签", icon: Tags },
+  { href: "/dashboard/shares", label: "分享", icon: Share2 },
+  { href: "/dashboard/map", label: "地图", icon: MapPinned },
+  { href: "/dashboard/users", label: "用户", icon: Users, requiresManager: true },
+  { href: "/dashboard/settings", label: "设置", icon: Settings }
 ];
 
 export function DashboardNav({ canManageUsers }: DashboardNavProps) {

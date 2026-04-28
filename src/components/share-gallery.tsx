@@ -25,17 +25,18 @@ type ShareGalleryImage = {
 type ShareGalleryProps = {
   allowDownload: boolean;
   images: ShareGalleryImage[];
+  publicBaseUrl: string;
   title: string;
 };
 
-export function ShareGallery({ allowDownload, images, title }: ShareGalleryProps) {
+export function ShareGallery({ allowDownload, images, publicBaseUrl, title }: ShareGalleryProps) {
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const activeImage = images.find((image) => image.id === activeImageId) ?? null;
 
   if (!images.length) {
     return (
       <div className="rounded-[32px] border border-white/20 bg-white/10 px-6 py-16 text-center text-sm text-white/70">
-        No images currently match this share.
+        当前没有图片符合此分享条件。
       </div>
     );
   }
@@ -52,7 +53,7 @@ export function ShareGallery({ allowDownload, images, title }: ShareGalleryProps
           >
             <div
               className="aspect-[4/3] bg-slate-700 bg-cover bg-center"
-              style={{ backgroundImage: `url("${buildOssImageUrl(image.objectKey, "thumb")}")` }}
+              style={{ backgroundImage: `url("${buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}")` }}
             />
             <div className="space-y-3 p-4">
               <div>
@@ -85,12 +86,12 @@ export function ShareGallery({ allowDownload, images, title }: ShareGalleryProps
               onClick={() => setActiveImageId(null)}
               className="absolute right-5 top-5 rounded-full border border-white/15 px-3 py-1 text-xs font-semibold text-white/70 transition hover:border-white/35 hover:text-white"
             >
-              Close
+              关闭
             </button>
 
             <div
               className="min-h-[360px] rounded-[28px] bg-slate-900 bg-contain bg-center bg-no-repeat"
-              style={{ backgroundImage: `url("${buildOssImageUrl(activeImage.objectKey, "preview")}")` }}
+              style={{ backgroundImage: `url("${buildOssImageUrl(activeImage.objectKey, "preview", { publicBaseUrl })}")` }}
               aria-label={activeImage.filename}
             />
 
@@ -118,10 +119,10 @@ export function ShareGallery({ allowDownload, images, title }: ShareGalleryProps
 
               {allowDownload ? (
                 <a
-                  href={buildOssImageUrl(activeImage.objectKey, "original")}
+                  href={buildOssImageUrl(activeImage.objectKey, "original", { publicBaseUrl })}
                   className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
                 >
-                  Download original
+                  下载原图
                 </a>
               ) : null}
             </aside>

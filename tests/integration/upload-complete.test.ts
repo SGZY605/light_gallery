@@ -24,7 +24,7 @@ describe("POST /api/uploads/complete", () => {
 
     getCurrentUser.mockResolvedValue({
       id: "user-1",
-      role: "OWNER"
+      role: "ADMIN"
     });
 
     transactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>

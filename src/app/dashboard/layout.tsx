@@ -4,6 +4,11 @@ import { requireUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
+const roleLabels = {
+  ADMIN: "管理员",
+  MEMBER: "成员"
+} as const;
+
 export default async function DashboardLayout({
   children
 }: Readonly<{
@@ -17,10 +22,10 @@ export default async function DashboardLayout({
       <div className="mx-auto flex min-h-screen max-w-[1500px] flex-col xl:flex-row">
         <aside className="border-b border-slate-800 bg-slate-950 px-6 py-8 text-white xl:min-h-screen xl:w-[320px] xl:border-b-0 xl:border-r">
           <div className="mb-10 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.36em] text-amber-300">Light Gallery</p>
-            <h1 className="text-2xl font-semibold leading-tight">Private photo storage with fast curation workflows.</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.36em] text-amber-300">轻量图库</p>
+            <h1 className="text-2xl font-semibold leading-tight">私有照片库的高效整理控制台。</h1>
             <p className="text-sm leading-6 text-slate-300">
-              Signed in as {user.name} ({user.role.toLowerCase()}).
+              已登录：{user.name}（{roleLabels[user.role]}）。
             </p>
           </div>
 
@@ -31,7 +36,7 @@ export default async function DashboardLayout({
               type="submit"
               className="w-full rounded-2xl border border-white/15 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:border-white/35 hover:bg-white/10 hover:text-white"
             >
-              Sign out
+              退出登录
             </button>
           </form>
         </aside>

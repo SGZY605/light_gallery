@@ -46,19 +46,39 @@ function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, "");
 }
 
-function buildDefaultUploadBaseUrl(bucket: string, region: string): string {
-  const regionHost = region.includes(".")
-    ? region
-    : `${region.startsWith("oss-") ? region : `oss-${region}`}.aliyuncs.com`;
+function buildRegionHost(region: string): string {
+  return region.includes(".") ? region : `${region.startsWith("oss-") ? region : `oss-${region}`}.aliyuncs.com`;
+}
 
+function buildDefaultUploadBaseUrl(bucket: string, region: string): string {
+  const regionHost = buildRegionHost(region);
   return `https://${bucket}.${regionHost}`;
+}
+
+function normalizeOssBaseUrl(value: string, bucket: string, region: string): string {
+  const trimmedValue = trimTrailingSlash(value);
+
+  try {
+    const url = new URL(trimmedValue);
+    const regionHost = buildRegionHost(region);
+
+    if (url.hostname === regionHost) {
+      url.hostname = `${bucket}.${regionHost}`;
+    }
+
+    return trimTrailingSlash(url.toString());
+  } catch {
+    return trimmedValue;
+  }
 }
 
 export function getOssConfig(): OssConfig {
   const bucket = readRequiredEnv("OSS_BUCKET");
   const region = readRequiredEnv("OSS_REGION");
-  const uploadBaseUrl = trimTrailingSlash(
-    process.env.OSS_UPLOAD_BASE_URL?.trim() ?? buildDefaultUploadBaseUrl(bucket, region)
+  const uploadBaseUrl = normalizeOssBaseUrl(
+    process.env.OSS_UPLOAD_BASE_URL?.trim() ?? buildDefaultUploadBaseUrl(bucket, region),
+    bucket,
+    region
   );
 
   return {
@@ -71,7 +91,11 @@ export function getOssConfig(): OssConfig {
       "OSS_POLICY_EXPIRES_SECONDS",
       DEFAULT_POLICY_EXPIRES_SECONDS
     ),
-    publicBaseUrl: trimTrailingSlash(process.env.OSS_PUBLIC_BASE_URL?.trim() || uploadBaseUrl),
+    publicBaseUrl: normalizeOssBaseUrl(
+      process.env.OSS_PUBLIC_BASE_URL?.trim() || uploadBaseUrl,
+      bucket,
+      region
+    ),
     region,
     uploadBaseUrl,
     uploadPrefix: process.env.OSS_UPLOAD_PREFIX?.trim() || DEFAULT_UPLOAD_PREFIX

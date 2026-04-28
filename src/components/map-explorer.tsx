@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import L from "leaflet";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
 import { LocationEditor } from "@/components/location-editor";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 
@@ -40,6 +39,7 @@ type MapExplorerProps = {
     name: string;
   }>;
   images: MapImage[];
+  publicBaseUrl: string;
 };
 
 type GroupedLocation = {
@@ -51,6 +51,17 @@ type GroupedLocation = {
 };
 
 const defaultCenter: [number, number] = [31.2304, 121.4737];
+const LazyMapCanvas = dynamic(
+  () => import("@/components/map-canvas").then((module) => module.MapCanvas),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center bg-slate-50 text-sm text-slate-500">
+        正在加载地图...
+      </div>
+    )
+  }
+);
 
 function groupImagesByLocation(images: MapImage[]): GroupedLocation[] {
   const groups = new Map<string, GroupedLocation>();
@@ -80,40 +91,16 @@ function groupImagesByLocation(images: MapImage[]): GroupedLocation[] {
   return Array.from(groups.values());
 }
 
-function createMarkerIcon(count: number) {
-  return L.divIcon({
-    className: "",
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:9999px;background:#0f172a;color:white;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,0.75);box-shadow:0 16px 30px rgba(15,23,42,0.25)">${count}</div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
-  });
-}
-
-function FitBounds({ locations }: { locations: GroupedLocation[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!locations.length) {
-      map.setView(defaultCenter, 4);
-      return;
-    }
-
-    if (locations.length === 1) {
-      map.setView([locations[0].latitude, locations[0].longitude], 10);
-      return;
-    }
-
-    const bounds = L.latLngBounds(locations.map((location) => [location.latitude, location.longitude] as [number, number]));
-    map.fitBounds(bounds.pad(0.2));
-  }, [locations, map]);
-
-  return null;
-}
-
-export function MapExplorer({ availableTags, images }: MapExplorerProps) {
+export function MapExplorer({ availableTags, images, publicBaseUrl }: MapExplorerProps) {
+  const [isMapReady, setIsMapReady] = useState(false);
   const [selectedTagId, setSelectedTagId] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  useEffect(() => {
+    setIsMapReady(true);
+  }, []);
+
   const filteredImages = images.filter((image) => {
     if (selectedTagId && !image.tags.some((tag) => tag.id === selectedTagId)) {
       return false;
@@ -131,7 +118,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
 
     return true;
   });
-  const groupedLocations = groupImagesByLocation(filteredImages);
+  const groupedLocations = useMemo(() => groupImagesByLocation(filteredImages), [filteredImages]);
   const [selectedLocationKey, setSelectedLocationKey] = useState<string | null>(groupedLocations[0]?.key ?? null);
   const selectedLocation =
     groupedLocations.find((location) => location.key === selectedLocationKey) ?? groupedLocations[0] ?? null;
@@ -148,13 +135,13 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
     <div className="space-y-6">
       <section className="grid gap-4 rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1fr)_180px_180px]">
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Tag filter</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">标签筛选</span>
           <select
             value={selectedTagId}
             onChange={(event) => setSelectedTagId(event.target.value)}
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
           >
-            <option value="">All tags</option>
+            <option value="">全部标签</option>
             {availableTags.map((tag) => (
               <option key={tag.id} value={tag.id}>
                 {tag.name}
@@ -164,7 +151,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
         </label>
 
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">From date</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">开始日期</span>
           <input
             value={fromDate}
             onChange={(event) => setFromDate(event.target.value)}
@@ -174,7 +161,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
         </label>
 
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">To date</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">结束日期</span>
           <input
             value={toDate}
             onChange={(event) => setToDate(event.target.value)}
@@ -187,43 +174,36 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_420px]">
         <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
           <div className="h-[620px] overflow-hidden rounded-[28px]">
-            <MapContainer center={defaultCenter} zoom={4} className="h-full w-full">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            {isMapReady ? (
+              <LazyMapCanvas
+                defaultCenter={defaultCenter}
+                locations={groupedLocations.map((location) => ({
+                  key: location.key,
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  label: location.label,
+                  imageCount: location.images.length
+                }))}
+                onSelectLocation={setSelectedLocationKey}
               />
-              <FitBounds locations={groupedLocations} />
-              {groupedLocations.map((location) => (
-                <Marker
-                  key={location.key}
-                  position={[location.latitude, location.longitude]}
-                  icon={createMarkerIcon(location.images.length)}
-                  eventHandlers={{
-                    click: () => setSelectedLocationKey(location.key)
-                  }}
-                >
-                  <Popup>
-                    <div className="space-y-1">
-                      <p className="font-semibold">{location.label || "Pinned photos"}</p>
-                      <p>{location.images.length} image{location.images.length === 1 ? "" : "s"}</p>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center bg-slate-50 text-sm text-slate-500">
+                正在加载地图...
+              </div>
+            )}
           </div>
         </section>
 
         <aside className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
           <div className="border-b border-slate-200 pb-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Location panel</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">位置面板</p>
             <h3 className="mt-2 text-2xl font-semibold text-slate-950">
-              {selectedLocation?.label || "Selected location"}
+              {selectedLocation?.label || "已选位置"}
             </h3>
             <p className="mt-2 text-sm text-slate-600">
               {selectedLocation
                 ? `${selectedLocation.latitude.toFixed(5)}, ${selectedLocation.longitude.toFixed(5)}`
-                : "Select a marker to inspect the images stored there."}
+                : "选择一个标记即可查看该位置的图片。"}
             </p>
           </div>
 
@@ -236,13 +216,13 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
                 >
                   <div
                     className="aspect-[4/3] rounded-[24px] bg-slate-200 bg-cover bg-center"
-                    style={{ backgroundImage: `url("${buildOssImageUrl(image.objectKey, "thumb")}")` }}
+                    style={{ backgroundImage: `url("${buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}")` }}
                   />
 
                   <div>
                     <h4 className="font-semibold text-slate-950">{image.filename}</h4>
                     <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      Source: {image.effectiveLocation.source === "manual" ? "Manual override" : "EXIF GPS"}
+                      来源：{image.effectiveLocation.source === "manual" ? "手动覆盖" : "EXIF GPS"}
                     </p>
                   </div>
 
@@ -263,7 +243,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-sm text-slate-500">
-                No geotagged images match the current filters.
+                当前筛选条件下没有带地理位置的图片。
               </div>
             )}
           </div>

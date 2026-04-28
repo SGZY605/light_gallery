@@ -7,11 +7,11 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOssConfig } from "@/lib/oss/config";
 import { createOssUploadPolicy } from "@/lib/oss/policy";
 
-const INVALID_REQUEST = "Invalid upload request.";
-const UNAUTHORIZED = "You must be signed in to upload images.";
-const FORBIDDEN = "Your account cannot upload images.";
-const INVALID_MIME = "Only image uploads are allowed.";
-const FILE_TOO_LARGE = "The selected file exceeds the configured upload size limit.";
+const INVALID_REQUEST = "上传请求无效。";
+const UNAUTHORIZED = "请先登录后再上传图片。";
+const FORBIDDEN = "当前账号没有上传图片的权限。";
+const INVALID_MIME = "只允许上传图片文件。";
+const FILE_TOO_LARGE = "所选文件超过了当前配置的上传大小上限。";
 
 const requestSchema = z.object({
   filename: z.string().trim().min(1).max(255),

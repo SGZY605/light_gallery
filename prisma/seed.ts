@@ -1,37 +1,40 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { getSeedAdminConfig } from "./seed-admin";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = (process.env.SEED_OWNER_EMAIL ?? "owner@example.com").trim().toLowerCase();
-  const password = process.env.SEED_OWNER_PASSWORD ?? "change-me";
+  const { email, password, updatePassword } = getSeedAdminConfig(process.env);
   const passwordHash = await bcrypt.hash(password, 12);
-  const updatePassword = process.env.SEED_OWNER_PASSWORD !== undefined;
 
   await prisma.user.upsert({
     where: { email },
     update: {
-      name: "Owner",
-      role: UserRole.OWNER,
+      name: "管理员",
+      role: UserRole.ADMIN,
       ...(updatePassword ? { passwordHash } : {}),
     },
     create: {
       email,
-      name: "Owner",
+      name: "管理员",
       passwordHash,
-      role: UserRole.OWNER,
+      role: UserRole.ADMIN,
     },
   });
 
   await Promise.all(
-    ["family", "travel", "favorite"].map((name) =>
+    [
+      { slug: "family", name: "家庭" },
+      { slug: "travel", name: "旅行" },
+      { slug: "favorite", name: "精选" }
+    ].map((tag) =>
       prisma.tag.upsert({
-        where: { slug: name },
-        update: { name },
+        where: { slug: tag.slug },
+        update: { name: tag.name },
         create: {
-          name,
-          slug: name,
+          name: tag.name,
+          slug: tag.slug,
         },
       }),
     ),

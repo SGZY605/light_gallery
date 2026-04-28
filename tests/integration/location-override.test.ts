@@ -31,7 +31,7 @@ describe("location override route", () => {
 
     getCurrentUser.mockResolvedValue({
       id: "user-1",
-      role: "OWNER"
+      role: "ADMIN"
     });
     imageFindUniqueMock.mockResolvedValue({ id: "image-1" });
     imageLocationOverrideUpsertMock.mockResolvedValue({

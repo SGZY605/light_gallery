@@ -24,7 +24,7 @@ export function CopyShareButton({ token }: CopyShareButtonProps) {
       }}
       className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
     >
-      {copied ? "Copied" : "Copy link"}
+      {copied ? "已复制" : "复制链接"}
     </button>
   );
 }

@@ -36,6 +36,15 @@ type UploadDropzoneProps = {
   availableTags: AvailableTag[];
 };
 
+const uploadStatusLabels: Record<UploadStatus, string> = {
+  queued: "排队中",
+  signing: "签名中",
+  uploading: "上传中",
+  saving: "保存中",
+  complete: "已完成",
+  failed: "失败"
+};
+
 function formatBytes(sizeBytes: number): string {
   if (sizeBytes < 1024) {
     return `${sizeBytes} B`;
@@ -131,7 +140,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(payload?.error ?? "Failed to create an upload signature.");
+      throw new Error(payload?.error ?? "创建上传签名失败。");
     }
 
     return (await response.json()) as UploadSignatureResponse;
@@ -146,13 +155,19 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
 
     formData.append("file", file);
 
-    const response = await fetch(signature.uploadUrl, {
-      method: "POST",
-      body: formData
-    });
+    let response: Response;
+
+    try {
+      response = await fetch(signature.uploadUrl, {
+        method: "POST",
+        body: formData
+      });
+    } catch {
+      throw new Error("直传 OSS 失败，请检查上传地址和 Bucket 的 CORS 设置。");
+    }
 
     if (!response.ok) {
-      throw new Error("Direct upload to OSS failed.");
+      throw new Error(`直传 OSS 失败，状态码 ${response.status}。请检查 OSS 凭据和 Bucket 策略。`);
     }
   }
 
@@ -178,7 +193,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(payload?.error ?? "Failed to persist image metadata.");
+      throw new Error(payload?.error ?? "保存图片元数据失败。");
     }
   }
 
@@ -201,7 +216,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
     } catch (error) {
       updateQueueItem(item.id, {
         status: "failed",
-        error: error instanceof Error ? error.message : "Upload failed."
+        error: error instanceof Error ? error.message : "上传失败。"
       });
     }
   }
@@ -267,13 +282,13 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
           <input {...getInputProps()} />
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600">
-              Direct To OSS
+              直传到 OSS
             </p>
             <h2 className="mt-4 text-3xl font-semibold text-slate-950">
-              Drop original photos here and let the browser handle the heavy lift.
+              把原始照片拖到这里，上传过程交给浏览器处理。
             </h2>
             <p className="mt-4 text-sm leading-6 text-slate-600">
-              EXIF is parsed locally, originals go straight to OSS, and metadata lands in the app after upload.
+              EXIF 会在本地解析，原图直接上传到 OSS，上传完成后再把元数据写入应用。
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <button
@@ -281,42 +296,42 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                 onClick={open}
                 className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                Choose photos
+                选择照片
               </button>
-              <span className="text-sm text-slate-500">or drag multiple files into this area</span>
+              <span className="text-sm text-slate-500">或将多个文件拖到这个区域</span>
             </div>
           </div>
         </div>
 
         <aside className="space-y-5 rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Default Metadata</p>
-            <h3 className="text-lg font-semibold text-slate-950">Tags and description</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">默认元数据</p>
+            <h3 className="text-lg font-semibold text-slate-950">标签和描述</h3>
           </div>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Description</span>
+            <span className="text-sm font-medium text-slate-700">描述</span>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={4}
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-              placeholder="Optional caption applied to each queued upload"
+              placeholder="应用到每个排队上传项的可选说明"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Create tags</span>
+            <span className="text-sm font-medium text-slate-700">新建标签</span>
             <input
               value={newTagNames}
               onChange={(event) => setNewTagNames(event.target.value)}
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-              placeholder="travel, family, favorites"
+              placeholder="旅行, 家庭, 精选"
             />
           </label>
 
           <div className="space-y-3">
-            <span className="text-sm font-medium text-slate-700">Attach existing tags</span>
+            <span className="text-sm font-medium text-slate-700">附加现有标签</span>
             <div className="flex flex-wrap gap-2">
               {availableTags.map((tag) => {
                 const selected = defaultTagIds.includes(tag.id);
@@ -345,11 +360,11 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
       <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Queue</p>
-            <h3 className="mt-2 text-lg font-semibold text-slate-950">Upload status</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">队列</p>
+            <h3 className="mt-2 text-lg font-semibold text-slate-950">上传状态</h3>
           </div>
           <p className="text-sm text-slate-500">
-            {completedCount} complete / {queue.length} queued
+            已完成 {completedCount} / 共 {queue.length} 项
           </p>
         </div>
 
@@ -364,7 +379,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                   <p className="font-medium text-slate-900">{item.filename}</p>
                   <p className="text-xs text-slate-500">
                     {formatBytes(item.sizeBytes)}
-                    {item.width && item.height ? ` • ${item.width}×${item.height}` : ""}
+                    {item.width && item.height ? ` | ${item.width}x${item.height}` : ""}
                   </p>
                   {item.error ? <p className="text-xs text-red-600">{item.error}</p> : null}
                 </div>
@@ -380,7 +395,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                           : "bg-slate-200 text-slate-600"
                     ].join(" ")}
                   >
-                    {item.status}
+                    {uploadStatusLabels[item.status]}
                   </span>
 
                   {item.status === "failed" ? (
@@ -391,7 +406,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                       }}
                       className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
                     >
-                      Retry
+                      重试
                     </button>
                   ) : null}
                 </div>
@@ -400,7 +415,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
           </div>
         ) : (
           <div className="mt-6 rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-sm text-slate-500">
-            Your upload queue is empty.
+            上传队列为空。
           </div>
         )}
       </section>

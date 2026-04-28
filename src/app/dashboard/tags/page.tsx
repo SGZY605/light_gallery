@@ -170,10 +170,10 @@ export default async function DashboardTagsPage() {
   return (
     <div className="space-y-8">
       <section className="rounded-[32px] border border-slate-200 bg-white px-7 py-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Tags</p>
-        <h2 className="mt-3 text-3xl font-semibold text-slate-950">Keep the vocabulary tight so the library stays filterable.</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">标签</p>
+        <h2 className="mt-3 text-3xl font-semibold text-slate-950">保持标签体系精简，让图库始终易于筛选。</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Rename tags in place or merge duplicate concepts into a single canonical tag. Merge operations update image relations and dynamic shares before deleting the source tag.
+          你可以直接重命名标签，或把重复概念合并成一个标准标签。合并会在删除源标签前先更新图片关系和动态分享。
         </p>
       </section>
 
@@ -187,7 +187,7 @@ export default async function DashboardTagsPage() {
             >
               <input type="hidden" name="tagId" value={tag.id} />
               <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Tag name</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">标签名称</span>
                 <input
                   name="name"
                   defaultValue={tag.name}
@@ -195,13 +195,13 @@ export default async function DashboardTagsPage() {
                 />
               </label>
               <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Images</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">图片</span>
                 <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
                   {tag._count.images}
                 </p>
               </div>
               <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Shares</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">分享</span>
                 <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
                   {tag._count.shares}
                 </p>
@@ -210,7 +210,7 @@ export default async function DashboardTagsPage() {
                 type="submit"
                 className="self-end rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                Rename
+                重命名
               </button>
             </form>
           ))}
@@ -219,20 +219,20 @@ export default async function DashboardTagsPage() {
 
       <section className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Merge</p>
-          <h3 className="mt-2 text-2xl font-semibold text-slate-950">Collapse duplicates into one target tag.</h3>
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">合并</p>
+          <h3 className="mt-2 text-2xl font-semibold text-slate-950">把重复标签合并到同一个目标标签。</h3>
         </div>
 
         <form action={mergeTagsAction} className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">Source tag</span>
+            <span className="text-sm font-medium text-slate-700">源标签</span>
             <select
               name="sourceTagId"
               className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
               defaultValue=""
             >
               <option value="" disabled>
-                Select source
+                选择源标签
               </option>
               {tags.map((tag) => (
                 <option key={tag.id} value={tag.id}>
@@ -243,14 +243,14 @@ export default async function DashboardTagsPage() {
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">Target tag</span>
+            <span className="text-sm font-medium text-slate-700">目标标签</span>
             <select
               name="targetTagId"
               className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
               defaultValue=""
             >
               <option value="" disabled>
-                Select target
+                选择目标标签
               </option>
               {tags.map((tag) => (
                 <option key={tag.id} value={tag.id}>
@@ -264,7 +264,7 @@ export default async function DashboardTagsPage() {
             type="submit"
             className="self-end rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
           >
-            Merge tags
+            合并标签
           </button>
         </form>
       </section>
