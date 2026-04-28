@@ -28,14 +28,12 @@ type ShareGalleryProps = {
   allowDownload: boolean;
   images: ShareGalleryImage[];
   publicBaseUrl: string;
-  title: string;
 };
 
 export function ShareGallery({
   allowDownload,
   images,
   publicBaseUrl,
-  title
 }: ShareGalleryProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -90,7 +88,7 @@ export function ShareGallery({
   if (!images.length) {
     return (
       <div className="px-6 py-16 text-center text-sm text-white/40">
-        No images currently match this share.
+        没有匹配此分享的图片。
       </div>
     );
   }
@@ -98,7 +96,7 @@ export function ShareGallery({
   return (
     <>
       {/* Masonry grid */}
-      <div className="columns-2 md:columns-3 xl:columns-4 gap-1">
+      <div className="columns-2 md:columns-3 xl:columns-4 gap-0.5">
         {images.map((image, index) => (
           <img
             key={image.id}
@@ -106,7 +104,7 @@ export function ShareGallery({
             alt={image.filename}
             loading="lazy"
             onClick={() => openLightbox(index)}
-            className="w-full h-auto break-inside-avoid mb-1 cursor-pointer hover:opacity-80 transition-opacity block"
+            className="w-full h-auto break-inside-avoid mb-0.5 cursor-pointer hover:opacity-80 transition-opacity block"
           />
         ))}
       </div>
@@ -123,30 +121,30 @@ export function ShareGallery({
             className="fixed inset-0 z-50 flex flex-col bg-black"
           >
             {/* Top bar: counter + close */}
-            <div className="flex items-center justify-between px-4 py-3 text-white/80 text-sm">
+            <div className="flex items-center justify-between px-3 py-2 text-white/40 text-xs">
               <span className="tabular-nums">
                 {activeIndex + 1} / {images.length}
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {allowDownload ? (
                   <a
                     href={buildOssImageUrl(activeImage.objectKey, "original", {
                       publicBaseUrl
                     })}
                     download={activeImage.filename}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/20 hover:text-white"
+                    className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium text-white/40 transition hover:bg-white/15 hover:text-white/70"
                   >
-                    <Download className="size-3.5" />
-                    Download
+                    <Download className="size-3" />
+                    下载
                   </a>
                 ) : null}
                 <button
                   type="button"
                   onClick={closeLightbox}
-                  className="rounded-full p-1.5 transition hover:bg-white/10"
-                  aria-label="Close"
+                  className="rounded-full p-1 text-white/30 transition hover:text-white hover:bg-white/10"
+                  aria-label="关闭"
                 >
-                  <X className="size-5" />
+                  <X className="size-3.5" />
                 </button>
               </div>
             </div>
@@ -157,10 +155,10 @@ export function ShareGallery({
               <button
                 type="button"
                 onClick={goToPrev}
-                className="absolute left-3 z-10 rounded-full bg-white/10 p-2 text-white/70 transition hover:bg-white/20 hover:text-white"
-                aria-label="Previous image"
+                className="absolute left-3 z-10 rounded-full p-1.5 text-white/20 transition hover:text-white hover:bg-white/10"
+                aria-label="上一张"
               >
-                <ChevronLeft className="size-6" />
+                <ChevronLeft className="size-3.5" />
               </button>
 
               <motion.img
@@ -179,40 +177,40 @@ export function ShareGallery({
               <button
                 type="button"
                 onClick={goToNext}
-                className="absolute right-3 z-10 rounded-full bg-white/10 p-2 text-white/70 transition hover:bg-white/20 hover:text-white"
-                aria-label="Next image"
+                className="absolute right-3 z-10 rounded-full p-1.5 text-white/20 transition hover:text-white hover:bg-white/10"
+                aria-label="下一张"
               >
-                <ChevronRight className="size-6" />
+                <ChevronRight className="size-3.5" />
               </button>
             </div>
 
             {/* Bottom bar: EXIF info + filename */}
-            <div className="px-4 py-3">
-              <p className="text-sm font-medium text-white/90 truncate">
+            <div className="px-4 py-2">
+              <p className="text-xs font-medium text-white/50 truncate">
                 {activeImage.filename}
               </p>
               {activeImage.description ? (
-                <p className="mt-0.5 text-xs text-white/50 truncate">
+                <p className="mt-0.5 text-[10px] text-white/30 truncate">
                   {activeImage.description}
                 </p>
               ) : null}
               <ExifSummary
                 exif={activeImage.exif}
-                className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/40"
+                className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-white/25"
               />
             </div>
 
             {/* Thumbnail strip */}
-            <div className="flex gap-1 overflow-x-auto px-4 pb-4 pt-1">
+            <div className="flex gap-1 overflow-x-auto px-3 pb-3 pt-1">
               {images.map((image, index) => (
                 <button
                   key={image.id}
                   type="button"
                   onClick={() => setActiveIndex(index)}
-                  className={`shrink-0 h-14 w-20 overflow-hidden rounded transition ${
+                  className={`shrink-0 h-10 w-16 overflow-hidden rounded transition ${
                     index === activeIndex
-                      ? "ring-1 ring-white/60 opacity-100"
-                      : "opacity-50 hover:opacity-80"
+                      ? "ring-1 ring-white/40 opacity-100"
+                      : "opacity-40 hover:opacity-70"
                   }`}
                 >
                   <img

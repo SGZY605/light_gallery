@@ -8,10 +8,10 @@ type SettingRowProps = {
 
 function SettingRow({ label, value, description }: SettingRowProps) {
   return (
-    <article className="rounded-[28px] border border-border bg-surface p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white/90">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-white/70">{description}</p>
+    <article className="border border-white/[0.04] p-3">
+      <p className="text-[10px] text-white/20">{label}</p>
+      <p className="mt-1 text-sm font-medium text-white/50">{value}</p>
+      <p className="mt-1 text-[10px] leading-4 text-white/25">{description}</p>
     </article>
   );
 }
@@ -23,78 +23,77 @@ export default function DashboardSettingsPage() {
       process.env.OSS_ACCESS_KEY_ID &&
       process.env.OSS_ACCESS_KEY_SECRET
   );
-  const publicBaseUrl = process.env.OSS_PUBLIC_BASE_URL || "Not configured";
-  const uploadBaseUrl = process.env.OSS_UPLOAD_BASE_URL || "Derived from bucket + region";
+  const publicBaseUrl = process.env.OSS_PUBLIC_BASE_URL || "未配置";
+  const uploadBaseUrl = process.env.OSS_UPLOAD_BASE_URL || "从存储桶和区域派生";
   const maxUploadBytes = process.env.OSS_MAX_UPLOAD_BYTES || "26214400";
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-border bg-card px-7 py-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Settings</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white/90">Check environment-backed configuration without exposing secrets.</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">
-          This page is intentionally read-only in the first version. It shows whether the core OSS and sharing settings are present while leaving secret values hidden.
+    <div className="space-y-4">
+      <section>
+        <h2 className="text-base font-semibold text-white/40">设置</h2>
+        <p className="mt-1 text-xs text-white/20">
+          基于环境变量的配置。密钥不会暴露。
         </p>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-3">
+      <section className="grid gap-3 lg:grid-cols-3">
         <SettingRow
-          label="OSS status"
-          value={hasOssBaseConfig ? "Configured" : "Missing required values"}
-          description="Checks for region, bucket, access key id, and access key secret. Secrets are not rendered."
+          label="OSS 状态"
+          value={hasOssBaseConfig ? "已配置" : "缺少必需的值"}
+          description="检查区域、存储桶、访问密钥 ID 和访问密钥密钥。"
         />
         <SettingRow
-          label="Public base URL"
+          label="公共基础 URL"
           value={publicBaseUrl}
-          description="Used to derive thumbnail, preview, and original URLs for image display."
+          description="用于生成缩略图、预览和原始 URL。"
         />
         <SettingRow
-          label="Upload max size"
+          label="上传大小限制"
           value={`${(Number(maxUploadBytes) / (1024 * 1024)).toFixed(0)} MB`}
-          description="Maximum file size accepted by the upload signature route before the browser attempts OSS upload."
+          description="上传签名路由接受的最大文件大小。"
         />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
-        <article className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600">Share defaults</p>
-          <div className="mt-5 space-y-4">
+      <section className="grid gap-3 xl:grid-cols-2">
+        <article className="border border-white/[0.04] p-4">
+          <p className="text-[10px] text-amber-500/40">分享默认设置</p>
+          <div className="mt-4 space-y-3">
             <SettingRow
-              label="Match mode"
+              label="匹配模式"
               value="ALL"
-              description="First version shares require every selected tag to match before an image becomes visible."
+              description="所有选定标签都必须匹配，图片才会显示。"
             />
             <SettingRow
-              label="Allow downloads"
-              value="Disabled by default"
-              description="Public shares start without original-download access unless explicitly enabled when the share is created."
+              label="允许下载"
+              value="默认禁用"
+              description="公开分享默认不提供原图下载权限。"
             />
             <SettingRow
-              label="Upload endpoint"
+              label="上传端点"
               value={uploadBaseUrl}
-              description="Direct browser uploads target this OSS endpoint with a server-signed form policy."
+              description="浏览器直接上传至此 OSS 端点。"
             />
           </div>
         </article>
 
-        <article className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Reserved metadata writeback</p>
-          <h3 className="mt-3 text-2xl font-semibold text-white/90">EXIF writeback stays disabled in this version.</h3>
-          <p className="mt-3 text-sm leading-6 text-white/70">
-            Location edits and future metadata tweaks are stored as application metadata only. The reserved writeback endpoint returns a `501` response until object rewrite workflows are implemented.
+        <article className="border border-white/[0.04] p-4">
+          <p className="text-[10px] text-white/20">保留的元数据回写</p>
+          <h3 className="mt-2 text-base font-medium text-white/50">EXIF 回写保持禁用。</h3>
+          <p className="mt-1 text-[10px] leading-4 text-white/25">
+            位置编辑和未来的元数据调整仅存储为应用程序元数据。
           </p>
-          <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface p-5">
+          <div className="mt-4 border border-dashed border-white/[0.04] p-3">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-white/90">Write EXIF back to original</p>
-                <p className="mt-1 text-sm text-white/70">Reserved for a future version.</p>
+                <p className="text-xs font-medium text-white/40">将 EXIF 写回原始文件</p>
+                <p className="text-[10px] text-white/20">预留给未来版本。</p>
               </div>
               <button
                 type="button"
                 disabled
-                className="rounded-full bg-white/5 px-4 py-2 text-sm font-semibold text-white/30"
+                className="px-2 py-1 text-[10px] text-white/15"
               >
-                Disabled
+                禁用
               </button>
             </div>
           </div>

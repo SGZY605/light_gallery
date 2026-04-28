@@ -16,9 +16,9 @@ function UnavailableShare({ title, message }: { title: string; message: string }
   return (
     <main className="min-h-screen bg-black px-6 py-16 text-white">
       <div className="mx-auto max-w-3xl px-8 py-14 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.36em] text-amber-300">Share unavailable</p>
-        <h1 className="mt-4 text-4xl font-semibold">{title}</h1>
-        <p className="mt-4 text-base leading-7 text-white/70">{message}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.36em] text-amber-300">分享不可用</p>
+        <h1 className="mt-4 text-2xl font-semibold">{title}</h1>
+        <p className="mt-4 text-sm leading-7 text-white/70">{message}</p>
       </div>
     </main>
   );
@@ -41,53 +41,50 @@ export default async function PublicSharePage({ params }: SharePageProps) {
   });
 
   if (!share) {
-    return <UnavailableShare title="Unknown share" message="This share token does not exist or has already been removed." />;
+    return <UnavailableShare title="分享不存在" message="此分享链接不存在或已被删除。" />;
   }
 
   const shareState = getShareState(share);
 
   if (shareState === "expired") {
-    return <UnavailableShare title={share.title} message="This share expired and is no longer available." />;
+    return <UnavailableShare title={share.title} message="此分享已过期，不再可用。" />;
   }
 
   if (shareState === "revoked") {
-    return <UnavailableShare title={share.title} message="This share was revoked by its owner and is no longer public." />;
+    return <UnavailableShare title={share.title} message="此分享已被所有者撤销，不再公开。" />;
   }
 
   const images = await getImagesForShare(share.id);
 
   return (
-    <main className="min-h-screen bg-black py-12 text-white">
-      <div className="space-y-10">
-        <section className="px-4 sm:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.36em] text-amber-300">Shared Gallery</p>
-          <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end">
-            <div>
-              <h1 className="text-4xl font-semibold leading-tight text-white">{share.title}</h1>
-              {share.description ? <p className="mt-4 max-w-3xl text-base leading-7 text-white/75">{share.description}</p> : null}
-            </div>
-
-            <div className="space-y-3 rounded-[28px] border border-white/[0.06] bg-[#111111] p-5 text-sm text-white/70">
-              <p>Curated by {share.creator.name}</p>
-              <p>{images.length} image{images.length === 1 ? "" : "s"} currently match this share.</p>
-              <div className="flex flex-wrap gap-2">
-                {share.tags.map(({ tag }) => (
-                  <span
-                    key={tag.id}
-                    className="rounded-full border border-white/[0.06] bg-[#0a0a0a] px-3 py-1 text-xs font-semibold text-white/75"
-                  >
-                    {tag.name}
-                  </span>
-                ))}
-              </div>
-            </div>
+    <main className="min-h-screen bg-black text-white">
+      <div className="space-y-4">
+        <section className="px-4 sm:px-8 pt-6">
+          <h1 className="text-2xl font-semibold text-white/80">{share.title}</h1>
+          {share.description ? <p className="mt-1 max-w-2xl text-sm text-white/40">{share.description}</p> : null}
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-white/25">
+            <span>{share.creator.name}</span>
+            <span className="text-white/10">·</span>
+            <span>{images.length} 张图片</span>
           </div>
+          {share.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {share.tags.map(({ tag }) => (
+                <span
+                  key={tag.id}
+                  className="text-[10px] text-white/25"
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="mt-4 border-b border-white/[0.04]" />
         </section>
 
         <ShareGallery
           allowDownload={share.allowDownload}
           publicBaseUrl={getOssConfig().publicBaseUrl}
-          title={share.title}
           images={images.map((image) => ({
             id: image.id,
             objectKey: image.objectKey,

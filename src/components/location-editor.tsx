@@ -48,14 +48,14 @@ export function LocationEditor({
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error ?? "Unable to save location.");
+        throw new Error(payload?.error ?? "无法保存位置。");
       }
 
       startTransition(() => {
         router.refresh();
       });
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Unable to save location.");
+      setError(saveError instanceof Error ? saveError.message : "无法保存位置。");
     } finally {
       setIsSaving(false);
     }
@@ -72,7 +72,7 @@ export function LocationEditor({
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error ?? "Unable to clear location.");
+        throw new Error(payload?.error ?? "无法清除位置。");
       }
 
       setLabel(fallbackLocation?.label ?? "");
@@ -82,7 +82,7 @@ export function LocationEditor({
         router.refresh();
       });
     } catch (clearError) {
-      setError(clearError instanceof Error ? clearError.message : "Unable to clear location.");
+      setError(clearError instanceof Error ? clearError.message : "无法清除位置。");
     } finally {
       setIsSaving(false);
     }
@@ -91,13 +91,13 @@ export function LocationEditor({
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">Location override</p>
-        <p className="mt-2 text-sm text-white/70">Manual coordinates take precedence over EXIF GPS when both are present.</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">位置覆盖</p>
+        <p className="mt-2 text-sm text-white/70">手动坐标在有两者时优先于 EXIF GPS。</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Latitude</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">纬度</span>
           <input
             value={latitude}
             onChange={(event) => setLatitude(event.target.value)}
@@ -105,7 +105,7 @@ export function LocationEditor({
           />
         </label>
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Longitude</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">经度</span>
           <input
             value={longitude}
             onChange={(event) => setLongitude(event.target.value)}
@@ -115,12 +115,12 @@ export function LocationEditor({
       </div>
 
       <label className="block space-y-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Label</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">标签</span>
         <input
           value={label}
           onChange={(event) => setLabel(event.target.value)}
           className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
-          placeholder="Optional place label"
+          placeholder="可选地点标签"
         />
       </label>
 
@@ -135,7 +135,7 @@ export function LocationEditor({
           disabled={isSaving}
           className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isSaving ? "Saving..." : "Save location"}
+          {isSaving ? "保存中..." : "保存位置"}
         </button>
 
         <button
@@ -146,7 +146,7 @@ export function LocationEditor({
           disabled={isSaving}
           className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Clear override
+          清除覆盖
         </button>
       </div>
     </div>

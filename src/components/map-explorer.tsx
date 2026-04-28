@@ -148,13 +148,13 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
     <div className="space-y-6">
       <section className="grid gap-4 rounded-[32px] border border-border bg-card p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1fr)_180px_180px]">
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">Tag filter</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">标签筛选</span>
           <select
             value={selectedTagId}
             onChange={(event) => setSelectedTagId(event.target.value)}
             className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           >
-            <option value="">All tags</option>
+            <option value="">全部标签</option>
             {availableTags.map((tag) => (
               <option key={tag.id} value={tag.id}>
                 {tag.name}
@@ -164,7 +164,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
         </label>
 
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">From date</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">起始日期</span>
           <input
             value={fromDate}
             onChange={(event) => setFromDate(event.target.value)}
@@ -174,7 +174,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
         </label>
 
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">To date</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">截止日期</span>
           <input
             value={toDate}
             onChange={(event) => setToDate(event.target.value)}
@@ -204,8 +204,8 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
                 >
                   <Popup>
                     <div className="space-y-1">
-                      <p className="font-semibold">{location.label || "Pinned photos"}</p>
-                      <p>{location.images.length} image{location.images.length === 1 ? "" : "s"}</p>
+                      <p className="font-semibold">{location.label || "已标记照片"}</p>
+                      <p>{location.images.length} 张图片</p>
                     </div>
                   </Popup>
                 </Marker>
@@ -216,14 +216,14 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
 
         <aside className="rounded-[32px] border border-border bg-card p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
           <div className="border-b border-slate-200 pb-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Location panel</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">位置面板</p>
             <h3 className="mt-2 text-2xl font-semibold text-slate-950">
-              {selectedLocation?.label || "Selected location"}
+              {selectedLocation?.label || "已选位置"}
             </h3>
             <p className="mt-2 text-sm text-slate-600">
               {selectedLocation
                 ? `${selectedLocation.latitude.toFixed(5)}, ${selectedLocation.longitude.toFixed(5)}`
-                : "Select a marker to inspect the images stored there."}
+                : "点击标记查看该位置的图片"}
             </p>
           </div>
 
@@ -242,7 +242,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
                   <div>
                     <h4 className="font-semibold text-slate-950">{image.filename}</h4>
                     <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      Source: {image.effectiveLocation.source === "manual" ? "Manual override" : "EXIF GPS"}
+                      Source: {image.effectiveLocation.source === "manual" ? "手动覆盖" : "EXIF GPS"}
                     </p>
                   </div>
 
@@ -263,7 +263,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-sm text-slate-500">
-                No geotagged images match the current filters.
+                没有符合当前筛选条件的地理标记图片。
               </div>
             )}
           </div>

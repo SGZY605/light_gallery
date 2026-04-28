@@ -40,7 +40,7 @@ type ImageGridProps = {
 
 export function ImageGrid({
   images,
-  emptyMessage = "No images match the current filters.",
+  emptyMessage = "没有匹配的图片",
   publicBaseUrl,
 }: ImageGridProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -110,9 +110,9 @@ export function ImageGrid({
   return (
     <>
       {/* --------------- Masonry grid --------------- */}
-      <div className="columns-2 md:columns-3 xl:columns-4 gap-1">
+      <div className="columns-2 md:columns-3 xl:columns-4 gap-0.5">
         {images.map((image, index) => (
-          <div key={image.id} className="break-inside-avoid mb-1">
+          <div key={image.id} className="break-inside-avoid mb-0.5">
             <img
               src={buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}
               alt={image.filename}
@@ -138,14 +138,14 @@ export function ImageGrid({
             {/* Close button */}
             <button
               onClick={closeLightbox}
-              className="absolute top-4 right-4 z-10 rounded-full p-2 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-              aria-label="Close lightbox"
+              className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="关闭灯箱"
             >
-              <X className="h-6 w-6" />
+              <X className="h-3.5 w-3.5" />
             </button>
 
             {/* Counter */}
-            <div className="absolute top-4 left-4 z-10 text-sm text-white/60 tabular-nums">
+            <div className="absolute top-3 left-4 z-10 text-xs text-white/30 tabular-nums">
               {lightboxIndex + 1} / {images.length}
             </div>
 
@@ -156,10 +156,10 @@ export function ImageGrid({
                   e.stopPropagation();
                   goPrev();
                 }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 rounded-full p-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                aria-label="Previous image"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full text-white/20 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="上一张"
               >
-                <ChevronLeft className="h-8 w-8" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
             )}
 
@@ -170,10 +170,10 @@ export function ImageGrid({
                   e.stopPropagation();
                   goNext();
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 rounded-full p-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                aria-label="Next image"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full text-white/20 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="下一张"
               >
-                <ChevronRight className="h-8 w-8" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             )}
 
@@ -192,16 +192,16 @@ export function ImageGrid({
 
             {/* Bottom info bar */}
             <div
-              className="w-full bg-black/60 px-4 py-3 flex items-center gap-6 text-sm"
+              className="w-full bg-black/40 px-4 py-1.5 flex items-center gap-6 text-xs opacity-60"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="text-white/90 font-medium truncate">
+              <span className="text-white/70 font-medium truncate">
                 {currentImage.filename}
               </span>
               {currentImage.exif && (
                 <ExifSummary
                   exif={currentImage.exif}
-                  className="hidden sm:flex items-center gap-4 text-xs text-white/50"
+                  className="hidden sm:flex items-center gap-4 text-[10px] text-white/30"
                 />
               )}
             </div>
@@ -209,7 +209,7 @@ export function ImageGrid({
             {/* Thumbnail strip */}
             {hasMultiple && (
               <div
-                className="w-full bg-black/80 border-t border-white/[0.06] px-2 py-2"
+                className="w-full bg-black/60 border-t border-white/[0.03] px-2 py-1"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex gap-1 overflow-x-auto">
@@ -217,10 +217,10 @@ export function ImageGrid({
                     <button
                       key={image.id}
                       onClick={() => goTo(idx)}
-                      className={`flex-shrink-0 h-12 w-12 overflow-hidden transition-colors ${
+                      className={`flex-shrink-0 h-10 w-10 overflow-hidden transition-colors ${
                         idx === lightboxIndex
-                          ? "ring-2 ring-white"
-                          : "ring-1 ring-white/10 hover:ring-white/40"
+                          ? "ring-1 ring-white/50"
+                          : "ring-1 ring-white/[0.04] hover:ring-white/20"
                       }`}
                     >
                       <img

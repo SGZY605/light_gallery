@@ -123,86 +123,77 @@ export default async function DashboardUsersPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-border bg-card px-7 py-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Users</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white/90">Manage the small set of private accounts allowed into the gallery.</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">
-          Owners and admins can create users, adjust roles, and disable accounts. Members are kept out of this page entirely.
+    <div className="space-y-4">
+      <section>
+        <h2 className="text-base font-semibold text-white/40">用户</h2>
+        <p className="mt-1 text-xs text-white/20">
+          管理允许访问画廊的私有账户。
         </p>
       </section>
 
-      <section className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600">Create account</p>
-          <h3 className="mt-2 text-2xl font-semibold text-white/90">Add a new private user</h3>
-        </div>
+      <section className="border-t border-white/[0.04] pt-4">
+        <h3 className="text-sm font-semibold text-white/30">创建账户</h3>
 
-        <form action={createUserAction} className="mt-6 grid gap-4 xl:grid-cols-4">
+        <form action={createUserAction} className="mt-3 flex flex-wrap items-end gap-2">
           <input
             name="name"
-            placeholder="Name"
-            className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
+            placeholder="姓名"
+            className="bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
           />
           <input
             name="email"
             type="email"
             placeholder="Email"
-            className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
+            className="bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
           />
           <input
             name="password"
             type="password"
             placeholder="Password"
-            className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
+            className="bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
           />
-          <div className="flex gap-3">
-            <select
-              name="role"
-              defaultValue={UserRole.MEMBER}
-              className="min-w-0 flex-1 rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-white outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
-            >
-              {Object.values(UserRole).map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
-            >
-              Create
-            </button>
-          </div>
+          <select
+            name="role"
+            defaultValue={UserRole.MEMBER}
+            className="bg-transparent py-1 text-xs text-white/50 outline-none border-b border-white/[0.04] transition focus:border-white/10"
+          >
+            {Object.values(UserRole).map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="px-3 py-1 text-xs font-medium text-white/30 transition hover:text-white/50"
+          >
+            Create
+          </button>
         </form>
       </section>
 
-      <section className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-        <div className="border-b border-border pb-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Accounts</p>
-          <h3 className="mt-2 text-2xl font-semibold text-white/90">Existing users</h3>
-        </div>
+      <section className="border-t border-white/[0.04] pt-4">
+        <h3 className="text-sm font-semibold text-white/30">现有用户</h3>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-3 space-y-2">
           {users.map((user) => (
-            <article key={user.id} className="rounded-[28px] border border-border bg-surface p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
+            <article key={user.id} className="border-b border-white/[0.02] pb-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h4 className="text-lg font-semibold text-white/90">{user.name}</h4>
-                  <p className="mt-1 text-sm text-white/50">{user.email}</p>
-                  <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/50">
+                  <h4 className="text-sm font-medium text-white/50">{user.name}</h4>
+                  <p className="text-[10px] text-white/25">{user.email}</p>
+                  <p className="mt-1 text-[10px] text-white/15">
                     {user.status.toLowerCase()} • created {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(user.createdAt)}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <form action={updateUserRoleAction} className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <form action={updateUserRoleAction} className="flex items-center gap-1.5">
                     <input type="hidden" name="userId" value={user.id} />
                     <select
                       name="role"
                       defaultValue={user.role}
-                      className="rounded-full border border-border bg-surface px-3 py-2 text-xs font-semibold text-white/70 outline-none transition focus:border-white/30"
+                      className="bg-transparent py-1 text-[10px] text-white/40 outline-none border-b border-white/[0.04] transition focus:border-white/10"
                     >
                       {Object.values(UserRole).map((role) => (
                         <option key={role} value={role}>
@@ -212,9 +203,9 @@ export default async function DashboardUsersPage() {
                     </select>
                     <button
                       type="submit"
-                      className="rounded-full border border-border px-3 py-2 text-xs font-semibold text-white/70 transition hover:border-white/50 hover:text-white"
+                      className="px-1.5 py-0.5 text-[10px] text-white/30 transition hover:text-white/50"
                     >
-                      Update role
+                      Update
                     </button>
                   </form>
 
@@ -223,7 +214,7 @@ export default async function DashboardUsersPage() {
                       <input type="hidden" name="userId" value={user.id} />
                       <button
                         type="submit"
-                        className="rounded-full border border-red-500/30 px-3 py-2 text-xs font-semibold text-red-400 transition hover:border-red-500/50"
+                        className="px-1.5 py-0.5 text-[10px] text-red-400/50 transition hover:text-red-400/80"
                       >
                         Disable
                       </button>
