@@ -6,6 +6,7 @@ import { canUpload } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { normalizeExif } from "@/lib/images/exif";
+import { normalizeTagName, slugifyTagName } from "@/lib/tags";
 
 const INVALID_REQUEST = "Invalid upload completion payload.";
 const UNAUTHORIZED = "You must be signed in to complete uploads.";
@@ -26,19 +27,6 @@ const requestSchema = z.object({
   tagNames: z.array(z.string().trim().min(1).max(64)).max(50).optional(),
   uploadItemId: z.string().trim().min(1).optional()
 });
-
-function normalizeTagName(name: string): string {
-  return name.trim().replace(/\s+/g, " ");
-}
-
-function slugifyTagName(name: string): string {
-  const normalizedValue = normalizeTagName(name)
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  const slug = normalizedValue.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  return slug || "tag";
-}
 
 function uniqueValues(values: string[] | undefined): string[] {
   return Array.from(new Set(values?.map((value) => value.trim()).filter(Boolean) ?? []));
