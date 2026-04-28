@@ -260,8 +260,8 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
           className={[
             "rounded-[32px] border border-dashed px-8 py-14 transition",
             isDragActive
-              ? "border-amber-400 bg-amber-50"
-              : "border-slate-300 bg-white shadow-[0_22px_70px_rgba(15,23,42,0.08)]"
+              ? "border-amber-400 bg-amber-500/10"
+              : "border-border bg-card shadow-[0_22px_70px_rgba(15,23,42,0.08)]"
           ].join(" ")}
         >
           <input {...getInputProps()} />
@@ -269,54 +269,54 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600">
               Direct To OSS
             </p>
-            <h2 className="mt-4 text-3xl font-semibold text-slate-950">
+            <h2 className="mt-4 text-3xl font-semibold text-white/90">
               Drop original photos here and let the browser handle the heavy lift.
             </h2>
-            <p className="mt-4 text-sm leading-6 text-slate-600">
+            <p className="mt-4 text-sm leading-6 text-white/70">
               EXIF is parsed locally, originals go straight to OSS, and metadata lands in the app after upload.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={open}
-                className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
               >
                 Choose photos
               </button>
-              <span className="text-sm text-slate-500">or drag multiple files into this area</span>
+              <span className="text-sm text-white/50">or drag multiple files into this area</span>
             </div>
           </div>
         </div>
 
-        <aside className="space-y-5 rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
+        <aside className="space-y-5 rounded-[32px] border border-border bg-card p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Default Metadata</p>
-            <h3 className="text-lg font-semibold text-slate-950">Tags and description</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Default Metadata</p>
+            <h3 className="text-lg font-semibold text-white/90">Tags and description</h3>
           </div>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Description</span>
+            <span className="text-sm font-medium text-white/70">Description</span>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={4}
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
               placeholder="Optional caption applied to each queued upload"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Create tags</span>
+            <span className="text-sm font-medium text-white/70">Create tags</span>
             <input
               value={newTagNames}
               onChange={(event) => setNewTagNames(event.target.value)}
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
               placeholder="travel, family, favorites"
             />
           </label>
 
           <div className="space-y-3">
-            <span className="text-sm font-medium text-slate-700">Attach existing tags</span>
+            <span className="text-sm font-medium text-white/70">Attach existing tags</span>
             <div className="flex flex-wrap gap-2">
               {availableTags.map((tag) => {
                 const selected = defaultTagIds.includes(tag.id);
@@ -329,8 +329,8 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                     className={[
                       "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
                       selected
-                        ? "border-slate-950 bg-slate-950 text-white"
-                        : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-400"
+                        ? "border-white/10 bg-white/10 text-white"
+                        : "border-border bg-surface text-white/70 hover:border-white/20"
                     ].join(" ")}
                   >
                     {tag.name}
@@ -342,13 +342,13 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
         </aside>
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <section className="rounded-[32px] border border-border bg-card p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Queue</p>
-            <h3 className="mt-2 text-lg font-semibold text-slate-950">Upload status</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Queue</p>
+            <h3 className="mt-2 text-lg font-semibold text-white/90">Upload status</h3>
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-white/50">
             {completedCount} complete / {queue.length} queued
           </p>
         </div>
@@ -358,11 +358,11 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
             {queue.map((item) => (
               <article
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface px-4 py-4"
               >
                 <div className="space-y-1">
-                  <p className="font-medium text-slate-900">{item.filename}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-medium text-white/90">{item.filename}</p>
+                  <p className="text-xs text-white/50">
                     {formatBytes(item.sizeBytes)}
                     {item.width && item.height ? ` • ${item.width}×${item.height}` : ""}
                   </p>
@@ -377,7 +377,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                         ? "bg-emerald-100 text-emerald-700"
                         : item.status === "failed"
                           ? "bg-red-100 text-red-700"
-                          : "bg-slate-200 text-slate-600"
+                          : "bg-white/10 text-white/70"
                     ].join(" ")}
                   >
                     {item.status}
@@ -389,7 +389,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                       onClick={() => {
                         void processItem(item);
                       }}
-                      className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+                      className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-white/70 transition hover:border-white/20 hover:text-white"
                     >
                       Retry
                     </button>
@@ -399,7 +399,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
             ))}
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-sm text-slate-500">
+          <div className="mt-6 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-white/50">
             Your upload queue is empty.
           </div>
         )}

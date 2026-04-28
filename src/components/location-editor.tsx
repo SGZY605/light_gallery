@@ -89,37 +89,37 @@ export function LocationEditor({
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+    <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Location override</p>
-        <p className="mt-2 text-sm text-slate-600">Manual coordinates take precedence over EXIF GPS when both are present.</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">Location override</p>
+        <p className="mt-2 text-sm text-white/70">Manual coordinates take precedence over EXIF GPS when both are present.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Latitude</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Latitude</span>
           <input
             value={latitude}
             onChange={(event) => setLatitude(event.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           />
         </label>
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Longitude</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Longitude</span>
           <input
             value={longitude}
             onChange={(event) => setLongitude(event.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           />
         </label>
       </div>
 
       <label className="block space-y-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Label</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Label</span>
         <input
           value={label}
           onChange={(event) => setLabel(event.target.value)}
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+          className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           placeholder="Optional place label"
         />
       </label>
@@ -133,7 +133,7 @@ export function LocationEditor({
             void saveLocation();
           }}
           disabled={isSaving}
-          className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isSaving ? "Saving..." : "Save location"}
         </button>
@@ -144,7 +144,7 @@ export function LocationEditor({
             void clearLocation();
           }}
           disabled={isSaving}
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+          className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
           Clear override
         </button>

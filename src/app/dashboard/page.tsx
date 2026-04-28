@@ -11,10 +11,10 @@ function StatCard({
   description: string;
 }) {
   return (
-    <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{label}</p>
-      <p className="mt-5 text-4xl font-semibold text-slate-950">{value}</p>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+    <article className="rounded-[28px] border border-border bg-card p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">{label}</p>
+      <p className="mt-5 text-4xl font-semibold text-white/90">{value}</p>
+      <p className="mt-3 text-sm leading-6 text-white/70">{description}</p>
     </article>
   );
 }
@@ -49,12 +49,12 @@ export default async function DashboardOverviewPage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[32px] border border-slate-200 bg-white/90 px-7 py-7 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600">Overview</p>
+      <section className="rounded-[32px] border border-border bg-card px-7 py-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-300">Overview</p>
         <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="text-3xl font-semibold text-slate-950">A compact control room for your private photo library.</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            <h2 className="text-3xl font-semibold text-white/90">A compact control room for your private photo library.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
               Keep uploads moving, monitor share links, and jump back into the library without navigating through a public homepage.
             </p>
           </div>
@@ -62,13 +62,13 @@ export default async function DashboardOverviewPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/dashboard/upload"
-              className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
             >
               Upload photos
             </Link>
             <Link
               href="/dashboard/shares"
-              className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-white/70 transition hover:border-white/50 hover:text-white"
             >
               Manage shares
             </Link>
@@ -82,13 +82,13 @@ export default async function DashboardOverviewPage() {
         <StatCard label="Active Shares" value={activeShareCount} description="Currently valid public tag-based share links that have not expired or been revoked." />
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <section className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Recent Uploads</p>
-            <h3 className="mt-2 text-xl font-semibold text-slate-950">Latest images</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Recent Uploads</p>
+            <h3 className="mt-2 text-xl font-semibold text-white/90">Latest images</h3>
           </div>
-          <Link href="/dashboard/library" className="text-sm font-semibold text-slate-700 transition hover:text-slate-950">
+          <Link href="/dashboard/library" className="text-sm font-semibold text-white/70 transition hover:text-white">
             Open library
           </Link>
         </div>
@@ -98,21 +98,21 @@ export default async function DashboardOverviewPage() {
             recentUploads.map((image) => (
               <article
                 key={image.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-4"
               >
                 <div>
-                  <p className="font-medium text-slate-900">{image.filename}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="font-medium text-white/90">{image.filename}</p>
+                  <p className="text-sm text-white/50">
                     Uploaded by {image.uploader.name} • {(image.sizeBytes / (1024 * 1024)).toFixed(2)} MB
                   </p>
                 </div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/50">
                   {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(image.createdAt)}
                 </p>
               </article>
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-white/50">
               No uploads have been recorded yet.
             </div>
           )}

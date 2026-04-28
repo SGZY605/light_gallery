@@ -146,13 +146,13 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1fr)_180px_180px]">
+      <section className="grid gap-4 rounded-[32px] border border-border bg-card p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1fr)_180px_180px]">
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Tag filter</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">Tag filter</span>
           <select
             value={selectedTagId}
             onChange={(event) => setSelectedTagId(event.target.value)}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           >
             <option value="">All tags</option>
             {availableTags.map((tag) => (
@@ -164,28 +164,28 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
         </label>
 
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">From date</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">From date</span>
           <input
             value={fromDate}
             onChange={(event) => setFromDate(event.target.value)}
             type="date"
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           />
         </label>
 
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">To date</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">To date</span>
           <input
             value={toDate}
             onChange={(event) => setToDate(event.target.value)}
             type="date"
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           />
         </label>
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_420px]">
-        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <section className="overflow-hidden rounded-[32px] border border-border bg-card p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
           <div className="h-[620px] overflow-hidden rounded-[28px]">
             <MapContainer center={defaultCenter} zoom={4} className="h-full w-full">
               <TileLayer
@@ -214,7 +214,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
           </div>
         </section>
 
-        <aside className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <aside className="rounded-[32px] border border-border bg-card p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
           <div className="border-b border-slate-200 pb-4">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Location panel</p>
             <h3 className="mt-2 text-2xl font-semibold text-slate-950">

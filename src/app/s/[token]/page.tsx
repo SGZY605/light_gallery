@@ -1,5 +1,6 @@
 import { ShareGallery } from "@/components/share-gallery";
 import { db } from "@/lib/db";
+import { getOssConfig } from "@/lib/oss/config";
 import { getImagesForShare } from "@/lib/shares/query";
 import { getShareState } from "@/lib/shares/tokens";
 
@@ -13,8 +14,8 @@ type SharePageProps = {
 
 function UnavailableShare({ title, message }: { title: string; message: string }) {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,_#020617_0%,_#0f172a_100%)] px-6 py-16 text-white">
-      <div className="mx-auto max-w-3xl rounded-[36px] border border-white/10 bg-white/5 px-8 py-14 text-center shadow-[0_24px_90px_rgba(2,6,23,0.45)]">
+    <main className="min-h-screen bg-black px-6 py-16 text-white">
+      <div className="mx-auto max-w-3xl px-8 py-14 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.36em] text-amber-300">Share unavailable</p>
         <h1 className="mt-4 text-4xl font-semibold">{title}</h1>
         <p className="mt-4 text-base leading-7 text-white/70">{message}</p>
@@ -56,9 +57,9 @@ export default async function PublicSharePage({ params }: SharePageProps) {
   const images = await getImagesForShare(share.id);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,_#020617_0%,_#0f172a_30%,_#1e293b_100%)] px-6 py-12 text-white">
-      <div className="mx-auto max-w-7xl space-y-10">
-        <section className="rounded-[36px] border border-white/10 bg-[linear-gradient(135deg,_rgba(255,255,255,0.12),_rgba(255,255,255,0.02))] px-8 py-10 shadow-[0_28px_110px_rgba(2,6,23,0.42)] backdrop-blur">
+    <main className="min-h-screen bg-black py-12 text-white">
+      <div className="space-y-10">
+        <section className="px-4 sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.36em] text-amber-300">Shared Gallery</p>
           <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end">
             <div>
@@ -66,14 +67,14 @@ export default async function PublicSharePage({ params }: SharePageProps) {
               {share.description ? <p className="mt-4 max-w-3xl text-base leading-7 text-white/75">{share.description}</p> : null}
             </div>
 
-            <div className="space-y-3 rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-white/70">
+            <div className="space-y-3 rounded-[28px] border border-white/[0.06] bg-[#111111] p-5 text-sm text-white/70">
               <p>Curated by {share.creator.name}</p>
               <p>{images.length} image{images.length === 1 ? "" : "s"} currently match this share.</p>
               <div className="flex flex-wrap gap-2">
                 {share.tags.map(({ tag }) => (
                   <span
                     key={tag.id}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/75"
+                    className="rounded-full border border-white/[0.06] bg-[#0a0a0a] px-3 py-1 text-xs font-semibold text-white/75"
                   >
                     {tag.name}
                   </span>
@@ -85,6 +86,7 @@ export default async function PublicSharePage({ params }: SharePageProps) {
 
         <ShareGallery
           allowDownload={share.allowDownload}
+          publicBaseUrl={getOssConfig().publicBaseUrl}
           title={share.title}
           images={images.map((image) => ({
             id: image.id,

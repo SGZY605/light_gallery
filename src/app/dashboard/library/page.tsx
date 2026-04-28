@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { ImageGrid } from "@/components/image-grid";
 import { db } from "@/lib/db";
+import { getOssConfig } from "@/lib/oss/config";
 
 type LibraryPageProps = {
   searchParams?: Promise<{
@@ -86,18 +87,20 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
     })
   ]);
 
+  const publicBaseUrl = getOssConfig().publicBaseUrl;
+
   return (
     <div className="space-y-8">
-      <section className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+      <section className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Library</p>
-            <h2 className="mt-2 text-3xl font-semibold text-slate-950">Search fast, batch later, and keep the grid dense.</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Library</p>
+            <h2 className="mt-2 text-3xl font-semibold text-white/90">Search fast, batch later, and keep the grid dense.</h2>
           </div>
 
           <Link
             href="/dashboard/upload"
-            className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
           >
             Add more photos
           </Link>
@@ -107,7 +110,7 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
           <input
             name="q"
             defaultValue={query}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
             placeholder="Search filenames or descriptions"
           />
           {selectedTagIds.map((tagId) => (
@@ -115,7 +118,7 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
           ))}
           <button
             type="submit"
-            className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+            className="rounded-2xl border border-border px-5 py-3 text-sm font-semibold text-white/70 transition hover:border-white/50 hover:text-white"
           >
             Apply filters
           </button>
@@ -132,8 +135,8 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
                 className={[
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
                   active
-                    ? "border-slate-950 bg-slate-950 text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-400"
+                    ? "border-white/30 bg-white/10 text-white"
+                    : "border-border bg-surface text-white/70 hover:border-white/30"
                 ].join(" ")}
               >
                 {tag.name}
@@ -143,51 +146,25 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Batch Toolbar</p>
-            <p className="mt-2 text-sm text-slate-600">0 selected. Batch apply and remove actions will plug into this slot.</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled
-              className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-400"
-            >
-              Add tags
-            </button>
-            <button
-              type="button"
-              disabled
-              className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-400"
-            >
-              Remove tags
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <ImageGrid
-            images={images.map((image) => ({
-              id: image.id,
-              objectKey: image.objectKey,
-              filename: image.filename,
-              description: image.description,
-              width: image.width,
-              height: image.height,
-              createdAt: image.createdAt,
-              exif: image.exif,
-              tags: image.tags.map(({ tag }) => ({
-                id: tag.id,
-                name: tag.name,
-                slug: tag.slug,
-                color: tag.color
-              }))
-            }))}
-          />
-        </div>
-      </section>
+      <ImageGrid
+        publicBaseUrl={publicBaseUrl}
+        images={images.map((image) => ({
+          id: image.id,
+          objectKey: image.objectKey,
+          filename: image.filename,
+          description: image.description,
+          width: image.width,
+          height: image.height,
+          createdAt: image.createdAt,
+          exif: image.exif,
+          tags: image.tags.map(({ tag }) => ({
+            id: tag.id,
+            name: tag.name,
+            slug: tag.slug,
+            color: tag.color
+          }))
+        }))}
+      />
     </div>
   );
 }

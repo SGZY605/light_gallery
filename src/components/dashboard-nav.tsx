@@ -54,8 +54,8 @@ export function DashboardNav({ canManageUsers }: DashboardNavProps) {
               className={[
                 "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
                 isActive
-                  ? "bg-amber-300 text-slate-950 shadow-[0_14px_30px_rgba(245,158,11,0.28)]"
-                  : "text-slate-300 hover:bg-white/10 hover:text-white"
+                  ? "bg-amber-400 text-black shadow-[0_14px_30px_rgba(245,158,11,0.35)]"
+                  : "text-white/50 hover:bg-white/10 hover:text-white"
               ].join(" ")}
             >
               <Icon className="h-4 w-4" />

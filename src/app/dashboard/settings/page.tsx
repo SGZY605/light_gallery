@@ -8,10 +8,10 @@ type SettingRowProps = {
 
 function SettingRow({ label, value, description }: SettingRowProps) {
   return (
-    <article className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-slate-950">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    <article className="rounded-[28px] border border-border bg-surface p-5">
+      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">{label}</p>
+      <p className="mt-3 text-lg font-semibold text-white/90">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-white/70">{description}</p>
     </article>
   );
 }
@@ -29,10 +29,10 @@ export default function DashboardSettingsPage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[32px] border border-slate-200 bg-white px-7 py-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Settings</p>
-        <h2 className="mt-3 text-3xl font-semibold text-slate-950">Check environment-backed configuration without exposing secrets.</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+      <section className="rounded-[32px] border border-border bg-card px-7 py-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Settings</p>
+        <h2 className="mt-3 text-3xl font-semibold text-white/90">Check environment-backed configuration without exposing secrets.</h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">
           This page is intentionally read-only in the first version. It shows whether the core OSS and sharing settings are present while leaving secret values hidden.
         </p>
       </section>
@@ -56,7 +56,7 @@ export default function DashboardSettingsPage() {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-2">
-        <article className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <article className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600">Share defaults</p>
           <div className="mt-5 space-y-4">
             <SettingRow
@@ -77,22 +77,22 @@ export default function DashboardSettingsPage() {
           </div>
         </article>
 
-        <article className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Reserved metadata writeback</p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-950">EXIF writeback stays disabled in this version.</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
+        <article className="rounded-[32px] border border-border bg-card p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/50">Reserved metadata writeback</p>
+          <h3 className="mt-3 text-2xl font-semibold text-white/90">EXIF writeback stays disabled in this version.</h3>
+          <p className="mt-3 text-sm leading-6 text-white/70">
             Location edits and future metadata tweaks are stored as application metadata only. The reserved writeback endpoint returns a `501` response until object rewrite workflows are implemented.
           </p>
-          <div className="mt-6 rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-5">
+          <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Write EXIF back to original</p>
-                <p className="mt-1 text-sm text-slate-600">Reserved for a future version.</p>
+                <p className="text-sm font-semibold text-white/90">Write EXIF back to original</p>
+                <p className="mt-1 text-sm text-white/70">Reserved for a future version.</p>
               </div>
               <button
                 type="button"
                 disabled
-                className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500"
+                className="rounded-full bg-white/5 px-4 py-2 text-sm font-semibold text-white/30"
               >
                 Disabled
               </button>
