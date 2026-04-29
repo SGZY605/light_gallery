@@ -26,7 +26,7 @@ type NavigationItem = {
 };
 
 const navigationItems: NavigationItem[] = [
-  { href: "/dashboard", label: "概览", icon: LayoutDashboard },
+  { href: "/dashboard", label: "首页", icon: LayoutDashboard },
   { href: "/dashboard/library", label: "图库", icon: Grid2x2 },
   { href: "/dashboard/upload", label: "上传", icon: UploadCloud },
   { href: "/dashboard/tags", label: "标签", icon: Tags },
@@ -40,7 +40,7 @@ export function DashboardNav({ canManageUsers }: DashboardNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-2">
+    <nav className="space-y-0.5">
       {navigationItems
         .filter((item) => (item.requiresManager ? canManageUsers : true))
         .map((item) => {
@@ -52,13 +52,16 @@ export function DashboardNav({ canManageUsers }: DashboardNavProps) {
               key={item.href}
               href={item.href}
               className={[
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
+                "flex items-center gap-2 px-2 py-1.5 text-xs font-medium transition relative",
                 isActive
-                  ? "bg-amber-300 text-slate-950 shadow-[0_14px_30px_rgba(245,158,11,0.28)]"
-                  : "text-slate-300 hover:bg-white/10 hover:text-white"
+                  ? "text-white/80"
+                  : "text-white/30 hover:text-white/50"
               ].join(" ")}
             >
-              <Icon className="h-4 w-4" />
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-3 rounded-full bg-white/30" />
+              )}
+              <Icon className="h-3.5 w-3.5" />
               <span>{item.label}</span>
             </Link>
           );

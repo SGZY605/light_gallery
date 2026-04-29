@@ -7,7 +7,13 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}"
   ],
   theme: {
-    extend: {}
+    extend: {
+      colors: {
+        surface: '#0a0a0a',
+        card: '#111111',
+        border: 'rgba(255,255,255,0.06)',
+      }
+    }
   },
   plugins: []
 };

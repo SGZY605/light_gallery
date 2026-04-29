@@ -168,47 +168,43 @@ export default async function DashboardTagsPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-slate-200 bg-white px-7 py-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">标签</p>
-        <h2 className="mt-3 text-3xl font-semibold text-slate-950">保持标签体系精简，让图库始终易于筛选。</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          你可以直接重命名标签，或把重复概念合并成一个标准标签。合并会在删除源标签前先更新图片关系和动态分享。
-        </p>
+    <div className="space-y-4">
+      <section>
+        <h2 className="text-base font-semibold text-white/40">标签</h2>
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="grid gap-4">
+      <section className="border-t border-white/[0.04] pt-4">
+        <div className="space-y-2">
           {tags.map((tag) => (
             <form
               key={tag.id}
               action={renameTagAction}
-              className="grid gap-4 rounded-[28px] border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]"
+              className="flex flex-wrap items-end gap-2 p-1 border-b border-white/[0.02]"
             >
               <input type="hidden" name="tagId" value={tag.id} />
-              <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">标签名称</span>
+              <label className="flex-1 min-w-0 space-y-0.5">
+                <span className="text-[10px] text-white/20">标签名称</span>
                 <input
                   name="name"
                   defaultValue={tag.name}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                  className="w-full bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
                 />
               </label>
-              <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">图片</span>
-                <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
+              <div className="text-center">
+                <span className="text-[10px] text-white/20">图片</span>
+                <p className="text-xs font-medium text-white/30">
                   {tag._count.images}
                 </p>
               </div>
-              <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">分享</span>
-                <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
+              <div className="text-center">
+                <span className="text-[10px] text-white/20">分享</span>
+                <p className="text-xs font-medium text-white/30">
                   {tag._count.shares}
                 </p>
               </div>
               <button
                 type="submit"
-                className="self-end rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="px-2 py-1 text-[10px] font-medium text-white/30 transition hover:text-white/50"
               >
                 重命名
               </button>
@@ -217,18 +213,17 @@ export default async function DashboardTagsPage() {
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">合并</p>
-          <h3 className="mt-2 text-2xl font-semibold text-slate-950">把重复标签合并到同一个目标标签。</h3>
+      <section className="border-t border-white/[0.04] pt-4">
+        <div className="max-w-2xl">
+          <h3 className="text-sm font-semibold text-white/30">合并标签</h3>
         </div>
 
-        <form action={mergeTagsAction} className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">源标签</span>
+        <form action={mergeTagsAction} className="mt-3 flex flex-wrap items-end gap-2">
+          <label className="space-y-0.5">
+            <span className="text-[10px] text-white/20">源标签</span>
             <select
               name="sourceTagId"
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              className="bg-transparent py-1 text-xs text-white/50 outline-none border-b border-white/[0.04] transition focus:border-white/10"
               defaultValue=""
             >
               <option value="" disabled>
@@ -242,11 +237,11 @@ export default async function DashboardTagsPage() {
             </select>
           </label>
 
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">目标标签</span>
+          <label className="space-y-0.5">
+            <span className="text-[10px] text-white/20">目标标签</span>
             <select
               name="targetTagId"
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              className="bg-transparent py-1 text-xs text-white/50 outline-none border-b border-white/[0.04] transition focus:border-white/10"
               defaultValue=""
             >
               <option value="" disabled>
@@ -262,7 +257,7 @@ export default async function DashboardTagsPage() {
 
           <button
             type="submit"
-            className="self-end rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+            className="px-2 py-1 text-[10px] font-medium text-white/30 transition hover:text-white/50"
           >
             合并标签
           </button>

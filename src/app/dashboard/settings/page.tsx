@@ -8,10 +8,10 @@ type SettingRowProps = {
 
 function SettingRow({ label, value, description }: SettingRowProps) {
   return (
-    <article className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-slate-950">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    <article className="border border-white/[0.04] p-3">
+      <p className="text-[10px] text-white/20">{label}</p>
+      <p className="mt-1 text-sm font-medium text-white/50">{value}</p>
+      <p className="mt-1 text-[10px] leading-4 text-white/25">{description}</p>
     </article>
   );
 }
@@ -24,77 +24,76 @@ export default function DashboardSettingsPage() {
       process.env.OSS_ACCESS_KEY_SECRET
   );
   const publicBaseUrl = process.env.OSS_PUBLIC_BASE_URL || "未配置";
-  const uploadBaseUrl = process.env.OSS_UPLOAD_BASE_URL || "根据 Bucket 和 Region 自动推导";
+  const uploadBaseUrl = process.env.OSS_UPLOAD_BASE_URL || "从存储桶和区域派生";
   const maxUploadBytes = process.env.OSS_MAX_UPLOAD_BYTES || "26214400";
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-slate-200 bg-white px-7 py-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">设置</p>
-        <h2 className="mt-3 text-3xl font-semibold text-slate-950">在不暴露密钥的前提下查看环境变量配置。</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          第一版页面刻意保持只读。它会展示核心 OSS 与分享配置是否齐备，同时隐藏具体密钥内容。
+    <div className="space-y-4">
+      <section>
+        <h2 className="text-base font-semibold text-white/40">设置</h2>
+        <p className="mt-1 text-xs text-white/20">
+          基于环境变量的配置。密钥不会暴露。
         </p>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-3">
+      <section className="grid gap-3 lg:grid-cols-3">
         <SettingRow
           label="OSS 状态"
-          value={hasOssBaseConfig ? "已配置" : "缺少必填项"}
-          description="检查 Region、Bucket、Access Key ID 和 Access Key Secret 是否存在。不会显示密钥内容。"
+          value={hasOssBaseConfig ? "已配置" : "缺少必需的值"}
+          description="检查区域、存储桶、访问密钥 ID 和访问密钥密钥。"
         />
         <SettingRow
           label="公共基础 URL"
           value={publicBaseUrl}
-          description="用于生成图片展示所需的缩略图、预览图和原图地址。"
+          description="用于生成缩略图、预览和原始 URL。"
         />
         <SettingRow
-          label="上传大小上限"
+          label="上传大小限制"
           value={`${(Number(maxUploadBytes) / (1024 * 1024)).toFixed(0)} MB`}
-          description="浏览器开始直传 OSS 之前，上传签名接口允许的最大文件大小。"
+          description="上传签名路由接受的最大文件大小。"
         />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
-        <article className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600">分享默认项</p>
-          <div className="mt-5 space-y-4">
+      <section className="grid gap-3 xl:grid-cols-2">
+        <article className="border border-white/[0.04] p-4">
+          <p className="text-[10px] text-amber-500/40">分享默认设置</p>
+          <div className="mt-4 space-y-3">
             <SettingRow
               label="匹配模式"
-              value="全部匹配"
-              description="第一版要求一张图片必须同时命中所有已选标签，才会在分享页中显示。"
+              value="ALL"
+              description="所有选定标签都必须匹配，图片才会显示。"
             />
             <SettingRow
-              label="原图下载"
-              value="默认关闭"
-              description="公开分享默认不允许下载原图，只有在创建分享时显式开启后才可用。"
+              label="允许下载"
+              value="默认禁用"
+              description="公开分享默认不提供原图下载权限。"
             />
             <SettingRow
               label="上传端点"
               value={uploadBaseUrl}
-              description="浏览器会使用服务器签名后的表单策略，直接向这个 OSS 端点上传文件。"
+              description="浏览器直接上传至此 OSS 端点。"
             />
           </div>
         </article>
 
-        <article className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">预留的元数据回写</p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-950">本版本暂不支持 EXIF 回写。</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            位置编辑和后续的元数据调整目前只会保存为应用元数据。在真正实现对象重写流程前，预留的回写接口都会返回 `501`。
+        <article className="border border-white/[0.04] p-4">
+          <p className="text-[10px] text-white/20">保留的元数据回写</p>
+          <h3 className="mt-2 text-base font-medium text-white/50">EXIF 回写保持禁用。</h3>
+          <p className="mt-1 text-[10px] leading-4 text-white/25">
+            位置编辑和未来的元数据调整仅存储为应用程序元数据。
           </p>
-          <div className="mt-6 rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-5">
+          <div className="mt-4 border border-dashed border-white/[0.04] p-3">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-slate-900">将 EXIF 回写到原图</p>
-                <p className="mt-1 text-sm text-slate-600">保留给后续版本。</p>
+                <p className="text-xs font-medium text-white/40">将 EXIF 写回原始文件</p>
+                <p className="text-[10px] text-white/20">预留给未来版本。</p>
               </div>
               <button
                 type="button"
                 disabled
-                className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500"
+                className="px-2 py-1 text-[10px] text-white/15"
               >
-                已禁用
+                禁用
               </button>
             </div>
           </div>
