@@ -14,13 +14,13 @@ export default async function DashboardLayout({
   const canOpenUsersPage = canManageUsers(user.role);
 
   return (
-    <div className="dashboard-root min-h-screen bg-[color:var(--page-bg)] text-[color:var(--text-primary)]">
+    <div className="dashboard-root h-screen overflow-hidden bg-[color:var(--page-bg)] text-[color:var(--text-primary)]">
       <div
         data-dashboard-shell
         data-sidebar="expanded"
-        className="dashboard-shell flex min-h-screen w-full flex-col xl:flex-row"
+        className="dashboard-shell flex h-full w-full flex-col xl:flex-row"
       >
-        <aside className="dashboard-sidebar flex flex-col items-center border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-2 py-4 text-center text-[color:var(--text-primary)] xl:min-h-screen xl:w-32 xl:border-b-0 xl:border-r">
+        <aside className="dashboard-sidebar shrink-0 flex flex-col items-center border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-2 py-4 text-center text-[color:var(--text-primary)] xl:h-full xl:w-32 xl:border-b-0 xl:border-r xl:min-h-0">
           <div className="dashboard-shell-brand mb-6 w-full space-y-1">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--shell-caption)]">光影画廊</p>
             <p className="text-[10px] leading-relaxed text-[color:var(--shell-subtle)]">
@@ -44,7 +44,7 @@ export default async function DashboardLayout({
           <DashboardShellControls />
         </aside>
 
-        <main className="flex-1 px-4 py-4 sm:px-6 xl:px-7 xl:py-6">{children}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 xl:px-7 xl:py-6">{children}</main>
       </div>
     </div>
   );
