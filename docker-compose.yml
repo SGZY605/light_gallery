@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-light_gallery}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -13,6 +13,8 @@ services:
       retries: 10
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
 
   app:
     build:
@@ -24,26 +26,29 @@ services:
       - path: .env
         required: false
     environment:
-      NODE_ENV: production
-      PORT: 3000
-      HOSTNAME: 0.0.0.0
-      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/light_gallery?schema=public}
-      SESSION_SECRET: ${SESSION_SECRET:-replace-with-a-long-random-secret}
-      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin}
-      RUN_DB_SEED: ${RUN_DB_SEED:-true}
-      DB_INIT_MAX_ATTEMPTS: ${DB_INIT_MAX_ATTEMPTS:-30}
-      DB_INIT_RETRY_DELAY_SECONDS: ${DB_INIT_RETRY_DELAY_SECONDS:-2}
-      OSS_REGION: ${OSS_REGION:-cn-shanghai}
-      OSS_BUCKET: ${OSS_BUCKET:-light-gallery}
-      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-your-access-key-id}
-      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-your-access-key-secret}
-      OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:-https://light-gallery.oss-cn-shanghai.aliyuncs.com}
-      OSS_UPLOAD_BASE_URL: ${OSS_UPLOAD_BASE_URL:-https://light-gallery.oss-cn-shanghai.aliyuncs.com}
-      OSS_MAX_UPLOAD_BYTES: ${OSS_MAX_UPLOAD_BYTES:-26214400}
-      OSS_POLICY_EXPIRES_SECONDS: ${OSS_POLICY_EXPIRES_SECONDS:-300}
+      NODE_ENV: ${NODE_ENV:?Set NODE_ENV in .env}
+      PORT: ${APP_PORT:?Set APP_PORT in .env}
+      HOSTNAME: ${APP_HOSTNAME:?Set APP_HOSTNAME in .env}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL in .env}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env}
+      RUN_DB_SEED: ${RUN_DB_SEED:?Set RUN_DB_SEED in .env}
+      DB_INIT_MAX_ATTEMPTS: ${DB_INIT_MAX_ATTEMPTS:?Set DB_INIT_MAX_ATTEMPTS in .env}
+      DB_INIT_RETRY_DELAY_SECONDS: ${DB_INIT_RETRY_DELAY_SECONDS:?Set DB_INIT_RETRY_DELAY_SECONDS in .env}
+      OSS_REGION: ${OSS_REGION:?Set OSS_REGION in .env}
+      OSS_BUCKET: ${OSS_BUCKET:?Set OSS_BUCKET in .env}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:?Set OSS_ACCESS_KEY_ID in .env}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:?Set OSS_ACCESS_KEY_SECRET in .env}
+      OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:?Set OSS_PUBLIC_BASE_URL in .env}
+      OSS_UPLOAD_BASE_URL: ${OSS_UPLOAD_BASE_URL:?Set OSS_UPLOAD_BASE_URL in .env}
+      NEXT_PUBLIC_OSS_PUBLIC_BASE_URL: ${NEXT_PUBLIC_OSS_PUBLIC_BASE_URL:?Set NEXT_PUBLIC_OSS_PUBLIC_BASE_URL in .env}
+      OSS_MAX_UPLOAD_BYTES: ${OSS_MAX_UPLOAD_BYTES:?Set OSS_MAX_UPLOAD_BYTES in .env}
+      OSS_POLICY_EXPIRES_SECONDS: ${OSS_POLICY_EXPIRES_SECONDS:?Set OSS_POLICY_EXPIRES_SECONDS in .env}
+      OSS_ALLOWED_MIME_PREFIX: ${OSS_ALLOWED_MIME_PREFIX:?Set OSS_ALLOWED_MIME_PREFIX in .env}
+      OSS_UPLOAD_PREFIX: ${OSS_UPLOAD_PREFIX:?Set OSS_UPLOAD_PREFIX in .env}
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${APP_PORT}:${APP_PORT}"
 
 volumes:
   postgres-data:
