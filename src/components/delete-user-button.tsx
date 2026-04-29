@@ -27,7 +27,7 @@ export function DeleteUserForm({ userId, userName, serverAction }: DeleteUserFor
           type="button"
           className="px-1.5 py-0.5 text-[10px] text-red-400/50 transition hover:text-red-400/80"
         >
-          Delete
+          删除
         </button>
       </ConfirmDialog>
     </>

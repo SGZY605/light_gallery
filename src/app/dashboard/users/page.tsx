@@ -73,9 +73,9 @@ async function updateUserRoleAction(formData: FormData) {
   await requireManagingUser();
 
   const userId = String(formData.get("userId") ?? "");
-  const roleValue = String(formData.get("role") ?? UserRole.MEMBER);
+  const roleValue = String(formData.get("role") ?? "");
 
-  if (!userId || !roleOptions.includes(roleValue as UserRole)) {
+  if (!userId || !roleValue || !roleOptions.includes(roleValue as UserRole)) {
     return;
   }
 
@@ -84,11 +84,21 @@ async function updateUserRoleAction(formData: FormData) {
       id: userId
     },
     select: {
-      email: true
+      id: true,
+      email: true,
+      role: true
     }
   });
 
-  if (!targetUser || !canChangeUserRole(targetUser.email, roleValue as UserRole)) {
+  if (!targetUser) {
+    return;
+  }
+
+  if (targetUser.role === roleValue) {
+    return;
+  }
+
+  if (!canChangeUserRole(targetUser.email, roleValue as UserRole)) {
     return;
   }
 
@@ -112,7 +122,16 @@ async function resetUserPasswordAction(formData: FormData) {
   const userId = String(formData.get("userId") ?? "");
   const password = String(formData.get("password") ?? "");
 
-  if (!userId || password.length < MIN_PASSWORD_LENGTH) {
+  if (!userId || !password || password.length < MIN_PASSWORD_LENGTH) {
+    return;
+  }
+
+  const targetUser = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true }
+  });
+
+  if (!targetUser) {
     return;
   }
 
@@ -272,7 +291,7 @@ export default async function DashboardUsersPage() {
           <input
             name="password"
             type="password"
-            placeholder="Password"
+            placeholder="密码"
             className="bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
           />
           <select
@@ -290,7 +309,7 @@ export default async function DashboardUsersPage() {
             type="submit"
             className="px-3 py-1 text-xs font-medium text-white/30 transition hover:text-white/50"
           >
-            Create
+            创建
           </button>
         </form>
       </section>
@@ -314,12 +333,12 @@ export default async function DashboardUsersPage() {
                     </div>
                     <p className="text-[10px] text-white/25">{user.email}</p>
                     <p className="mt-1 text-[10px] text-white/15">
-                      created {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(user.createdAt)}
+                      创建于 {new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" }).format(user.createdAt)}
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center justify-end gap-2">
-                    <form action={updateUserRoleAction} className="flex items-center gap-1.5">
+                    <form key={`${user.id}-${user.role}`} action={updateUserRoleAction} className="flex items-center gap-1.5">
                       <input type="hidden" name="userId" value={user.id} />
                       <select
                         name="role"
@@ -338,7 +357,7 @@ export default async function DashboardUsersPage() {
                         disabled={isProtectedAdmin}
                         className="px-1.5 py-0.5 text-[10px] text-white/30 transition hover:text-white/50 disabled:cursor-not-allowed disabled:text-white/10"
                       >
-                        Update
+                        修改
                       </button>
                     </form>
 
@@ -347,14 +366,16 @@ export default async function DashboardUsersPage() {
                       <input
                         name="password"
                         type="password"
-                        placeholder="New password"
+                        placeholder="新密码"
+                        required
+                        minLength={MIN_PASSWORD_LENGTH}
                         className="w-28 bg-transparent py-1 text-[10px] text-white/40 placeholder:text-white/10 outline-none border-b border-white/[0.04] transition focus:border-white/10"
                       />
                       <button
                         type="submit"
                         className="px-1.5 py-0.5 text-[10px] text-white/30 transition hover:text-white/50"
                       >
-                        Reset
+                        重置密码
                       </button>
                     </form>
 

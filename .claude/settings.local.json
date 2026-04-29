@@ -5,7 +5,10 @@
       "Bash(npx prisma:*)",
       "Bash(npx next:*)",
       "Bash(docker compose:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //F //PID 19316)",
+      "Bash(rm -rf E:/Docker_Projects/apps/.next)"
     ]
   }
 }
