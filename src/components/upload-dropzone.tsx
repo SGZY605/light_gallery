@@ -26,12 +26,6 @@ type UploadQueueItem = {
   error: string | null;
 };
 
-type UploadSignatureResponse = {
-  expiresAt: string;
-  fields: Record<string, string>;
-  uploadUrl: string;
-};
-
 type UploadDropzoneProps = {
   availableTags: AvailableTag[];
 };
@@ -116,83 +110,48 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
     );
   }
 
-  async function requestSignature(file: File): Promise<UploadSignatureResponse> {
-    const response = await fetch("/api/uploads/sign", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        filename: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size
-      })
-    });
-
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(payload?.error ?? "Failed to create an upload signature.");
-    }
-
-    return (await response.json()) as UploadSignatureResponse;
-  }
-
-  async function uploadFileToOss(signature: UploadSignatureResponse, file: File) {
+  async function uploadFileThroughServer(item: UploadQueueItem) {
     const formData = new FormData();
 
-    Object.entries(signature.fields).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
+    formData.append("file", item.file);
+    formData.append("filename", item.filename);
+    formData.append("mimeType", item.mimeType);
+    formData.append("sizeBytes", String(item.sizeBytes));
 
-    formData.append("file", file);
+    if (item.width) {
+      formData.append("width", String(item.width));
+    }
 
-    const response = await fetch(signature.uploadUrl, {
+    if (item.height) {
+      formData.append("height", String(item.height));
+    }
+
+    if (description.trim()) {
+      formData.append("description", description.trim());
+    }
+
+    if (item.exif) {
+      formData.append("exif", JSON.stringify(item.exif));
+    }
+
+    formData.append("tagIds", JSON.stringify(defaultTagIds));
+    formData.append("tagNames", JSON.stringify(parseTagNames(newTagNames)));
+
+    const response = await fetch("/api/uploads/proxy", {
       method: "POST",
       body: formData
     });
 
     if (!response.ok) {
-      throw new Error("Direct upload to OSS failed.");
-    }
-  }
-
-  async function completeUpload(item: UploadQueueItem, objectKey: string) {
-    const response = await fetch("/api/uploads/complete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        objectKey,
-        filename: item.filename,
-        mimeType: item.mimeType,
-        sizeBytes: item.sizeBytes,
-        width: item.width ?? undefined,
-        height: item.height ?? undefined,
-        description: description.trim() || undefined,
-        exif: item.exif,
-        tagIds: defaultTagIds,
-        tagNames: parseTagNames(newTagNames)
-      })
-    });
-
-    if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(payload?.error ?? "Failed to persist image metadata.");
+      throw new Error(payload?.error ?? "Failed to upload image.");
     }
   }
 
   async function processItem(item: UploadQueueItem) {
     try {
-      updateQueueItem(item.id, { status: "signing", error: null });
-      const signature = await requestSignature(item.file);
-      const objectKey = signature.fields.key;
-
       updateQueueItem(item.id, { status: "uploading" });
-      await uploadFileToOss(signature, item.file);
-
-      updateQueueItem(item.id, { status: "saving" });
-      await completeUpload(item, objectKey);
+      await uploadFileThroughServer(item);
 
       updateQueueItem(item.id, { status: "complete" });
       startTransition(() => {

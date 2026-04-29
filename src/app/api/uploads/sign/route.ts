@@ -1,10 +1,9 @@
-import { randomUUID } from "node:crypto";
-import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { canUpload } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOssConfig } from "@/lib/oss/config";
+import { buildOssObjectKey } from "@/lib/oss/keys";
 import { createOssUploadPolicy } from "@/lib/oss/policy";
 
 const INVALID_REQUEST = "上传请求无效。";
@@ -18,29 +17,6 @@ const requestSchema = z.object({
   mimeType: z.string().trim().min(1).max(255),
   sizeBytes: z.number().int().positive()
 });
-
-function sanitizeFilename(filename: string): string {
-  const parsed = path.parse(filename);
-  const normalizedBaseName = parsed.name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  const safeBaseName =
-    normalizedBaseName.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) ||
-    "image";
-  const safeExtension = parsed.ext.toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 10);
-
-  return `${safeBaseName}${safeExtension}`;
-}
-
-function buildObjectKey(filename: string, uploadPrefix: string): string {
-  const now = new Date();
-  const year = String(now.getUTCFullYear());
-  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const identifier = randomUUID().replace(/-/g, "");
-
-  return `${uploadPrefix}/${year}/${month}/${identifier}-${sanitizeFilename(filename)}`;
-}
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -78,7 +54,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: FILE_TOO_LARGE }, { status: 413 });
   }
 
-  const key = buildObjectKey(filename, config.uploadPrefix);
+  const key = buildOssObjectKey(filename, config.uploadPrefix);
   const uploadPolicy = createOssUploadPolicy({
     config,
     key,
