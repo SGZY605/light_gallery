@@ -123,5 +123,5 @@ export function MapCanvas({
     map.fitBounds(bounds.pad(0.2));
   }, [defaultCenter, locations, onSelectLocation]);
 
-  return <div ref={containerRef} className="h-full w-full bg-slate-950/5" />;
+  return <div ref={containerRef} className="h-full w-full bg-surface" />;
 }

@@ -85,7 +85,7 @@ export function DashboardNav({ canManageUsers }: DashboardNavProps) {
                 <span className="dashboard-nav-indicator" />
               )}
               <Icon className="h-3.5 w-3.5" />
-              <span>{item.label}</span>
+              <span className="dashboard-nav-label">{item.label}</span>
             </Link>
           );
         })}

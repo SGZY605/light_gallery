@@ -18,10 +18,11 @@ export default async function DashboardLayout({
       <div
         data-dashboard-shell
         data-layout="wide"
+        data-sidebar="expanded"
         className="dashboard-shell flex min-h-screen w-full flex-col xl:flex-row"
       >
-        <aside className="flex flex-col border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-3 py-4 text-[color:var(--text-primary)] xl:min-h-screen xl:w-44 xl:border-b-0 xl:border-r">
-          <div className="mb-6 space-y-1">
+        <aside className="dashboard-sidebar flex flex-col border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-3 py-4 text-[color:var(--text-primary)] xl:min-h-screen xl:w-40 xl:border-b-0 xl:border-r">
+          <div className="dashboard-shell-brand mb-6 space-y-1">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--shell-caption)]">光影画廊</p>
             <p className="text-[10px] leading-relaxed text-[color:var(--shell-subtle)]">
               已登录为 {user.name}
@@ -34,7 +35,7 @@ export default async function DashboardLayout({
 
           <DashboardShellControls />
 
-          <form action="/api/auth/logout" method="post" className="mt-3">
+          <form action="/api/auth/logout" method="post" className="dashboard-logout mt-3">
             <button
               type="submit"
               className="w-full px-2 py-1 text-left text-[10px] font-medium text-[color:var(--shell-nav-muted)] transition hover:text-[color:var(--shell-nav-hover)]"

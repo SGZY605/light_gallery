@@ -3,6 +3,7 @@ import {
   isNavigationItemActive,
   getNavigationTextColor,
   resolveLayoutMode,
+  resolveSidebarMode,
   resolveThemeMode
 } from "@/components/dashboard-shell-state";
 
@@ -29,6 +30,13 @@ describe("dashboard shell state", () => {
     expect(resolveLayoutMode("wide")).toBe("wide");
     expect(resolveLayoutMode("unexpected")).toBe("wide");
     expect(resolveLayoutMode(null)).toBe("wide");
+  });
+
+  it("normalizes stored sidebar mode and defaults to expanded", () => {
+    expect(resolveSidebarMode("expanded")).toBe("expanded");
+    expect(resolveSidebarMode("collapsed")).toBe("collapsed");
+    expect(resolveSidebarMode("unexpected")).toBe("expanded");
+    expect(resolveSidebarMode(null)).toBe("expanded");
   });
 
   it("returns theme-aware navigation text colors", () => {

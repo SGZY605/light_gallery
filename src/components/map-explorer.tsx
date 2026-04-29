@@ -55,7 +55,7 @@ const ClientMapCanvas = dynamic(
   () => import("@/components/map-canvas").then((module) => module.MapCanvas),
   {
     ssr: false,
-    loading: () => <div className="h-full w-full bg-slate-950/5" />
+    loading: () => <div className="h-full w-full bg-surface" />
   }
 );
 
@@ -179,12 +179,12 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
         </section>
 
         <aside className="rounded-[32px] border border-border bg-card p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <div className="border-b border-slate-200 pb-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">位置面板</p>
-            <h3 className="mt-2 text-2xl font-semibold text-slate-950">
+          <div className="border-b border-border pb-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[color:var(--text-faint)]">位置面板</p>
+            <h3 className="mt-2 text-2xl font-semibold text-[color:var(--text-primary)]">
               {selectedLocation?.label || "已选位置"}
             </h3>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
               {selectedLocation
                 ? `${selectedLocation.latitude.toFixed(5)}, ${selectedLocation.longitude.toFixed(5)}`
                 : "点击标记查看该位置的图片"}
@@ -196,16 +196,16 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
               selectedLocation.images.map((image) => (
                 <article
                   key={image.id}
-                  className="space-y-4 rounded-[28px] border border-slate-200 bg-slate-50 p-4"
+                  className="space-y-4 rounded-[28px] border border-border bg-surface p-4"
                 >
                   <div
-                    className="aspect-[4/3] rounded-[24px] bg-slate-200 bg-cover bg-center"
+                    className="aspect-[4/3] rounded-[24px] bg-card bg-cover bg-center"
                     style={{ backgroundImage: `url("${buildOssImageUrl(image.objectKey, "thumb")}")` }}
                   />
 
                   <div>
-                    <h4 className="font-semibold text-slate-950">{image.filename}</h4>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">
+                    <h4 className="font-semibold text-[color:var(--text-primary)]">{image.filename}</h4>
+                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[color:var(--text-faint)]">
                       Source: {image.effectiveLocation.source === "manual" ? "手动覆盖" : "EXIF GPS"}
                     </p>
                   </div>
@@ -226,7 +226,7 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
                 </article>
               ))
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-[color:var(--text-muted)]">
                 没有符合当前筛选条件的地理标记图片。
               </div>
             )}

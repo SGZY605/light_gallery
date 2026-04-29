@@ -1,10 +1,13 @@
 export type DashboardThemeMode = "dark" | "light";
 export type DashboardLayoutMode = "wide" | "narrow";
+export type DashboardSidebarMode = "expanded" | "collapsed";
 
 export const DEFAULT_DASHBOARD_THEME: DashboardThemeMode = "dark";
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutMode = "wide";
+export const DEFAULT_DASHBOARD_SIDEBAR: DashboardSidebarMode = "expanded";
 export const DASHBOARD_THEME_STORAGE_KEY = "light-gallery-dashboard-theme";
 export const DASHBOARD_LAYOUT_STORAGE_KEY = "light-gallery-dashboard-layout";
+export const DASHBOARD_SIDEBAR_STORAGE_KEY = "light-gallery-dashboard-sidebar";
 export const DASHBOARD_THEME_CHANGE_EVENT = "light-gallery-dashboard-theme-change";
 
 export function isNavigationItemActive(itemHref: string, pathname: string | null): boolean {
@@ -25,6 +28,10 @@ export function resolveThemeMode(value: string | null): DashboardThemeMode {
 
 export function resolveLayoutMode(value: string | null): DashboardLayoutMode {
   return value === "wide" || value === "narrow" ? value : DEFAULT_DASHBOARD_LAYOUT;
+}
+
+export function resolveSidebarMode(value: string | null): DashboardSidebarMode {
+  return value === "expanded" || value === "collapsed" ? value : DEFAULT_DASHBOARD_SIDEBAR;
 }
 
 export function getNavigationTextColor(mode: DashboardThemeMode, isActive: boolean): string {

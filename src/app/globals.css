@@ -70,6 +70,12 @@ body {
     transition: color 150ms ease;
   }
 
+  .dashboard-sidebar {
+    transition:
+      width 180ms ease,
+      padding 180ms ease;
+  }
+
   :root[data-theme="light"] .dashboard-nav-link-active {
     color: rgba(37, 35, 31, 0.92) !important;
   }
@@ -112,6 +118,34 @@ body {
     max-width: 1500px;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  @media (min-width: 1280px) {
+    .dashboard-shell[data-sidebar="collapsed"] .dashboard-sidebar {
+      width: 3.5rem;
+      align-items: center;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .dashboard-shell[data-sidebar="collapsed"] .dashboard-shell-brand,
+    .dashboard-shell[data-sidebar="collapsed"] .dashboard-logout,
+    .dashboard-shell[data-sidebar="collapsed"] .dashboard-nav-label {
+      display: none;
+    }
+
+    .dashboard-shell[data-sidebar="collapsed"] nav {
+      width: 100%;
+    }
+
+    .dashboard-shell[data-sidebar="collapsed"] .dashboard-nav-link {
+      width: 2.25rem;
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+      margin-left: auto;
+      margin-right: auto;
+    }
   }
 
   .dashboard-icon-button {
