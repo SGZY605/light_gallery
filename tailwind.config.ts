@@ -9,9 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        surface: '#0a0a0a',
-        card: '#111111',
-        border: 'rgba(255,255,255,0.06)',
+        surface: "var(--bg-surface)",
+        card: "var(--bg-card)",
+        border: "var(--border-color)",
       }
     }
   },

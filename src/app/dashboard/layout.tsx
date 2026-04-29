@@ -1,3 +1,4 @@
+import { DashboardShellControls } from "@/components/dashboard-shell-controls";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -13,29 +14,37 @@ export default async function DashboardLayout({
   const canOpenUsersPage = canManageUsers(user.role);
 
   return (
-    <div className="min-h-screen bg-black">
-      <div className="mx-auto flex min-h-screen max-w-[1500px] flex-col xl:flex-row">
-        <aside className="border-b border-white/[0.04] bg-[#050505] px-3 py-4 text-white xl:min-h-screen xl:w-48 xl:border-b-0 xl:border-r">
+    <div className="dashboard-root min-h-screen bg-[color:var(--page-bg)] text-[color:var(--text-primary)]">
+      <div
+        data-dashboard-shell
+        data-layout="wide"
+        className="dashboard-shell flex min-h-screen w-full flex-col xl:flex-row"
+      >
+        <aside className="flex flex-col border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-3 py-4 text-[color:var(--text-primary)] xl:min-h-screen xl:w-44 xl:border-b-0 xl:border-r">
           <div className="mb-6 space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-white/20">光影画廊</p>
-            <p className="text-[10px] leading-relaxed text-white/30">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--shell-caption)]">光影画廊</p>
+            <p className="text-[10px] leading-relaxed text-[color:var(--shell-subtle)]">
               已登录为 {user.name}
             </p>
           </div>
 
           <DashboardNav canManageUsers={canOpenUsersPage} />
 
-          <form action="/api/auth/logout" method="post" className="mt-6">
+          <div className="flex-1" />
+
+          <DashboardShellControls />
+
+          <form action="/api/auth/logout" method="post" className="mt-3">
             <button
               type="submit"
-              className="w-full px-2 py-1 text-[10px] font-medium text-white/20 transition hover:text-white/40"
+              className="w-full px-2 py-1 text-left text-[10px] font-medium text-[color:var(--shell-nav-muted)] transition hover:text-[color:var(--shell-nav-hover)]"
             >
               退出登录
             </button>
           </form>
         </aside>
 
-        <main className="flex-1 px-4 py-4 sm:px-6 xl:px-8 xl:py-6">{children}</main>
+        <main className="flex-1 px-4 py-4 sm:px-6 xl:px-7 xl:py-6">{children}</main>
       </div>
     </div>
   );
