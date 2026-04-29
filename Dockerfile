@@ -1,17 +1,45 @@
-FROM node:20-alpine
+ARG NODE_IMAGE=docker.m.daocloud.io/library/node:20-bookworm-slim
+
+FROM ${NODE_IMAGE} AS builder
 
 WORKDIR /app
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
 
-ENV NODE_ENV=production
-
 RUN npx prisma generate
 RUN npm run build
 
+FROM ${NODE_IMAGE} AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN sed -i 's/\r$//' ./docker-entrypoint.sh \
+    && chmod +x ./docker-entrypoint.sh
+
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["./docker-entrypoint.sh"]

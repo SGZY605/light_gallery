@@ -23,7 +23,7 @@ function formatDate(value: Date | string | null | undefined): string | null {
     return null;
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("zh-CN", {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(date);
@@ -59,7 +59,7 @@ export function ExifSummary({ exif, className }: ExifSummaryProps) {
       exif.exposureTime ?? null,
       formatIso(exif.iso)
     ],
-    " • "
+    " | "
   );
   const takenAt = formatDate(exif.takenAt);
   const lines = [camera, exif.lensModel ?? null, exposure, takenAt].filter(Boolean) as string[];

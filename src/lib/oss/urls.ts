@@ -33,7 +33,16 @@ export function buildOssImageUrl(
   variant: OssImageVariant,
   options: BuildOssImageUrlOptions = {}
 ): string {
-  const publicBaseUrl = trimTrailingSlash(options.publicBaseUrl ?? getOssConfig().publicBaseUrl);
+  const resolvedPublicBaseUrl =
+    options.publicBaseUrl ??
+    process.env.NEXT_PUBLIC_OSS_PUBLIC_BASE_URL ??
+    (typeof window === "undefined" ? getOssConfig().publicBaseUrl : null);
+
+  if (!resolvedPublicBaseUrl) {
+    throw new Error("publicBaseUrl is required when buildOssImageUrl is used in client components");
+  }
+
+  const publicBaseUrl = trimTrailingSlash(resolvedPublicBaseUrl);
   const encodedObjectKey = encodeObjectKey(objectKey);
   const baseUrl = `${publicBaseUrl}/${encodedObjectKey}`;
 

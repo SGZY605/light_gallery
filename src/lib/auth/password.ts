@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 
 const PASSWORD_COST = 12;
+export const MIN_PASSWORD_LENGTH = 5;
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();

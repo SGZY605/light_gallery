@@ -80,7 +80,7 @@ export async function getCurrentUser(): Promise<User | null> {
     where: { id: userId }
   });
 
-  if (!user || user.status === "DISABLED") {
+  if (!user) {
     return null;
   }
 

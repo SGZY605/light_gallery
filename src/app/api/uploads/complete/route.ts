@@ -8,11 +8,11 @@ import { db } from "@/lib/db";
 import { normalizeExif } from "@/lib/images/exif";
 import { normalizeTagName, slugifyTagName } from "@/lib/tags";
 
-const INVALID_REQUEST = "Invalid upload completion payload.";
-const UNAUTHORIZED = "You must be signed in to complete uploads.";
-const FORBIDDEN = "Your account cannot upload images.";
-const INVALID_TAGS = "One or more selected tags are invalid.";
-const DUPLICATE_OBJECT_KEY = "An image with this object key already exists.";
+const INVALID_REQUEST = "上传完成请求无效。";
+const UNAUTHORIZED = "请先登录后再完成上传。";
+const FORBIDDEN = "当前账号没有上传图片的权限。";
+const INVALID_TAGS = "所选标签中存在无效项。";
+const DUPLICATE_OBJECT_KEY = "这个对象键对应的图片已经存在。";
 
 const requestSchema = z.object({
   objectKey: z.string().trim().min(1).max(1024),

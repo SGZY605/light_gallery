@@ -20,7 +20,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "请先登录。" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -29,13 +29,13 @@ export async function PUT(request: Request, { params }: RouteContext) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    return NextResponse.json({ error: "请求内容无效，请输入正确的经纬度。" }, { status: 400 });
   }
 
   const parsedRequest = requestSchema.safeParse(body);
 
   if (!parsedRequest.success) {
-    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    return NextResponse.json({ error: "请求内容无效，请输入正确的经纬度。" }, { status: 400 });
   }
 
   const image = await db.image.findUnique({
@@ -48,7 +48,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
   });
 
   if (!image) {
-    return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return NextResponse.json({ error: "未找到对应图片。" }, { status: 404 });
   }
 
   const location = await db.imageLocationOverride.upsert({
@@ -94,7 +94,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "请先登录。" }, { status: 401 });
   }
 
   const { id } = await params;

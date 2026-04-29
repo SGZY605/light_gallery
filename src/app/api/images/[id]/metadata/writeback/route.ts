@@ -6,18 +6,17 @@ export async function POST() {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "请先登录。" }, { status: 401 });
   }
 
   if (!canManageUsers(user.role)) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "没有执行此操作的权限。" }, { status: 403 });
   }
 
   return NextResponse.json(
     {
       error: "metadata_writeback_not_implemented",
-      message:
-        "EXIF writeback is reserved for a future version. Current edits are stored as application metadata."
+      message: "EXIF 回写功能保留给后续版本。当前编辑内容只会保存为应用元数据。"
     },
     { status: 501 }
   );

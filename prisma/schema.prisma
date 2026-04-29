@@ -8,14 +8,8 @@ datasource db {
 }
 
 enum UserRole {
-  OWNER
   ADMIN
   MEMBER
-}
-
-enum UserStatus {
-  ACTIVE
-  DISABLED
 }
 
 enum ShareMatchMode {
@@ -33,7 +27,6 @@ enum UploadStatus {
 enum AuditAction {
   USER_CREATED
   USER_UPDATED
-  USER_DISABLED
   IMAGE_CREATED
   IMAGE_UPDATED
   IMAGE_DELETED
@@ -55,7 +48,6 @@ model User {
   name            String
   passwordHash    String
   role            UserRole                @default(MEMBER)
-  status          UserStatus              @default(ACTIVE)
   images          Image[]
   tags            Tag[]
   shares          Share[]
