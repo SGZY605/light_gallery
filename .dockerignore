@@ -7,6 +7,7 @@ node_modules
 !.env.example
 docs
 tests
+reference
 playwright-report
 test-results
 npm-debug.log*
