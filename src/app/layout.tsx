@@ -3,8 +3,8 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "轻量图库",
-  description: "私有照片图库"
+  title: "光影画廊",
+  description: "私人照片画廊"
 };
 
 export default function RootLayout({
@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
-      <body>{children}</body>
+    <html lang="zh" className="dark">
+      <body className="bg-black text-[#e5e5e5] antialiased min-h-screen">{children}</body>
     </html>
   );
 }

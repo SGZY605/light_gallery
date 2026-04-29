@@ -72,7 +72,7 @@ export function LocationEditor({
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error ?? "无法清除位置覆盖。");
+        throw new Error(payload?.error ?? "无法清除位置。");
       }
 
       setLabel(fallbackLocation?.label ?? "");
@@ -82,45 +82,45 @@ export function LocationEditor({
         router.refresh();
       });
     } catch (clearError) {
-      setError(clearError instanceof Error ? clearError.message : "无法清除位置覆盖。");
+      setError(clearError instanceof Error ? clearError.message : "无法清除位置。");
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+    <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">位置覆盖</p>
-        <p className="mt-2 text-sm text-slate-600">当手动坐标和 EXIF GPS 同时存在时，系统会优先使用手动坐标。</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">位置覆盖</p>
+        <p className="mt-2 text-sm text-white/70">手动坐标在有两者时优先于 EXIF GPS。</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">纬度</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">纬度</span>
           <input
             value={latitude}
             onChange={(event) => setLatitude(event.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           />
         </label>
         <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">经度</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">经度</span>
           <input
             value={longitude}
             onChange={(event) => setLongitude(event.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
           />
         </label>
       </div>
 
       <label className="block space-y-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">地点名称</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">标签</span>
         <input
           value={label}
           onChange={(event) => setLabel(event.target.value)}
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-          placeholder="可选地点名称"
+          className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
+          placeholder="可选地点标签"
         />
       </label>
 
@@ -133,7 +133,7 @@ export function LocationEditor({
             void saveLocation();
           }}
           disabled={isSaving}
-          className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isSaving ? "保存中..." : "保存位置"}
         </button>
@@ -144,7 +144,7 @@ export function LocationEditor({
             void clearLocation();
           }}
           disabled={isSaving}
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+          className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
           清除覆盖
         </button>
