@@ -1,67 +1,69 @@
-# Env Configuration Implementation Plan
+# 环境变量配置实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给自动化执行者的要求：**如果后续继续按本计划执行，必须逐项完成并复核。步骤使用复选框语法记录状态。
 
-**Goal:** Make `.env.example` the complete, Chinese-commented configuration template for local and Docker development.
+**目标：**让 `.env.example` 成为本地开发和 Docker 开发的完整中文注释配置模板。
 
-**Architecture:** Keep runtime configuration reads in place and centralize discoverability in `.env.example`. Docker Compose reads `.env` for interpolation, exposes Postgres to the host, and passes the same values into app containers.
+**架构：**保留现有运行时代码里的环境变量读取方式，把配置发现和默认值说明集中到 `.env.example`。Docker Compose 从 `.env` 读取变量，暴露 Postgres 宿主机端口，并把同一组配置传入 app 容器。
 
-**Tech Stack:** Next.js 15, Prisma 5, Docker Compose, Vitest, PostgreSQL.
+**技术栈：**Next.js 15、Prisma 5、Docker Compose、Vitest、PostgreSQL。
 
 ---
 
-### Task 1: Configuration Coverage Test
+### 任务 1：配置覆盖测试
 
-**Files:**
-- Create: `tests/unit/env-example.test.ts`
+**文件：**
+- 新建：`tests/unit/env-example.test.ts`
 
-- [x] **Step 1: Write the failing test**
+- [x] **步骤 1：编写失败测试**
 
-Create a Vitest test that reads `.env.example` and `docker-compose.yml`, then asserts that all environment keys used by the repo are present in the example and that Postgres exposes `${POSTGRES_PORT}:5432`.
+创建 Vitest 测试，读取 `.env.example` 和 `docker-compose.yml`，断言项目需要的环境变量都存在于示例文件中，并断言 Postgres 通过 `127.0.0.1:${POSTGRES_PORT}:5432` 暴露给宿主机。
 
-- [x] **Step 2: Run the test to verify it fails**
+- [x] **步骤 2：运行测试并确认失败**
 
-Run: `npm test -- tests/unit/env-example.test.ts`
+运行：`npm test -- tests/unit/env-example.test.ts`
 
-Expected before implementation: FAIL because `.env.example` lacks keys such as `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`, `APP_PORT`, `APP_HOSTNAME`, `DB_INIT_MAX_ATTEMPTS`, `DB_INIT_RETRY_DELAY_SECONDS`, `OSS_ALLOWED_MIME_PREFIX`, `OSS_UPLOAD_PREFIX`, and `NEXT_PUBLIC_OSS_PUBLIC_BASE_URL`.
+实现前预期：失败。原因是 `.env.example` 缺少 `POSTGRES_DB`、`POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_PORT`、`APP_PORT`、`APP_HOSTNAME`、`DB_INIT_MAX_ATTEMPTS`、`DB_INIT_RETRY_DELAY_SECONDS`、`OSS_ALLOWED_MIME_PREFIX`、`OSS_UPLOAD_PREFIX` 和 `NEXT_PUBLIC_OSS_PUBLIC_BASE_URL` 等配置项。
 
-- [ ] **Step 3: Implement the minimal configuration changes**
+- [x] **步骤 3：实现最小配置改动**
 
-Update `.env.example` and `docker-compose.yml` to satisfy the test.
+更新 `.env.example` 和 `docker-compose.yml`，使配置模板完整，并让 Postgres 通过宿主机端口访问。
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **步骤 4：运行测试并确认通过**
 
-Run: `npm test -- tests/unit/env-example.test.ts`
+运行：`npm test -- tests/unit/env-example.test.ts`
 
-Expected after implementation: PASS.
+实现后预期：通过。
 
-### Task 2: Documentation
+### 任务 2：文档
 
-**Files:**
-- Modify: `docs/docker-deploy.md`
+**文件：**
+- 修改：`docs/docker-deploy.md`
 
-- [ ] **Step 1: Update docs**
+- [x] **步骤 1：更新文档**
 
-Document copying `.env.example` to `.env`, the local development command sequence, and the Docker app startup command.
+记录复制 `.env.example` 为 `.env` 的方式、本地开发命令顺序，以及 Docker app 启动命令。
 
-- [ ] **Step 2: Verify docs mention the required commands**
+- [x] **步骤 2：验证文档包含必需命令**
 
-Run: `rg "docker compose up -d postgres|npx prisma db push|npm run db:seed|npm run dev" docs/docker-deploy.md`
+运行：`rg "docker compose up -d postgres|npx prisma db push|npm run db:seed|npm run dev" docs/docker-deploy.md`
 
-Expected: all four commands are present.
+预期：四条命令都存在。
 
-### Task 3: Full Verification and Commit
+### 任务 3：完整验证和提交
 
-**Files:**
-- Verify all changed files.
+**文件：**
+- 验证所有变更文件。
 
-- [ ] **Step 1: Run unit and lint checks**
+- [x] **步骤 1：运行单元测试和 lint**
 
-Run: `npm test` and `npm run lint`.
+运行：`npm test` 和 `npm run lint`。
 
-- [ ] **Step 2: Run local development startup flow**
+预期：单元测试通过；lint 没有错误，可能保留既有 `<img>` 使用警告。
 
-Run:
+- [x] **步骤 2：运行本地开发启动流程**
+
+运行：
 
 ```bash
 docker compose up -d postgres
@@ -70,8 +72,8 @@ npm run db:seed
 npm run dev
 ```
 
-Expected: Postgres starts, Prisma pushes schema, seed completes, and Next dev server serves HTTP 200.
+预期：Postgres 启动，Prisma 成功推送 schema，seed 完成，Next dev server 返回 HTTP 200。
 
-- [ ] **Step 3: Commit on main**
+- [x] **步骤 3：提交到 main**
 
-Run `git status --short --branch`, confirm branch is `main`, stage relevant files, and commit.
+运行 `git status --short --branch`，确认分支为 `main`，然后 stage 相关文件并提交。
