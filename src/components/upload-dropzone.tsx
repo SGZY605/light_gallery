@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parse } from "exifr";
 import { useDropzone } from "react-dropzone";
@@ -11,7 +11,7 @@ type AvailableTag = {
   slug: string;
 };
 
-type UploadStatus = "queued" | "signing" | "uploading" | "saving" | "complete" | "failed";
+type UploadStatus = "ready" | "signing" | "uploading" | "saving" | "complete" | "failed";
 
 type UploadQueueItem = {
   id: string;
@@ -22,6 +22,7 @@ type UploadQueueItem = {
   width: number | null;
   height: number | null;
   exif: unknown;
+  thumbnailUrl: string;
   status: UploadStatus;
   error: string | null;
 };
@@ -103,11 +104,38 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
     () => queue.filter((item) => item.status === "complete").length,
     [queue]
   );
+  const queueRef = useRef(queue);
+  queueRef.current = queue;
+
+  useEffect(() => {
+    return () => {
+      for (const item of queueRef.current) {
+        URL.revokeObjectURL(item.thumbnailUrl);
+      }
+    };
+  }, []);
+
+  const readyCount = useMemo(
+    () => queue.filter((item) => item.status === "ready").length,
+    [queue]
+  );
+  const isUploading = useMemo(
+    () => queue.some((item) => item.status === "uploading" || item.status === "signing" || item.status === "saving"),
+    [queue]
+  );
 
   function updateQueueItem(id: string, updates: Partial<UploadQueueItem>) {
     setQueue((currentQueue) =>
       currentQueue.map((item) => (item.id === id ? { ...item, ...updates } : item))
     );
+  }
+
+  function removeFromQueue(id: string) {
+    setQueue((currentQueue) => {
+      const item = currentQueue.find((i) => i.id === id);
+      if (item) URL.revokeObjectURL(item.thumbnailUrl);
+      return currentQueue.filter((i) => i.id !== id);
+    });
   }
 
   async function uploadFileThroughServer(item: UploadQueueItem) {
@@ -179,15 +207,19 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
           width: dimensions.width,
           height: dimensions.height,
           exif,
-          status: "queued" as const,
+          thumbnailUrl: URL.createObjectURL(file),
+          status: "ready" as const,
           error: null
         };
       })
     );
 
     setQueue((currentQueue) => [...currentQueue, ...preparedItems]);
+  }
 
-    for (const item of preparedItems) {
+  async function uploadAll() {
+    const readyItems = queue.filter((item) => item.status === "ready");
+    for (const item of readyItems) {
       await processItem(item);
     }
   }
@@ -234,16 +266,14 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
             <p className="mt-2 text-xs leading-5 text-white/30">
               EXIF 在本地解析，原始文件直接上传至 OSS，上传后元数据录入应用。
             </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={open}
-                className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/50 transition hover:bg-white/15 hover:text-white/80"
-              >
-                选择照片
-              </button>
-              <span className="text-[10px] text-white/20">或将多个文件拖入此区域</span>
-            </div>
+            <button
+              type="button"
+              onClick={open}
+              className="mt-6 inline-flex items-center justify-center rounded-2xl bg-white/[0.08] px-8 py-3 text-sm font-medium text-white/60 transition hover:bg-white/15 hover:text-white/80"
+            >
+              选择照片
+            </button>
+            <p className="mt-2 text-[10px] text-white/20">或将多个文件拖入此区域</p>
           </div>
         </div>
 
@@ -307,39 +337,64 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">队列</p>
             <h3 className="mt-1 text-sm font-semibold text-white/50">上传状态</h3>
           </div>
-          <p className="text-xs text-white/30">
-            {completedCount} 已完成 / {queue.length} 排队中
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-white/30">
+              {readyCount} 待上传 / {completedCount} 已完成 / {queue.length} 总计
+            </p>
+            {readyCount > 0 && (
+              <button
+                type="button"
+                onClick={() => void uploadAll()}
+                disabled={isUploading}
+                className="rounded-2xl bg-white/[0.08] px-8 py-3 text-sm font-semibold text-white/60 transition hover:bg-white/15 hover:text-white/80 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                上传全部
+              </button>
+            )}
+          </div>
         </div>
 
         {queue.length ? (
-          <div className="mt-5 space-y-2">
+          <div className="mt-5 space-y-3">
             {queue.map((item) => (
               <article
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/[0.04] bg-transparent px-3 py-3"
+                className="flex items-center gap-4 rounded-xl border border-white/[0.04] bg-transparent px-4 py-3"
               >
-                <div className="space-y-0.5">
-                  <p className="text-xs font-medium text-white/60">{item.filename}</p>
-                  <p className="text-[10px] text-white/25">
+                {/* 缩略图 */}
+                <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-white/[0.03]">
+                  <img
+                    src={item.thumbnailUrl}
+                    alt={item.filename}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                {/* 文件信息 */}
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="truncate text-sm font-medium text-white/60">{item.filename}</p>
+                  <p className="text-xs text-white/25">
                     {formatBytes(item.sizeBytes)}
                     {item.width && item.height ? ` • ${item.width}×${item.height}` : ""}
                   </p>
-                  {item.error ? <p className="text-[10px] text-red-400">{item.error}</p> : null}
+                  {item.error ? <p className="text-xs text-red-400">{item.error}</p> : null}
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* 状态与操作 */}
+                <div className="flex flex-shrink-0 items-center gap-2">
                   <span
                     className={[
-                      "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                      "rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
                       item.status === "complete"
                         ? "bg-emerald-500/15 text-emerald-400/80"
                         : item.status === "failed"
                           ? "bg-red-500/15 text-red-400/80"
-                          : "bg-white/[0.04] text-white/40"
+                          : item.status === "ready"
+                            ? "bg-blue-500/15 text-blue-400/80"
+                            : "bg-white/[0.04] text-white/40"
                     ].join(" ")}
                   >
-                    {item.status}
+                    {item.status === "ready" ? "待上传" : item.status}
                   </span>
 
                   {item.status === "failed" ? (
@@ -348,11 +403,24 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                       onClick={() => {
                         void processItem(item);
                       }}
-                      className="rounded-full border border-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-white/40 transition hover:border-white/20 hover:text-white/70"
+                      className="rounded-full border border-white/[0.06] px-2.5 py-1 text-xs font-medium text-white/40 transition hover:border-white/20 hover:text-white/70"
                     >
                       重试
                     </button>
                   ) : null}
+
+                  {(item.status === "ready" || item.status === "failed") && (
+                    <button
+                      type="button"
+                      onClick={() => removeFromQueue(item.id)}
+                      className="flex h-6 w-6 items-center justify-center rounded-full text-white/25 transition hover:bg-white/[0.08] hover:text-white/60"
+                      aria-label="移除"
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M4 4l8 8M12 4l-8 8" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </article>
             ))}

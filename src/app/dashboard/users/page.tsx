@@ -7,6 +7,9 @@ import { hashPassword, MIN_PASSWORD_LENGTH, normalizeEmail } from "@/lib/auth/pa
 import { canChangeUserRole, canDeleteUserAccount, PROTECTED_ADMIN_EMAIL } from "@/lib/auth/protected-admin";
 import { getExpiredSessionCookie, requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { isRegistrationAllowed, setSetting } from "@/lib/settings";
+import { DeleteUserForm } from "@/components/delete-user-button";
+import { RegistrationToggle } from "@/components/registration-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -204,8 +207,20 @@ async function deleteUserAction(formData: FormData) {
   revalidatePath("/dashboard/users");
 }
 
+async function toggleRegistrationAction() {
+  "use server";
+
+  await requireManagingUser();
+
+  const current = await isRegistrationAllowed();
+  await setSetting("allowRegistration", !current);
+
+  revalidatePath("/dashboard/users");
+}
+
 export default async function DashboardUsersPage() {
   const currentUser = await requireManagingUser();
+  const registrationAllowed = await isRegistrationAllowed();
   const users = await db.user.findMany({
     orderBy: [
       {
@@ -224,6 +239,18 @@ export default async function DashboardUsersPage() {
         <p className="mt-1 text-xs text-white/20">
           管理允许访问画廊的私有账户，超级管理员固定为 {PROTECTED_ADMIN_EMAIL}。
         </p>
+      </section>
+
+      <section className="border-t border-white/[0.04] pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-white/30">开放注册</h3>
+            <p className="mt-0.5 text-[10px] text-white/15">
+              开启后登录页面将显示注册入口，新用户可自行注册成员账号。
+            </p>
+          </div>
+          <RegistrationToggle allowed={registrationAllowed} toggleAction={toggleRegistrationAction} />
+        </div>
       </section>
 
       <section className="border-t border-white/[0.04] pt-4">
@@ -332,15 +359,11 @@ export default async function DashboardUsersPage() {
                     </form>
 
                     {canDeleteUserAccount(user.email) ? (
-                      <form action={deleteUserAction}>
-                        <input type="hidden" name="userId" value={user.id} />
-                        <button
-                          type="submit"
-                          className="px-1.5 py-0.5 text-[10px] text-red-400/50 transition hover:text-red-400/80"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      <DeleteUserForm
+                        userId={user.id}
+                        userName={user.name}
+                        serverAction={deleteUserAction}
+                      />
                     ) : null}
                   </div>
                 </div>

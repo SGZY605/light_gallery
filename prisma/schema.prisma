@@ -226,3 +226,9 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
 }
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

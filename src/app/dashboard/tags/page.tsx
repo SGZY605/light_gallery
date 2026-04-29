@@ -2,8 +2,52 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
 import { normalizeTagName, slugifyTagName } from "@/lib/tags";
+import { DeleteTagForm } from "@/components/delete-tag-button";
 
 export const dynamic = "force-dynamic";
+
+async function createTagAction(formData: FormData) {
+  "use server";
+
+  await requireUser();
+
+  const name = normalizeTagName(String(formData.get("name") ?? ""));
+  if (!name) {
+    return;
+  }
+
+  const slug = slugifyTagName(name);
+  const existing = await db.tag.findUnique({ where: { slug } });
+  if (existing) {
+    return;
+  }
+
+  await db.tag.create({ data: { name, slug } });
+
+  revalidatePath("/dashboard/tags");
+  revalidatePath("/dashboard/library");
+}
+
+async function deleteTagAction(formData: FormData) {
+  "use server";
+
+  await requireUser();
+
+  const tagId = String(formData.get("tagId") ?? "");
+  if (!tagId) {
+    return;
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.imageTag.deleteMany({ where: { tagId } });
+    await tx.shareTag.deleteMany({ where: { tagId } });
+    await tx.tag.delete({ where: { id: tagId } });
+  });
+
+  revalidatePath("/dashboard/tags");
+  revalidatePath("/dashboard/library");
+  revalidatePath("/dashboard/shares");
+}
 
 async function renameTagAction(formData: FormData) {
   "use server";
@@ -174,41 +218,67 @@ export default async function DashboardTagsPage() {
       </section>
 
       <section className="border-t border-white/[0.04] pt-4">
+        <h3 className="text-sm font-semibold text-white/30">创建标签</h3>
+        <form action={createTagAction} className="mt-3 flex flex-wrap items-end gap-2">
+          <input
+            name="name"
+            placeholder="标签名称"
+            required
+            className="bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
+          />
+          <button
+            type="submit"
+            className="px-2 py-1 text-[10px] font-medium text-white/30 transition hover:text-white/50"
+          >
+            创建
+          </button>
+        </form>
+      </section>
+
+      <section className="border-t border-white/[0.04] pt-4">
         <div className="space-y-2">
           {tags.map((tag) => (
-            <form
+            <div
               key={tag.id}
-              action={renameTagAction}
               className="flex flex-wrap items-end gap-2 p-1 border-b border-white/[0.02]"
             >
-              <input type="hidden" name="tagId" value={tag.id} />
-              <label className="flex-1 min-w-0 space-y-0.5">
-                <span className="text-[10px] text-white/20">标签名称</span>
-                <input
-                  name="name"
-                  defaultValue={tag.name}
-                  className="w-full bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
-                />
-              </label>
-              <div className="text-center">
-                <span className="text-[10px] text-white/20">图片</span>
-                <p className="text-xs font-medium text-white/30">
-                  {tag._count.images}
-                </p>
-              </div>
-              <div className="text-center">
-                <span className="text-[10px] text-white/20">分享</span>
-                <p className="text-xs font-medium text-white/30">
-                  {tag._count.shares}
-                </p>
-              </div>
-              <button
-                type="submit"
-                className="px-2 py-1 text-[10px] font-medium text-white/30 transition hover:text-white/50"
-              >
-                重命名
-              </button>
-            </form>
+              <form action={renameTagAction} className="flex flex-1 flex-wrap items-end gap-2 min-w-0">
+                <input type="hidden" name="tagId" value={tag.id} />
+                <label className="flex-1 min-w-0 space-y-0.5">
+                  <span className="text-[10px] text-white/20">标签名称</span>
+                  <input
+                    name="name"
+                    defaultValue={tag.name}
+                    className="w-full bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
+                  />
+                </label>
+                <div className="text-center">
+                  <span className="text-[10px] text-white/20">图片</span>
+                  <p className="text-xs font-medium text-white/30">
+                    {tag._count.images}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <span className="text-[10px] text-white/20">分享</span>
+                  <p className="text-xs font-medium text-white/30">
+                    {tag._count.shares}
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  className="px-2 py-1 text-[10px] font-medium text-white/30 transition hover:text-white/50"
+                >
+                  重命名
+                </button>
+              </form>
+              <DeleteTagForm
+                tagId={tag.id}
+                tagName={tag.name}
+                imageCount={tag._count.images}
+                shareCount={tag._count.shares}
+                serverAction={deleteTagAction}
+              />
+            </div>
           ))}
         </div>
       </section>
