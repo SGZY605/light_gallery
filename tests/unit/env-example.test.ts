@@ -39,9 +39,11 @@ describe(".env.example", () => {
       "DATABASE_URL",
       "DOCKER_DATABASE_URL",
       "NODE_ENV",
+      "DEV_PORT",
       "APP_PORT",
       "APP_HOSTNAME",
       "SESSION_SECRET",
+      "SESSION_COOKIE_SECURE",
       "SEED_ADMIN_PASSWORD",
       "RUN_DB_SEED",
       "DB_INIT_MAX_ATTEMPTS",
@@ -67,5 +69,23 @@ describe(".env.example", () => {
     const compose = readProjectFile("docker-compose.yml");
 
     expect(compose).toContain('"127.0.0.1:${POSTGRES_PORT}:5432"');
+  });
+
+  it("publishes the Docker app on the configured host port while keeping the container port stable", () => {
+    const compose = readProjectFile("docker-compose.yml");
+
+    expect(compose).toContain("PORT: 3000");
+    expect(compose).toContain('"127.0.0.1:${APP_PORT}:3000"');
+  });
+
+  it("keeps Docker on port 3000 and local development on port 3001", () => {
+    const envExample = readProjectFile(".env.example");
+    const packageJson = JSON.parse(readProjectFile("package.json")) as {
+      scripts: Record<string, string>;
+    };
+
+    expect(envExample).toContain('APP_PORT="3000"');
+    expect(envExample).toContain('DEV_PORT="3001"');
+    expect(packageJson.scripts.dev).toBe("node scripts/dev-server.mjs");
   });
 });

@@ -23,6 +23,13 @@ type SessionCookie = {
   };
 };
 
+type SessionCookieSecureInput = {
+  nodeEnv?: string;
+  requestUrl?: string;
+  forwardedProto?: string | null;
+  explicitSecure?: string | null;
+};
+
 function getSessionSecret(): Uint8Array {
   const secret = process.env.SESSION_SECRET;
 
@@ -33,7 +40,63 @@ function getSessionSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-export async function createSessionCookie(userId: string): Promise<SessionCookie> {
+function normalizeBoolean(value: string | null | undefined): boolean | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  return null;
+}
+
+export function resolveSessionCookieSecure({
+  nodeEnv = process.env.NODE_ENV,
+  requestUrl,
+  forwardedProto,
+  explicitSecure = process.env.SESSION_COOKIE_SECURE
+}: SessionCookieSecureInput = {}): boolean {
+  const explicitValue = normalizeBoolean(explicitSecure);
+
+  if (explicitValue !== null) {
+    return explicitValue;
+  }
+
+  const proto = forwardedProto?.split(",")[0]?.trim().toLowerCase();
+
+  if (proto) {
+    return proto === "https";
+  }
+
+  if (requestUrl) {
+    try {
+      return new URL(requestUrl).protocol === "https:";
+    } catch {
+      return false;
+    }
+  }
+
+  return nodeEnv === "production";
+}
+
+function getRequestCookieSecure(request?: Request): boolean {
+  return resolveSessionCookieSecure({
+    nodeEnv: process.env.NODE_ENV,
+    requestUrl: request?.url,
+    forwardedProto: request?.headers.get("x-forwarded-proto"),
+    explicitSecure: process.env.SESSION_COOKIE_SECURE
+  });
+}
+
+export async function createSessionCookie(userId: string, request?: Request): Promise<SessionCookie> {
   const value = await new SignJWT({ sub: userId } satisfies SessionPayload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -46,7 +109,7 @@ export async function createSessionCookie(userId: string): Promise<SessionCookie
     options: {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: getRequestCookieSecure(request),
       path: "/",
       maxAge: SESSION_DURATION_SECONDS
     }
@@ -97,14 +160,14 @@ export async function requireUser(): Promise<User> {
   return user;
 }
 
-export function getExpiredSessionCookie() {
+export function getExpiredSessionCookie(request?: Request) {
   return {
     name: SESSION_COOKIE_NAME,
     value: "",
     options: {
       httpOnly: true,
       sameSite: "lax" as const,
-      secure: process.env.NODE_ENV === "production",
+      secure: getRequestCookieSecure(request),
       path: "/" as const,
       maxAge: 0
     }

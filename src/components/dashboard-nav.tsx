@@ -62,7 +62,7 @@ export function DashboardNav({ canManageUsers }: DashboardNavProps) {
   }, []);
 
   return (
-    <nav className="space-y-0.5">
+    <nav className="w-full space-y-0.5">
       {navigationItems
         .filter((item) => (item.requiresManager ? canManageUsers : true))
         .map((item) => {

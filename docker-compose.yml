@@ -26,11 +26,12 @@ services:
       - path: .env
         required: false
     environment:
-      NODE_ENV: ${NODE_ENV:?Set NODE_ENV in .env}
-      PORT: ${APP_PORT:?Set APP_PORT in .env}
+      NODE_ENV: production
+      PORT: 3000
       HOSTNAME: ${APP_HOSTNAME:?Set APP_HOSTNAME in .env}
       DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL in .env}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env}
       RUN_DB_SEED: ${RUN_DB_SEED:?Set RUN_DB_SEED in .env}
       DB_INIT_MAX_ATTEMPTS: ${DB_INIT_MAX_ATTEMPTS:?Set DB_INIT_MAX_ATTEMPTS in .env}
@@ -48,7 +49,7 @@ services:
       OSS_UPLOAD_PREFIX: ${OSS_UPLOAD_PREFIX:?Set OSS_UPLOAD_PREFIX in .env}
     restart: unless-stopped
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "127.0.0.1:${APP_PORT}:3000"
 
 volumes:
   postgres-data:

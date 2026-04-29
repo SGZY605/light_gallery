@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   isNavigationItemActive,
   getNavigationTextColor,
-  resolveLayoutMode,
   resolveSidebarMode,
   resolveThemeMode
 } from "@/components/dashboard-shell-state";
+import * as dashboardShellState from "@/components/dashboard-shell-state";
 
 describe("dashboard shell state", () => {
   it("only marks the dashboard home link active on the exact dashboard path", () => {
@@ -20,16 +20,17 @@ describe("dashboard shell state", () => {
     expect(isNavigationItemActive("/dashboard/library", "/dashboard/map")).toBe(false);
   });
 
-  it("normalizes stored theme and layout modes", () => {
+  it("normalizes stored theme mode", () => {
     expect(resolveThemeMode("light")).toBe("light");
     expect(resolveThemeMode("dark")).toBe("dark");
     expect(resolveThemeMode("unexpected")).toBe("dark");
     expect(resolveThemeMode(null)).toBe("dark");
+  });
 
-    expect(resolveLayoutMode("narrow")).toBe("narrow");
-    expect(resolveLayoutMode("wide")).toBe("wide");
-    expect(resolveLayoutMode("unexpected")).toBe("wide");
-    expect(resolveLayoutMode(null)).toBe("wide");
+  it("does not expose a persisted manual layout mode", () => {
+    expect("DASHBOARD_LAYOUT_STORAGE_KEY" in dashboardShellState).toBe(false);
+    expect("DEFAULT_DASHBOARD_LAYOUT" in dashboardShellState).toBe(false);
+    expect("resolveLayoutMode" in dashboardShellState).toBe(false);
   });
 
   it("normalizes stored sidebar mode and defaults to expanded", () => {

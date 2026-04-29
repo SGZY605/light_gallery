@@ -62,8 +62,10 @@ body {
     position: relative;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     padding: 0.375rem 0.5rem;
+    width: 100%;
     font-size: 0.75rem;
     line-height: 1rem;
     font-weight: 500;
@@ -112,12 +114,6 @@ body {
     transform: translateY(-50%);
     border-radius: 9999px;
     background: var(--shell-nav-indicator);
-  }
-
-  .dashboard-shell[data-layout="narrow"] {
-    max-width: 1500px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   @media (min-width: 1280px) {

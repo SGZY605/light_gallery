@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: INVALID_CREDENTIALS }, { status: 401 });
   }
 
-  const session = await createSessionCookie(user.id);
+  const session = await createSessionCookie(user.id, request);
   const response = NextResponse.json({ ok: true });
   response.cookies.set(session.name, session.value, session.options);
 
