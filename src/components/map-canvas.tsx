@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 
 type GroupedLocation = {
@@ -27,33 +26,19 @@ function createMarkerIcon(count: number) {
   });
 }
 
-function FitBounds({
-  defaultCenter,
-  locations
-}: {
-  defaultCenter: [number, number];
-  locations: GroupedLocation[];
-}) {
-  const map = useMap();
+function buildPopupContent(location: GroupedLocation) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "space-y-1";
 
-  useEffect(() => {
-    if (!locations.length) {
-      map.setView(defaultCenter, 4);
-      return;
-    }
+  const title = document.createElement("p");
+  title.className = "font-semibold";
+  title.textContent = location.label || "Pinned photos";
 
-    if (locations.length === 1) {
-      map.setView([locations[0].latitude, locations[0].longitude], 10);
-      return;
-    }
+  const count = document.createElement("p");
+  count.textContent = `${location.imageCount} image${location.imageCount === 1 ? "" : "s"}`;
 
-    const bounds = L.latLngBounds(
-      locations.map((location) => [location.latitude, location.longitude] as [number, number])
-    );
-    map.fitBounds(bounds.pad(0.2));
-  }, [defaultCenter, locations, map]);
-
-  return null;
+  wrapper.append(title, count);
+  return wrapper;
 }
 
 export function MapCanvas({
@@ -61,34 +46,82 @@ export function MapCanvas({
   locations,
   onSelectLocation
 }: MapCanvasProps) {
-  const mapKey = locations.map((location) => location.key).join("|") || "empty";
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerLayerRef = useRef<L.LayerGroup | null>(null);
 
-  return (
-    <MapContainer key={mapKey} center={defaultCenter} zoom={4} className="h-full w-full">
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <FitBounds defaultCenter={defaultCenter} locations={locations} />
-      {locations.map((location) => (
-        <Marker
-          key={location.key}
-          position={[location.latitude, location.longitude]}
-          icon={createMarkerIcon(location.imageCount)}
-          eventHandlers={{
-            click: () => onSelectLocation(location.key)
-          }}
-        >
-          <Popup>
-            <div className="space-y-1">
-              <p className="font-semibold">{location.label || "Pinned photos"}</p>
-              <p>
-                {location.imageCount} image{location.imageCount === 1 ? "" : "s"}
-              </p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
-  );
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container || mapRef.current) {
+      return;
+    }
+
+    delete (container as HTMLDivElement & { _leaflet_id?: number })._leaflet_id;
+
+    const map = L.map(container, {
+      center: defaultCenter,
+      zoom: 4,
+      zoomControl: true
+    });
+
+    mapRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+    markerLayerRef.current = markerLayer;
+
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
+
+    return () => {
+      markerLayer.clearLayers();
+      map.remove();
+      markerLayerRef.current = null;
+      mapRef.current = null;
+      delete (container as HTMLDivElement & { _leaflet_id?: number })._leaflet_id;
+    };
+  }, [defaultCenter]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const markerLayer = markerLayerRef.current;
+
+    if (!map || !markerLayer) {
+      return;
+    }
+
+    markerLayer.clearLayers();
+
+    if (!locations.length) {
+      map.setView(defaultCenter, 4);
+      return;
+    }
+
+    const bounds = L.latLngBounds([]);
+
+    for (const location of locations) {
+      const marker = L.marker([location.latitude, location.longitude], {
+        icon: createMarkerIcon(location.imageCount)
+      });
+
+      marker.on("click", () => onSelectLocation(location.key));
+      marker.bindPopup(buildPopupContent(location));
+      marker.addTo(markerLayer);
+      bounds.extend([location.latitude, location.longitude]);
+    }
+
+    if (locations.length === 1) {
+      map.setView([locations[0].latitude, locations[0].longitude], 10);
+      return;
+    }
+
+    map.fitBounds(bounds.pad(0.2));
+  }, [defaultCenter, locations, onSelectLocation]);
+
+  return <div ref={containerRef} className="h-full w-full bg-slate-950/5" />;
 }

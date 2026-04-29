@@ -1,8 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import L from "leaflet";
 import { LocationEditor } from "@/components/location-editor";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 
@@ -52,6 +51,14 @@ type GroupedLocation = {
 
 const defaultCenter: [number, number] = [31.2304, 121.4737];
 
+const ClientMapCanvas = dynamic(
+  () => import("@/components/map-canvas").then((module) => module.MapCanvas),
+  {
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-slate-950/5" />
+  }
+);
+
 function groupImagesByLocation(images: MapImage[]): GroupedLocation[] {
   const groups = new Map<string, GroupedLocation>();
 
@@ -79,37 +86,6 @@ function groupImagesByLocation(images: MapImage[]): GroupedLocation[] {
 
   return Array.from(groups.values());
 }
-
-function createMarkerIcon(count: number) {
-  return L.divIcon({
-    className: "",
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:9999px;background:#0f172a;color:white;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,0.75);box-shadow:0 16px 30px rgba(15,23,42,0.25)">${count}</div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
-  });
-}
-
-function FitBounds({ locations }: { locations: GroupedLocation[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!locations.length) {
-      map.setView(defaultCenter, 4);
-      return;
-    }
-
-    if (locations.length === 1) {
-      map.setView([locations[0].latitude, locations[0].longitude], 10);
-      return;
-    }
-
-    const bounds = L.latLngBounds(locations.map((location) => [location.latitude, location.longitude] as [number, number]));
-    map.fitBounds(bounds.pad(0.2));
-  }, [locations, map]);
-
-  return null;
-}
-
 export function MapExplorer({ availableTags, images }: MapExplorerProps) {
   const [selectedTagId, setSelectedTagId] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -132,6 +108,13 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
     return true;
   });
   const groupedLocations = groupImagesByLocation(filteredImages);
+  const mapLocations = groupedLocations.map((location) => ({
+    key: location.key,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    label: location.label,
+    imageCount: location.images.length
+  }));
   const [selectedLocationKey, setSelectedLocationKey] = useState<string | null>(groupedLocations[0]?.key ?? null);
   const selectedLocation =
     groupedLocations.find((location) => location.key === selectedLocationKey) ?? groupedLocations[0] ?? null;
@@ -187,30 +170,11 @@ export function MapExplorer({ availableTags, images }: MapExplorerProps) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_420px]">
         <section className="overflow-hidden rounded-[32px] border border-border bg-card p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
           <div className="h-[620px] overflow-hidden rounded-[28px]">
-            <MapContainer center={defaultCenter} zoom={4} className="h-full w-full">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <FitBounds locations={groupedLocations} />
-              {groupedLocations.map((location) => (
-                <Marker
-                  key={location.key}
-                  position={[location.latitude, location.longitude]}
-                  icon={createMarkerIcon(location.images.length)}
-                  eventHandlers={{
-                    click: () => setSelectedLocationKey(location.key)
-                  }}
-                >
-                  <Popup>
-                    <div className="space-y-1">
-                      <p className="font-semibold">{location.label || "已标记照片"}</p>
-                      <p>{location.images.length} 张图片</p>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+            <ClientMapCanvas
+              defaultCenter={defaultCenter}
+              locations={mapLocations}
+              onSelectLocation={setSelectedLocationKey}
+            />
           </div>
         </section>
 
