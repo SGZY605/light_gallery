@@ -1,8 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { CopyShareButton } from "@/components/copy-share-button";
+import { DeleteShareButton } from "@/components/delete-share-button";
+import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
+import { SharePhotoSelector } from "@/components/share-photo-selector";
 import { canRevokeShare } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 import { createShareToken, getShareState } from "@/lib/shares/tokens";
 
 export const dynamic = "force-dynamic";
@@ -14,25 +18,46 @@ async function createShareAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const tagIds = Array.from(new Set(formData.getAll("tagIds").map((value) => String(value)).filter(Boolean)));
+  const imageIds = Array.from(new Set(formData.getAll("imageIds").map((value) => String(value)).filter(Boolean)));
   const expiresAtValue = String(formData.get("expiresAt") ?? "").trim();
   const allowDownload = formData.get("allowDownload") === "on";
 
-  if (!title || !tagIds.length) {
+  if (!title || !imageIds.length) {
     return;
   }
 
-  const uniqueTagIds = Array.from(new Set(tagIds));
-  const existingTags = await db.tag.findMany({
+  const uniqueImageIds = Array.from(new Set(imageIds));
+  const existingImages = await db.image.findMany({
     where: {
-      creatorId: user.id,
+      uploaderId: user.id,
+      deletedAt: null,
       id: {
-        in: uniqueTagIds
+        in: uniqueImageIds
       }
     },
     select: {
       id: true
     }
   });
+
+  if (existingImages.length !== uniqueImageIds.length) {
+    return;
+  }
+
+  const uniqueTagIds = Array.from(new Set(tagIds));
+  const existingTags = uniqueTagIds.length
+    ? await db.tag.findMany({
+        where: {
+          creatorId: user.id,
+          id: {
+            in: uniqueTagIds
+          }
+        },
+        select: {
+          id: true
+        }
+      })
+    : [];
 
   if (existingTags.length !== uniqueTagIds.length) {
     return;
@@ -46,6 +71,11 @@ async function createShareAction(formData: FormData) {
       expiresAt: expiresAtValue ? new Date(expiresAtValue) : null,
       allowDownload,
       creatorId: user.id,
+      images: {
+        create: uniqueImageIds.map((imageId) => ({
+          imageId
+        }))
+      },
       tags: {
         create: uniqueTagIds.map((tagId) => ({
           tagId
@@ -53,6 +83,40 @@ async function createShareAction(formData: FormData) {
       }
     }
   });
+
+  revalidatePath("/dashboard/shares");
+}
+
+async function deleteShareAction(formData: FormData) {
+  "use server";
+
+  const user = await requireUser();
+  const shareId = String(formData.get("shareId") ?? "");
+
+  if (!shareId) {
+    return;
+  }
+
+  const share = await db.share.findFirst({
+    where: {
+      creatorId: user.id,
+      id: shareId
+    }
+  });
+
+  if (!share) {
+    return;
+  }
+
+  const shareState = getShareState(share);
+
+  if (shareState !== "active") {
+    await db.share.delete({
+      where: {
+        id: share.id
+      }
+    });
+  }
 
   revalidatePath("/dashboard/shares");
 }
@@ -88,13 +152,35 @@ async function revokeShareAction(formData: FormData) {
 
 export default async function DashboardSharesPage() {
   const user = await requireUser();
-  const [tags, shares] = await Promise.all([
+  const ossConfig = await resolveUserOssConfig({ user });
+  const [tags, images, shares] = await Promise.all([
     db.tag.findMany({
       where: {
         creatorId: user.id
       },
       orderBy: {
         name: "asc"
+      }
+    }),
+    db.image.findMany({
+      where: {
+        deletedAt: null,
+        uploaderId: user.id
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true
+          },
+          where: {
+            tag: {
+              creatorId: user.id
+            }
+          }
+        }
       }
     }),
     db.share.findMany({
@@ -106,6 +192,11 @@ export default async function DashboardSharesPage() {
       },
       include: {
         creator: true,
+        images: {
+          select: {
+            imageId: true
+          }
+        },
         tags: {
           include: {
             tag: true
@@ -131,6 +222,8 @@ export default async function DashboardSharesPage() {
           <h3 className="text-sm font-semibold text-white/30">创建分享</h3>
         </div>
 
+        {!ossConfig ? <OssConfigRequiredNotice /> : null}
+
         <form action={createShareAction} className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px]">
           <div className="space-y-2">
             <label className="block space-y-0.5">
@@ -152,20 +245,26 @@ export default async function DashboardSharesPage() {
               />
             </label>
 
-            <div className="space-y-1.5">
-              <span className="text-[10px] text-white/20">标签筛选</span>
-              <div className="flex flex-wrap gap-1">
-                {tags.map((tag) => (
-                  <label
-                    key={tag.id}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-white/25 cursor-pointer"
-                  >
-                    <input type="checkbox" name="tagIds" value={tag.id} className="h-3 w-3 opacity-50" />
-                    <span>{tag.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            {ossConfig ? (
+              <SharePhotoSelector
+                images={images.map((image) => ({
+                  id: image.id,
+                  objectKey: image.objectKey,
+                  filename: image.filename,
+                  tags: image.tags.map(({ tag }) => ({
+                    id: tag.id,
+                    name: tag.name,
+                    slug: tag.slug,
+                    color: tag.color
+                  }))
+                }))}
+                publicBaseUrl={ossConfig.publicBaseUrl}
+                tags={tags.map((tag) => ({
+                  id: tag.id,
+                  name: tag.name
+                }))}
+              />
+            ) : null}
           </div>
 
           <div className="space-y-2 border-l border-white/[0.04] pl-4">
@@ -185,6 +284,7 @@ export default async function DashboardSharesPage() {
 
             <button
               type="submit"
+              disabled={!ossConfig}
               className="w-full px-3 py-1 text-xs font-medium text-white/30 transition hover:text-white/50"
             >
               创建分享
@@ -229,6 +329,7 @@ export default async function DashboardSharesPage() {
 
                       <p className="text-[10px] text-white/15">
                         /s/{share.token} • {share.creator.name}
+                        {share.images.length ? ` · ${share.images.length} 张照片` : ""}
                         {share.expiresAt
                           ? ` · 过期于 ${new Intl.DateTimeFormat("zh-CN", {
                               dateStyle: "medium",
@@ -261,6 +362,13 @@ export default async function DashboardSharesPage() {
                             撤销
                           </button>
                         </form>
+                      ) : null}
+                      {shareState !== "active" ? (
+                        <DeleteShareButton
+                          shareId={share.id}
+                          shareTitle={share.title}
+                          serverAction={deleteShareAction}
+                        />
                       ) : null}
                     </div>
                   </div>

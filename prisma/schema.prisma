@@ -75,6 +75,7 @@ model Image {
   exif        ImageExif?
   location    ImageLocationOverride?
   tags        ImageTag[]
+  shares      ShareImage[]
   uploadItems UploadItem[]
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
@@ -181,6 +182,7 @@ model Share {
   creatorId     String
   creator       User           @relation(fields: [creatorId], references: [id])
   tags          ShareTag[]
+  images        ShareImage[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -199,6 +201,17 @@ model ShareTag {
 
   @@id([shareId, tagId])
   @@index([tagId])
+}
+
+model ShareImage {
+  shareId   String
+  imageId   String
+  share     Share    @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([shareId, imageId])
+  @@index([imageId])
 }
 
 model UploadSession {

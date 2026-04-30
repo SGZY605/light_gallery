@@ -7,7 +7,8 @@ import { createShareToken } from "@/lib/shares/tokens";
 const createShareSchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(500).optional(),
-  tagIds: z.array(z.string().trim().min(1)).min(1).max(25),
+  imageIds: z.array(z.string().trim().min(1)).min(1).max(500),
+  tagIds: z.array(z.string().trim().min(1)).max(25).optional(),
   expiresAt: z.string().datetime().optional(),
   allowDownload: z.boolean().optional()
 });
@@ -85,15 +86,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  const uniqueTagIds = Array.from(new Set(parsedRequest.data.tagIds));
-  const existingTags = await db.tag.findMany({
+  const uniqueImageIds = Array.from(new Set(parsedRequest.data.imageIds));
+  const existingImages = await db.image.findMany({
+    where: {
+      uploaderId: user.id,
+      deletedAt: null,
+      id: {
+        in: uniqueImageIds
+      }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (existingImages.length !== uniqueImageIds.length) {
+    return NextResponse.json({ error: "invalid_images" }, { status: 400 });
+  }
+
+  const uniqueTagIds = Array.from(new Set(parsedRequest.data.tagIds ?? []));
+  const existingTags = uniqueTagIds.length
+    ? await db.tag.findMany({
     where: {
       creatorId: user.id,
       id: {
         in: uniqueTagIds
       }
+    },
+    select: {
+      id: true
     }
-  });
+      })
+    : [];
 
   if (existingTags.length !== uniqueTagIds.length) {
     return NextResponse.json({ error: "invalid_tags" }, { status: 400 });
@@ -107,6 +131,11 @@ export async function POST(request: Request) {
       allowDownload: parsedRequest.data.allowDownload ?? false,
       expiresAt: parsedRequest.data.expiresAt ? new Date(parsedRequest.data.expiresAt) : null,
       creatorId: user.id,
+      images: {
+        create: uniqueImageIds.map((imageId) => ({
+          imageId
+        }))
+      },
       tags: {
         create: uniqueTagIds.map((tagId) => ({
           tagId

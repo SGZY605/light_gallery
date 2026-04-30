@@ -154,3 +154,38 @@ BEGIN
     END IF;
   END IF;
 END $$;
+
+CREATE TABLE IF NOT EXISTS "ShareImage" (
+  "shareId" TEXT NOT NULL,
+  "imageId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT "ShareImage_pkey" PRIMARY KEY ("shareId", "imageId")
+);
+
+CREATE INDEX IF NOT EXISTS "ShareImage_imageId_idx" ON "ShareImage"("imageId");
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'ShareImage_shareId_fkey'
+  ) THEN
+    ALTER TABLE "ShareImage"
+    ADD CONSTRAINT "ShareImage_shareId_fkey"
+    FOREIGN KEY ("shareId") REFERENCES "Share"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'ShareImage_imageId_fkey'
+  ) THEN
+    ALTER TABLE "ShareImage"
+    ADD CONSTRAINT "ShareImage_imageId_fkey"
+    FOREIGN KEY ("imageId") REFERENCES "Image"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
