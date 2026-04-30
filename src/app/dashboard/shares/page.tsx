@@ -21,6 +21,23 @@ async function createShareAction(formData: FormData) {
     return;
   }
 
+  const uniqueTagIds = Array.from(new Set(tagIds));
+  const existingTags = await db.tag.findMany({
+    where: {
+      creatorId: user.id,
+      id: {
+        in: uniqueTagIds
+      }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (existingTags.length !== uniqueTagIds.length) {
+    return;
+  }
+
   await db.share.create({
     data: {
       token: createShareToken(),
@@ -30,7 +47,7 @@ async function createShareAction(formData: FormData) {
       allowDownload,
       creatorId: user.id,
       tags: {
-        create: tagIds.map((tagId) => ({
+        create: uniqueTagIds.map((tagId) => ({
           tagId
         }))
       }
@@ -57,6 +74,7 @@ async function revokeShareAction(formData: FormData) {
 
   await db.share.update({
     where: {
+      creatorId: user.id,
       id: shareId
     },
     data: {
@@ -72,11 +90,17 @@ export default async function DashboardSharesPage() {
   const user = await requireUser();
   const [tags, shares] = await Promise.all([
     db.tag.findMany({
+      where: {
+        creatorId: user.id
+      },
       orderBy: {
         name: "asc"
       }
     }),
     db.share.findMany({
+      where: {
+        creatorId: user.id
+      },
       orderBy: {
         createdAt: "desc"
       },
@@ -85,6 +109,11 @@ export default async function DashboardSharesPage() {
         tags: {
           include: {
             tag: true
+          },
+          where: {
+            tag: {
+              creatorId: user.id
+            }
           }
         }
       }

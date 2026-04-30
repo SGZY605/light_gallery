@@ -20,6 +20,9 @@ export async function GET() {
   }
 
   const shares = await db.share.findMany({
+    where: {
+      creatorId: user.id
+    },
     orderBy: {
       createdAt: "desc"
     },
@@ -28,6 +31,11 @@ export async function GET() {
       tags: {
         include: {
           tag: true
+        },
+        where: {
+          tag: {
+            creatorId: user.id
+          }
         }
       }
     }
@@ -80,6 +88,7 @@ export async function POST(request: Request) {
   const uniqueTagIds = Array.from(new Set(parsedRequest.data.tagIds));
   const existingTags = await db.tag.findMany({
     where: {
+      creatorId: user.id,
       id: {
         in: uniqueTagIds
       }

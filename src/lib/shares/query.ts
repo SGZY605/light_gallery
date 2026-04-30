@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 type ShareQueryClient = Pick<typeof db, "image" | "share">;
 
 type ShareWithTagIds = {
+  creatorId: string;
   id: string;
   matchMode: ShareMatchMode;
   tags: Array<{ tagId: string }>;
@@ -11,16 +12,18 @@ type ShareWithTagIds = {
 
 export function buildShareImageWhere(share: ShareWithTagIds): Prisma.ImageWhereInput {
   const tagIds = share.tags.map((tag) => tag.tagId);
+  const ownerWhere: Prisma.ImageWhereInput = {
+    deletedAt: null,
+    uploaderId: share.creatorId
+  };
 
   if (!tagIds.length) {
-    return {
-      deletedAt: null
-    };
+    return ownerWhere;
   }
 
   if (share.matchMode === "ANY") {
     return {
-      deletedAt: null,
+      ...ownerWhere,
       tags: {
         some: {
           tagId: {
@@ -32,7 +35,7 @@ export function buildShareImageWhere(share: ShareWithTagIds): Prisma.ImageWhereI
   }
 
   return {
-    deletedAt: null,
+    ...ownerWhere,
     AND: tagIds.map((tagId) => ({
       tags: {
         some: {

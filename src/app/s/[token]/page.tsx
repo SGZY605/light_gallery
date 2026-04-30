@@ -1,6 +1,6 @@
 import { ShareGallery } from "@/components/share-gallery";
 import { db } from "@/lib/db";
-import { getOssConfig } from "@/lib/oss/config";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 import { getImagesForShare } from "@/lib/shares/query";
 import { getShareState } from "@/lib/shares/tokens";
 
@@ -55,6 +55,11 @@ export default async function PublicSharePage({ params }: SharePageProps) {
   }
 
   const images = await getImagesForShare(share.id);
+  const ossConfig = await resolveUserOssConfig({ user: share.creator });
+
+  if (!ossConfig) {
+    return <UnavailableShare title={share.title} message="姝ゅ垎浜殑瀛樺偍閰嶇疆涓嶅彲鐢紝鏆傛椂鏃犳硶鎵撳紑銆?" />;
+  }
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -84,7 +89,7 @@ export default async function PublicSharePage({ params }: SharePageProps) {
 
         <ShareGallery
           allowDownload={share.allowDownload}
-          publicBaseUrl={getOssConfig().publicBaseUrl}
+          publicBaseUrl={ossConfig.publicBaseUrl}
           images={images.map((image) => ({
             id: image.id,
             objectKey: image.objectKey,

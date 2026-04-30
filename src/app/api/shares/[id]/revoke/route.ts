@@ -23,6 +23,7 @@ export async function POST(_request: Request, { params }: RouteContext) {
   const { id } = await params;
   const share = await db.share.update({
     where: {
+      creatorId: user.id,
       id
     },
     data: {

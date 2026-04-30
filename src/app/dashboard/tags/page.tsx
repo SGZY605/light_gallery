@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 async function createTagAction(formData: FormData) {
   "use server";
 
-  await requireUser();
+  const user = await requireUser();
 
   const name = normalizeTagName(String(formData.get("name") ?? ""));
   if (!name) {
@@ -17,7 +17,6 @@ async function createTagAction(formData: FormData) {
   }
 
   const slug = slugifyTagName(name);
-  const user = await requireUser();
   const existing = await db.tag.findUnique({ where: { creatorId_slug: { creatorId: user.id, slug } } });
   if (existing) {
     return;
@@ -101,7 +100,7 @@ async function renameTagAction(formData: FormData) {
 async function mergeTagsAction(formData: FormData) {
   "use server";
 
-  await requireUser();
+  const user = await requireUser();
 
   const sourceTagId = String(formData.get("sourceTagId") ?? "");
   const targetTagId = String(formData.get("targetTagId") ?? "");
@@ -112,8 +111,8 @@ async function mergeTagsAction(formData: FormData) {
 
   await db.$transaction(async (tx) => {
     const [sourceTag, targetTag] = await Promise.all([
-      tx.tag.findUnique({ where: { id: sourceTagId } }),
-      tx.tag.findUnique({ where: { id: targetTagId } })
+      tx.tag.findFirst({ where: { creatorId: user.id, id: sourceTagId } }),
+      tx.tag.findFirst({ where: { creatorId: user.id, id: targetTagId } })
     ]);
 
     if (!sourceTag || !targetTag) {
@@ -123,7 +122,8 @@ async function mergeTagsAction(formData: FormData) {
     const [sourceImageLinks, targetImageLinks, sourceShareLinks, targetShareLinks] = await Promise.all([
       tx.imageTag.findMany({
         where: {
-          tagId: sourceTagId
+          tagId: sourceTagId,
+          image: { uploaderId: user.id }
         },
         select: {
           imageId: true
@@ -131,7 +131,8 @@ async function mergeTagsAction(formData: FormData) {
       }),
       tx.imageTag.findMany({
         where: {
-          tagId: targetTagId
+          tagId: targetTagId,
+          image: { uploaderId: user.id }
         },
         select: {
           imageId: true
@@ -139,7 +140,8 @@ async function mergeTagsAction(formData: FormData) {
       }),
       tx.shareTag.findMany({
         where: {
-          tagId: sourceTagId
+          tagId: sourceTagId,
+          share: { creatorId: user.id }
         },
         select: {
           shareId: true
@@ -147,7 +149,8 @@ async function mergeTagsAction(formData: FormData) {
       }),
       tx.shareTag.findMany({
         where: {
-          tagId: targetTagId
+          tagId: targetTagId,
+          share: { creatorId: user.id }
         },
         select: {
           shareId: true
@@ -185,12 +188,14 @@ async function mergeTagsAction(formData: FormData) {
     await Promise.all([
       tx.imageTag.deleteMany({
         where: {
-          tagId: sourceTagId
+          tagId: sourceTagId,
+          image: { uploaderId: user.id }
         }
       }),
       tx.shareTag.deleteMany({
         where: {
-          tagId: sourceTagId
+          tagId: sourceTagId,
+          share: { creatorId: user.id }
         }
       })
     ]);
@@ -208,7 +213,11 @@ async function mergeTagsAction(formData: FormData) {
 }
 
 export default async function DashboardTagsPage() {
+  const user = await requireUser();
   const tags = await db.tag.findMany({
+    where: {
+      creatorId: user.id
+    },
     orderBy: {
       name: "asc"
     },
