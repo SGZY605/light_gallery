@@ -47,7 +47,7 @@ export async function persistUploadedImage(input: PersistUploadedImageInput, use
     const createdOrUpdatedTags = await Promise.all(
       tagNames.map((name) =>
         tx.tag.upsert({
-          where: { slug: slugifyTagName(name) },
+          where: { creatorId_slug: { creatorId: user.id, slug: slugifyTagName(name) } },
           update: { name },
           create: {
             name,

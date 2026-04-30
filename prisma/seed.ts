@@ -8,7 +8,7 @@ async function main() {
   const { email, password, updatePassword } = getSeedAdminConfig(process.env);
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email },
     update: {
       name: "管理员",
@@ -30,11 +30,12 @@ async function main() {
       { slug: "favorite", name: "精选" }
     ].map((tag) =>
       prisma.tag.upsert({
-        where: { slug: tag.slug },
-        update: { name: tag.name },
+        where: { creatorId_slug: { creatorId: admin.id, slug: tag.slug } },
+        update: { name: tag.name, creatorId: admin.id },
         create: {
           name: tag.name,
           slug: tag.slug,
+          creatorId: admin.id
         },
       }),
     ),

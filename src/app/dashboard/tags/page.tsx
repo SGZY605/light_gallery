@@ -17,12 +17,13 @@ async function createTagAction(formData: FormData) {
   }
 
   const slug = slugifyTagName(name);
-  const existing = await db.tag.findUnique({ where: { slug } });
+  const user = await requireUser();
+  const existing = await db.tag.findUnique({ where: { creatorId_slug: { creatorId: user.id, slug } } });
   if (existing) {
     return;
   }
 
-  await db.tag.create({ data: { name, slug } });
+  await db.tag.create({ data: { creatorId: user.id, name, slug } });
 
   revalidatePath("/dashboard/tags");
   revalidatePath("/dashboard/library");
@@ -31,7 +32,7 @@ async function createTagAction(formData: FormData) {
 async function deleteTagAction(formData: FormData) {
   "use server";
 
-  await requireUser();
+  const user = await requireUser();
 
   const tagId = String(formData.get("tagId") ?? "");
   if (!tagId) {
@@ -39,9 +40,15 @@ async function deleteTagAction(formData: FormData) {
   }
 
   await db.$transaction(async (tx) => {
-    await tx.imageTag.deleteMany({ where: { tagId } });
-    await tx.shareTag.deleteMany({ where: { tagId } });
-    await tx.tag.delete({ where: { id: tagId } });
+    const tag = await tx.tag.findFirst({ where: { creatorId: user.id, id: tagId }, select: { id: true } });
+
+    if (!tag) {
+      return;
+    }
+
+    await tx.imageTag.deleteMany({ where: { tagId: tag.id } });
+    await tx.shareTag.deleteMany({ where: { tagId: tag.id } });
+    await tx.tag.delete({ where: { id: tag.id } });
   });
 
   revalidatePath("/dashboard/tags");
@@ -52,7 +59,7 @@ async function deleteTagAction(formData: FormData) {
 async function renameTagAction(formData: FormData) {
   "use server";
 
-  await requireUser();
+  const user = await requireUser();
 
   const tagId = String(formData.get("tagId") ?? "");
   const nextName = normalizeTagName(String(formData.get("name") ?? ""));
@@ -64,7 +71,10 @@ async function renameTagAction(formData: FormData) {
   const nextSlug = slugifyTagName(nextName);
   const existingTag = await db.tag.findUnique({
     where: {
-      slug: nextSlug
+      creatorId_slug: {
+        creatorId: user.id,
+        slug: nextSlug
+      }
     }
   });
 
@@ -74,7 +84,8 @@ async function renameTagAction(formData: FormData) {
 
   await db.tag.update({
     where: {
-      id: tagId
+      id: tagId,
+      creatorId: user.id
     },
     data: {
       name: nextName,
