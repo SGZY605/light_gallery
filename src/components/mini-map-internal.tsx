@@ -152,7 +152,7 @@ export function MiniMapInternal({
   return (
     <div
       ref={containerRef}
-      className="w-full overflow-hidden rounded-lg border border-white/10"
+      className="relative z-0 w-full overflow-hidden rounded-lg border border-white/10"
       style={{ height }}
     />
   );

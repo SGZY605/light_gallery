@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, MapPin, Plus, RotateCcw, Save, Tag, X } from "lucide-react";
+import { ChevronDown, Download, MapPin, Plus, RotateCcw, Save, Tag, X } from "lucide-react";
 import { MiniMap } from "@/components/mini-map";
 import {
   buildDetailSavePayload,
@@ -42,6 +42,7 @@ type LocationData = {
 
 type ImageDetailSidebarProps = {
   imageId: string;
+  downloadUrl: string;
   filename: string;
   mimeType: string;
   sizeBytes: number;
@@ -182,6 +183,7 @@ function formatCoordinate(latitude: number, longitude: number) {
 
 export function ImageDetailSidebar({
   imageId,
+  downloadUrl,
   filename,
   mimeType,
   sizeBytes,
@@ -495,7 +497,7 @@ export function ImageDetailSidebar({
             )}
           </div>
 
-          <div className="relative z-30">
+          <div className="relative z-10">
             <button
               type="button"
               onClick={() => setShowTagMenu((current) => !current)}
@@ -509,8 +511,8 @@ export function ImageDetailSidebar({
 
             {showTagMenu && availableTags.length > 0 ? (
               <>
-                <div className="fixed inset-0 z-20" onClick={() => setShowTagMenu(false)} />
-                <div className="absolute left-0 top-full z-30 mt-2 max-h-52 w-60 overflow-y-auto rounded-lg border border-white/10 bg-[color:var(--bg-card)] p-1 shadow-2xl">
+                <div className="fixed inset-0 z-10" onClick={() => setShowTagMenu(false)} />
+                <div className="absolute left-0 top-full z-20 mt-2 max-h-52 w-60 overflow-y-auto rounded-lg border border-white/10 bg-[color:var(--bg-card)] p-1 shadow-2xl">
                   {availableTags.map((tag) => (
                     <button
                       key={tag.id}
@@ -642,15 +644,25 @@ export function ImageDetailSidebar({
             {selectedTags.length} 个标签
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => void saveChanges()}
-          disabled={isSaving || !hasUnsavedChanges}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white/12 px-4 py-2.5 text-sm font-semibold text-[color:var(--text-primary)] transition hover:bg-white/18 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Save className="h-4 w-4" />
-          {isSaving ? "保存中..." : "保存更改"}
-        </button>
+        <div className="grid grid-cols-2 gap-3">
+          <a
+            href={downloadUrl}
+            download={filename}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-[color:var(--text-secondary)] transition hover:border-white/20 hover:bg-white/[0.08] hover:text-[color:var(--text-primary)]"
+          >
+            <Download className="h-4 w-4" />
+            下载图片
+          </a>
+          <button
+            type="button"
+            onClick={() => void saveChanges()}
+            disabled={isSaving || !hasUnsavedChanges}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white/12 px-4 py-2.5 text-sm font-semibold text-[color:var(--text-primary)] transition hover:bg-white/18 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving ? "保存中..." : "保存更改"}
+          </button>
+        </div>
       </div>
     </aside>
   );

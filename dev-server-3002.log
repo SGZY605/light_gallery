@@ -1,0 +1,22 @@
+   ▲ Next.js 15.5.15
+   - Local:        http://localhost:3002
+   - Network:      http://172.24.64.1:3002
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1938ms
+ ○ Compiling /dashboard/upload ...
+ ✓ Compiled /dashboard/upload in 1350ms (799 modules)
+prisma:query SELECT "public"."Tag"."id", "public"."Tag"."name", "public"."Tag"."slug", "public"."Tag"."color", "public"."Tag"."creatorId", "public"."Tag"."createdAt", "public"."Tag"."updatedAt" FROM "public"."Tag" WHERE 1=1 ORDER BY "public"."Tag"."name" ASC OFFSET $1
+ GET /dashboard/upload 307 in 1729ms
+ ✓ Compiled in 218ms (283 modules)
+ ✓ Compiled in 256ms (283 modules)
+ ✓ Compiled in 170ms (283 modules)
+ ✓ Compiled in 302ms (283 modules)
+ ✓ Compiled /dashboard/upload in 264ms (516 modules)
+prisma:query SELECT "public"."Tag"."id", "public"."Tag"."name", "public"."Tag"."slug", "public"."Tag"."color", "public"."Tag"."creatorId", "public"."Tag"."createdAt", "public"."Tag"."updatedAt" FROM "public"."Tag" WHERE 1=1 ORDER BY "public"."Tag"."name" ASC OFFSET $1
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."name", "public"."User"."passwordHash", "public"."User"."role"::text, "public"."User"."createdAt", "public"."User"."updatedAt" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /dashboard/upload 200 in 636ms
+prisma:query SELECT "public"."Tag"."id", "public"."Tag"."name", "public"."Tag"."slug", "public"."Tag"."color", "public"."Tag"."creatorId", "public"."Tag"."createdAt", "public"."Tag"."updatedAt" FROM "public"."Tag" WHERE 1=1 ORDER BY "public"."Tag"."name" ASC OFFSET $1
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."name", "public"."User"."passwordHash", "public"."User"."role"::text, "public"."User"."createdAt", "public"."User"."updatedAt" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /dashboard/upload 200 in 106ms

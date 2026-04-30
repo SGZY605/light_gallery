@@ -102,6 +102,7 @@ function getDefaultDragState(): DragState {
 export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailViewProps) {
   const router = useRouter();
   const previewUrl = buildOssImageUrl(image.objectKey, "preview", { publicBaseUrl });
+  const downloadUrl = buildOssImageUrl(image.objectKey, "original", { publicBaseUrl });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageBoundsRef = useRef<HTMLDivElement | null>(null);
   const mainImageRef = useRef<HTMLImageElement | null>(null);
@@ -500,6 +501,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
 
       <ImageDetailSidebar
         imageId={image.id}
+        downloadUrl={downloadUrl}
         filename={image.filename}
         mimeType={image.mimeType}
         sizeBytes={image.sizeBytes}

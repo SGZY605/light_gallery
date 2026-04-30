@@ -33,6 +33,19 @@
 
 开发地址固定是 `http://127.0.0.1:3001/login`，端口来自 `.env` 的 `DEV_PORT=3001`。默认管理员账号是 `admin@example.com`，密码来自 `.env` 的 `SEED_ADMIN_PASSWORD`，模板默认值为 `admin`。
 
+如果启动时报端口被占用（`EADDRINUSE`），可以查找并停掉旧进程：
+
+```powershell
+# 查找占用 3001 端口的进程
+netstat -ano | findstr :3001
+
+# 用找到的 PID 停掉进程（替换 12345 为实际 PID）
+taskkill /PID 12345 /F
+
+# 或者一键停掉所有 node 进程
+taskkill /IM node.exe /F
+```
+
 ## Docker App 部署
 
 启动完整 Docker 应用：

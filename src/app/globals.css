@@ -164,6 +164,138 @@ body {
     background: var(--control-hover-bg);
     color: var(--shell-nav-hover);
   }
+
+  .upload-tag-toggle-muted,
+  .upload-tag-toggle-selected,
+  .upload-tag-toggle-custom,
+  .upload-tag-toggle-removed,
+  .upload-tag-pill-default,
+  .upload-tag-pill-custom {
+    transition:
+      color 150ms ease,
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-muted {
+    border-color: rgba(37, 35, 31, 0.14);
+    color: rgba(37, 35, 31, 0.56);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-muted:hover {
+    border-color: rgba(37, 35, 31, 0.24);
+    color: rgba(37, 35, 31, 0.84);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-selected {
+    border-color: rgba(37, 35, 31, 0.22);
+    background-color: rgba(37, 35, 31, 0.12);
+    color: rgba(37, 35, 31, 0.94);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-selected:hover {
+    border-color: rgba(37, 35, 31, 0.28);
+    background-color: rgba(37, 35, 31, 0.16);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-custom {
+    border-color: rgba(5, 150, 105, 0.36);
+    background-color: rgba(16, 185, 129, 0.2);
+    color: rgba(6, 78, 59, 0.96);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-custom:hover {
+    border-color: rgba(5, 150, 105, 0.48);
+    background-color: rgba(16, 185, 129, 0.24);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-removed {
+    border-color: rgba(37, 35, 31, 0.14);
+    color: rgba(37, 35, 31, 0.42);
+    text-decoration: line-through;
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-toggle-removed:hover {
+    border-color: rgba(37, 35, 31, 0.22);
+    color: rgba(37, 35, 31, 0.62);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-pill-default {
+    border-color: rgba(37, 35, 31, 0.16);
+    background-color: rgba(37, 35, 31, 0.1);
+    color: rgba(37, 35, 31, 0.9);
+  }
+
+  :root[data-theme="light"] .dashboard-root .upload-tag-pill-custom {
+    border-color: rgba(5, 150, 105, 0.3);
+    background-color: rgba(16, 185, 129, 0.18);
+    color: rgba(6, 78, 59, 0.96);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-muted,
+  :root.dark .dashboard-root .upload-tag-toggle-muted {
+    border-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.38);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-muted:hover,
+  :root.dark .dashboard-root .upload-tag-toggle-muted:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-selected,
+  :root.dark .dashboard-root .upload-tag-toggle-selected {
+    border-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-selected:hover,
+  :root.dark .dashboard-root .upload-tag-toggle-selected:hover {
+    border-color: rgba(255, 255, 255, 0.24);
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-custom,
+  :root.dark .dashboard-root .upload-tag-toggle-custom {
+    border-color: rgba(52, 211, 153, 0.42);
+    background-color: rgba(16, 185, 129, 0.18);
+    color: rgba(209, 250, 229, 0.96);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-custom:hover,
+  :root.dark .dashboard-root .upload-tag-toggle-custom:hover {
+    border-color: rgba(74, 222, 128, 0.54);
+    background-color: rgba(16, 185, 129, 0.24);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-removed,
+  :root.dark .dashboard-root .upload-tag-toggle-removed {
+    border-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.26);
+    text-decoration: line-through;
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-toggle-removed:hover,
+  :root.dark .dashboard-root .upload-tag-toggle-removed:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-pill-default,
+  :root.dark .dashboard-root .upload-tag-pill-default {
+    border-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  :root[data-theme="dark"] .dashboard-root .upload-tag-pill-custom,
+  :root.dark .dashboard-root .upload-tag-pill-custom {
+    border-color: rgba(52, 211, 153, 0.36);
+    background-color: rgba(16, 185, 129, 0.16);
+    color: rgba(209, 250, 229, 0.96);
+  }
 }
 
 @layer utilities {

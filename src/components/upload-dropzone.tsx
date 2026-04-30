@@ -1,19 +1,16 @@
 "use client";
 
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parse } from "exifr";
 import { useDropzone } from "react-dropzone";
 import {
   buildQueueTagPayload,
   createQueueTagDraft,
-  getEditableQueueTagNames,
   getEffectiveQueueTags,
   parseQueueTagNames,
-  selectQueueItemNamedTags,
   toggleQueueItemExistingTag,
-  toggleQueueItemNamedTag,
   type QueueTagDraft
 } from "@/lib/uploads/queue-tags";
 
@@ -38,7 +35,6 @@ type UploadQueueItem = {
   status: UploadStatus;
   error: string | null;
   tagDraft: QueueTagDraft;
-  tagInput: string;
 };
 
 type UploadDropzoneProps = {
@@ -80,24 +76,22 @@ function getTagToggleClassName({
   removedDefault: boolean;
 }): string {
   if (removedDefault) {
-    return "border-white/[0.06] bg-transparent text-white/20 line-through hover:border-white/12 hover:text-white/35";
+    return "upload-tag-toggle-removed";
   }
 
   if (selected && !defaultSelected) {
-    return "border-emerald-400/30 bg-emerald-500/10 text-emerald-200 hover:border-emerald-300/45";
+    return "upload-tag-toggle-custom";
   }
 
   if (selected) {
-    return "border-white/15 bg-white/10 text-white/70 hover:bg-white/15";
+    return "upload-tag-toggle-selected";
   }
 
-  return "border-white/[0.04] text-white/30 hover:border-white/15 hover:text-white/60";
+  return "upload-tag-toggle-muted";
 }
 
 function getAppliedTagPillClassName(isCustom: boolean): string {
-  return isCustom
-    ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200"
-    : "border-white/12 bg-white/[0.06] text-white/65";
+  return isCustom ? "upload-tag-pill-custom" : "upload-tag-pill-default";
 }
 
 async function readImageDimensions(file: File): Promise<{ width: number | null; height: number | null }> {
@@ -278,8 +272,7 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
           thumbnailUrl: URL.createObjectURL(file),
           status: "ready" as const,
           error: null,
-          tagDraft: createQueueTagDraft(),
-          tagInput: ""
+          tagDraft: createQueueTagDraft()
         };
       })
     );
@@ -319,37 +312,6 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
         tagId,
         defaultSelected,
         draft
-      })
-    );
-  }
-
-  function toggleItemTextTag(itemId: string, tagName: string, defaultSelected: boolean) {
-    updateQueueItemDraft(itemId, (draft) =>
-      toggleQueueItemNamedTag({
-        tagName,
-        defaultSelected,
-        draft
-      })
-    );
-  }
-
-  function addItemTextTags(itemId: string) {
-    setQueue((currentQueue) =>
-      currentQueue.map((item) => {
-        if (item.id !== itemId) {
-          return item;
-        }
-
-        const tagNames = parseQueueTagNames(item.tagInput);
-        if (!tagNames.length) {
-          return item;
-        }
-
-        return {
-          ...item,
-          tagDraft: selectQueueItemNamedTags(item.tagDraft, tagNames, defaultTagNames),
-          tagInput: ""
-        };
       })
     );
   }
@@ -490,20 +452,18 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                 defaultTagNames,
                 draft: item.tagDraft
               });
-              const editableTextTags = getEditableQueueTagNames({
-                defaultTagNames,
-                draft: item.tagDraft
-              });
               const selectedExistingTags = availableTags.filter((tag) =>
                 effectiveTags.tagIds.includes(tag.id)
               );
+              const hasAppliedTags =
+                selectedExistingTags.length > 0 || effectiveTags.tagNames.length > 0;
 
               return (
                 <article
                   key={item.id}
                   className="rounded-xl border border-white/[0.04] bg-transparent px-4 py-4"
                 >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-white/[0.03]">
                       <img
                         src={item.thumbnailUrl}
@@ -512,21 +472,21 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                       />
                     </div>
 
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="space-y-1">
-                        <p className="truncate text-sm font-medium text-white/70">{item.filename}</p>
-                        <p className="text-xs text-white/25">
-                          {formatBytes(item.sizeBytes)}
-                          {item.width && item.height ? ` · ${item.width}x${item.height}` : ""}
-                        </p>
-                        {item.error ? <p className="text-xs text-red-400">{item.error}</p> : null}
-                      </div>
+                    <div className="min-w-0 space-y-1 md:w-[13rem] md:flex-shrink-0">
+                      <p className="truncate text-sm font-medium text-white/70">{item.filename}</p>
+                      <p className="text-xs text-white/25">
+                        {formatBytes(item.sizeBytes)}
+                        {item.width && item.height ? ` · ${item.width}x${item.height}` : ""}
+                      </p>
+                      {item.error ? <p className="text-xs text-red-400">{item.error}</p> : null}
+                    </div>
 
-                      <div className="space-y-1.5">
+                    <div className="min-w-0 space-y-3 md:flex-1 md:pr-3">
+                      <div className="space-y-1">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/25">
                           已生效标签
                         </p>
-                        {selectedExistingTags.length || effectiveTags.tagNames.length ? (
+                        {hasAppliedTags ? (
                           <div className="flex flex-wrap gap-1.5">
                             {selectedExistingTags.map((tag) => {
                               const isCustom = item.tagDraft.addedTagIds.includes(tag.id);
@@ -563,9 +523,42 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                           <p className="text-xs text-white/20">当前未设置标签</p>
                         )}
                       </div>
+
+                      {editable ? (
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/25">
+                            单图已有标签
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {availableTags.map((tag) => {
+                              const defaultSelected = defaultTagIds.includes(tag.id);
+                              const removedDefault = item.tagDraft.removedDefaultTagIds.includes(tag.id);
+                              const selected = effectiveTags.tagIds.includes(tag.id);
+
+                              return (
+                                <button
+                                  key={tag.id}
+                                  type="button"
+                                  onClick={() => toggleItemExistingTag(item.id, tag.id, defaultSelected)}
+                                  className={[
+                                    "rounded-full border px-2 py-0.5 text-[10px] font-semibold transition",
+                                    getTagToggleClassName({
+                                      selected,
+                                      defaultSelected,
+                                      removedDefault
+                                    })
+                                  ].join(" ")}
+                                >
+                                  {tag.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
 
-                    <div className="flex flex-shrink-0 items-center gap-2 self-start">
+                    <div className="flex flex-shrink-0 items-center gap-2 self-start md:self-center">
                       <span
                         className={[
                           "rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
@@ -605,103 +598,6 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                       ) : null}
                     </div>
                   </div>
-
-                  {editable ? (
-                    <div className="mt-4 space-y-3 border-t border-white/[0.04] pt-4">
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/25">
-                          单图已有标签
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {availableTags.map((tag) => {
-                            const defaultSelected = defaultTagIds.includes(tag.id);
-                            const removedDefault = item.tagDraft.removedDefaultTagIds.includes(tag.id);
-                            const selected = effectiveTags.tagIds.includes(tag.id);
-
-                            return (
-                              <button
-                                key={tag.id}
-                                type="button"
-                                onClick={() => toggleItemExistingTag(item.id, tag.id, defaultSelected)}
-                                className={[
-                                  "rounded-full border px-2 py-0.5 text-[10px] font-semibold transition",
-                                  getTagToggleClassName({
-                                    selected,
-                                    defaultSelected,
-                                    removedDefault
-                                  })
-                                ].join(" ")}
-                              >
-                                {tag.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/25">
-                          单图文本标签
-                        </p>
-
-                        {editableTextTags.length ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {editableTextTags.map((tagName) => {
-                              const defaultSelected = hasNamedTag(defaultTagNames, tagName);
-                              const removedDefault = hasNamedTag(
-                                item.tagDraft.removedDefaultTagNames,
-                                tagName
-                              );
-                              const selected = hasNamedTag(effectiveTags.tagNames, tagName);
-
-                              return (
-                                <button
-                                  key={tagName}
-                                  type="button"
-                                  onClick={() => toggleItemTextTag(item.id, tagName, defaultSelected)}
-                                  className={[
-                                    "rounded-full border px-2 py-0.5 text-[10px] font-semibold transition",
-                                    getTagToggleClassName({
-                                      selected,
-                                      defaultSelected,
-                                      removedDefault
-                                    })
-                                  ].join(" ")}
-                                >
-                                  {tagName}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-white/20">还没有单图文本标签</p>
-                        )}
-
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                          <input
-                            value={item.tagInput}
-                            onChange={(event) => updateQueueItem(item.id, { tagInput: event.target.value })}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                addItemTextTags(item.id);
-                              }
-                            }}
-                            className="min-w-0 flex-1 rounded-xl border border-white/[0.06] bg-transparent px-3 py-2 text-xs text-white/70 outline-none transition focus:border-white/20 focus:ring-1 focus:ring-white/10"
-                            placeholder="给这张图追加文本标签，逗号分隔"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => addItemTextTags(item.id)}
-                            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-white/[0.06] px-3 text-xs font-medium text-white/50 transition hover:border-white/20 hover:text-white/75"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                            添加
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
                 </article>
               );
             })}
