@@ -26,7 +26,7 @@ test("gallery smoke flow", async ({ page }) => {
 
   await page.goto(`${baseUrl}/dashboard/shares`);
   await page.getByLabel("标题").fill("冒烟分享");
-  await page.getByText("家庭").click();
+  await page.getByRole("checkbox", { name: "家庭" }).check();
   await page.getByRole("button", { name: "创建分享" }).click();
 
   const shareText = await page.locator("text=/\\/s\\//").first().textContent();
