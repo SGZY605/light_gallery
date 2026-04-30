@@ -29,10 +29,11 @@ test("gallery smoke flow", async ({ page }) => {
   await page.getByText("家庭").click();
   await page.getByRole("button", { name: "创建分享" }).click();
 
-  const sharePath = await page.locator("text=/\\/s\\//").first().textContent();
+  const shareText = await page.locator("text=/\\/s\\//").first().textContent();
+  const sharePath = shareText?.match(/\/s\/[A-Za-z0-9_-]+/)?.[0];
 
   if (sharePath) {
-    await page.goto(`${baseUrl}${sharePath.trim()}`);
+    await page.goto(`${baseUrl}${sharePath}`);
     await expect(page.getByText("共享图库")).toBeVisible();
   }
 
