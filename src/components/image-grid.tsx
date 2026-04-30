@@ -2,9 +2,10 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { clampLibraryColumnCount } from "@/lib/library/columns";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 
-type ImageItem = {
+export type ImageGridImage = {
   id: string;
   objectKey: string;
   filename: string;
@@ -30,18 +31,21 @@ type ImageItem = {
   } | null;
 };
 
-type ImageGridProps = {
-  images: ImageItem[];
+export type ImageGridProps = {
+  columnCount?: number;
+  images: ImageGridImage[];
   emptyMessage?: string;
   publicBaseUrl: string;
 };
 
 export function ImageGrid({
+  columnCount,
   images,
-  emptyMessage = "没有匹配的图片",
+  emptyMessage = "没有匹配的图片。",
   publicBaseUrl
 }: ImageGridProps) {
   const router = useRouter();
+  const resolvedColumnCount = clampLibraryColumnCount(columnCount);
 
   const handleImageClick = useCallback(
     (index: number, e: React.MouseEvent<HTMLImageElement>) => {
@@ -58,7 +62,10 @@ export function ImageGrid({
             height: rect.height
           })
         );
-        sessionStorage.setItem( "image-detail-return-url", `${window.location.pathname}${window.location.search}`);
+        sessionStorage.setItem(
+          "image-detail-return-url",
+          `${window.location.pathname}${window.location.search}`
+        );
       } catch {
         // sessionStorage may be unavailable
       }
@@ -68,7 +75,6 @@ export function ImageGrid({
     [images, router]
   );
 
-  // Empty state
   if (!images.length) {
     return (
       <div className="flex items-center justify-center px-6 py-24 text-sm text-[color:var(--text-muted)]">
@@ -78,13 +84,13 @@ export function ImageGrid({
   }
 
   return (
-    <div className="columns-2 md:columns-3 xl:columns-4 gap-0.5">
+    <div className="gap-0.5" style={{ columnCount: resolvedColumnCount }}>
       {images.map((image, index) => (
-        <div key={image.id} className="break-inside-avoid mb-0.5">
+        <div key={image.id} className="mb-0.5 break-inside-avoid">
           <img
             src={buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}
             alt={image.filename}
-            className="w-full h-auto cursor-pointer hover:opacity-80 transition-opacity"
+            className="h-auto w-full cursor-pointer transition-opacity hover:opacity-80"
             onClick={(e) => handleImageClick(index, e)}
           />
         </div>

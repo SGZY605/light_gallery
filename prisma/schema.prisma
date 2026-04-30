@@ -48,6 +48,7 @@ model User {
   name            String
   passwordHash    String
   role            UserRole                @default(MEMBER)
+  libraryColumnCount Int                  @default(4)
   ossConfig       UserOssConfig?
   images          Image[]
   tags            Tag[]

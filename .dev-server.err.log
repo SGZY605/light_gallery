@@ -1,0 +1,38 @@
+ ⨯ Error [PrismaClientKnownRequestError]: 
+Invalid `prisma.user.findUnique()` invocation:
+
+
+The column `User.libraryColumnCount` does not exist in the current database.
+    at async getCurrentUser (src\lib\auth\session.ts:142:16)
+    at async HomePage (src\app\page.tsx:5:16)
+  140 |   }
+  141 |
+> 142 |   const user = await db.user.findUnique({
+      |                ^
+  143 |     where: { id: userId }
+  144 |   });
+  145 | {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: [Object],
+  digest: '3244787175'
+}
+ ⨯ Error [PrismaClientKnownRequestError]: 
+Invalid `prisma.user.findUnique()` invocation:
+
+
+The column `User.libraryColumnCount` does not exist in the current database.
+    at async getCurrentUser (src\lib\auth\session.ts:142:16)
+    at async HomePage (src\app\page.tsx:5:16)
+  140 |   }
+  141 |
+> 142 |   const user = await db.user.findUnique({
+      |                ^
+  143 |     where: { id: userId }
+  144 |   });
+  145 | {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: [Object],
+  digest: '3244787175'
+}

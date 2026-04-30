@@ -1,0 +1,28 @@
+
+> light-gallery@0.1.0 dev
+> node scripts/dev-server.mjs
+
+   ▲ Next.js 15.5.15
+   - Local:        http://localhost:3001
+   - Network:      http://172.24.64.1:3001
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1880ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1211ms (645 modules)
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."name", "public"."User"."passwordHash", "public"."User"."role"::text, "public"."User"."libraryColumnCount", "public"."User"."createdAt", "public"."User"."updatedAt" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:error 
+Invalid `prisma.user.findUnique()` invocation:
+
+
+The column `User.libraryColumnCount` does not exist in the current database.
+ ✓ Compiled in 328ms (229 modules)
+ GET / 500 in 1800ms
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."name", "public"."User"."passwordHash", "public"."User"."role"::text, "public"."User"."libraryColumnCount", "public"."User"."createdAt", "public"."User"."updatedAt" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:error 
+Invalid `prisma.user.findUnique()` invocation:
+
+
+The column `User.libraryColumnCount` does not exist in the current database.
+ GET / 500 in 45ms

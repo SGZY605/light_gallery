@@ -1,6 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import { ImageGrid } from "@/components/image-grid";
-import { LibraryFilterBar } from "@/components/library-filter-bar";
+import { LibraryPageShell } from "@/components/library-page-shell";
 import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
@@ -90,28 +89,28 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
   const publicBaseUrl = ossConfig.publicBaseUrl;
 
   return (
-    <div className="space-y-4">
-      <LibraryFilterBar query={query} selectedTagIds={selectedTagIds} tags={tags} />
-
-      <ImageGrid
-        publicBaseUrl={publicBaseUrl}
-        images={images.map((image) => ({
-          id: image.id,
-          objectKey: image.objectKey,
-          filename: image.filename,
-          description: image.description,
-          width: image.width,
-          height: image.height,
-          createdAt: image.createdAt,
-          exif: image.exif,
-          tags: image.tags.map(({ tag }) => ({
-            id: tag.id,
-            name: tag.name,
-            slug: tag.slug,
-            color: tag.color
-          }))
-        }))}
-      />
-    </div>
+    <LibraryPageShell
+      initialColumnCount={user.libraryColumnCount}
+      publicBaseUrl={publicBaseUrl}
+      query={query}
+      selectedTagIds={selectedTagIds}
+      tags={tags}
+      images={images.map((image) => ({
+        id: image.id,
+        objectKey: image.objectKey,
+        filename: image.filename,
+        description: image.description,
+        width: image.width,
+        height: image.height,
+        createdAt: image.createdAt,
+        exif: image.exif,
+        tags: image.tags.map(({ tag }) => ({
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+          color: tag.color
+        }))
+      }))}
+    />
   );
 }

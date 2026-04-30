@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 import Link from "next/link";
 
-type Tag = {
+export type LibraryFilterTag = {
   id: string;
   name: string;
 };
@@ -13,7 +13,7 @@ type Tag = {
 type LibraryFilterBarProps = {
   query: string;
   selectedTagIds: string[];
-  tags: Tag[];
+  tags: LibraryFilterTag[];
 };
 
 function buildTagHref(selectedTagIds: string[], tagId: string, query: string) {
@@ -73,7 +73,7 @@ export function LibraryFilterBar({ query, selectedTagIds, tags }: LibraryFilterB
   }, []);
 
   return (
-    <div ref={containerRef} className="sticky top-0 z-20 flex justify-end pb-2 pt-1">
+    <div ref={containerRef} className="flex min-w-0 flex-1 justify-end">
       <AnimatePresence mode="wait">
         {!isOpen ? (
           <motion.button
@@ -96,7 +96,7 @@ export function LibraryFilterBar({ query, selectedTagIds, tags }: LibraryFilterB
             exit={{ opacity: 0, scaleX: 0.6, scaleY: 0.8 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             style={{ transformOrigin: "right" }}
-            className="flex flex-wrap items-center gap-2 rounded-2xl bg-black/20 backdrop-blur-md px-3.5 py-1.5"
+            className="flex max-w-full flex-wrap items-center gap-2 rounded-2xl bg-black/20 px-3.5 py-1.5 backdrop-blur-md"
           >
             <form className="flex items-center gap-2">
               <input
