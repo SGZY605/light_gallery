@@ -53,4 +53,10 @@ describe("map explorer theme styling", () => {
     expect(explorer).toContain("selectedImage");
     expect(explorer).toContain("image-detail-return-url");
   });
+
+  it("formats map metadata dates with an explicit timezone to avoid hydration mismatches", () => {
+    const explorer = readProjectFile("src/components/map-explorer.tsx");
+
+    expect(explorer).toContain('timeZone: "Asia/Shanghai"');
+  });
 });
