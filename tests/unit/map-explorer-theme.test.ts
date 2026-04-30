@@ -26,4 +26,26 @@ describe("map explorer theme styling", () => {
       expect(content).not.toMatch(new RegExp(`(^|\\s)${className}(\\s|")`));
     }
   });
+
+  it("does not render the old tag and date filter controls", () => {
+    const content = readProjectFile("src/components/map-explorer.tsx");
+
+    expect(content).not.toContain("标签筛选");
+    expect(content).not.toContain("起始日期");
+    expect(content).not.toContain("截止日期");
+    expect(content).not.toContain("selectedTagId");
+    expect(content).not.toContain("fromDate");
+    expect(content).not.toContain("toDate");
+  });
+
+  it("uses per-image thumbnail markers instead of count-circle markers", () => {
+    const canvas = readProjectFile("src/components/map-canvas.tsx");
+    const explorer = readProjectFile("src/components/map-explorer.tsx");
+
+    expect(canvas).toContain("thumbnailUrl");
+    expect(canvas).toContain("createThumbnailIcon");
+    expect(canvas).not.toContain("createMarkerIcon(count");
+    expect(explorer).toContain("selectedImage");
+    expect(explorer).toContain("image-detail-return-url");
+  });
 });

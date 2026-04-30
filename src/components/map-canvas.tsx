@@ -3,49 +3,44 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 
-type GroupedLocation = {
-  key: string;
+export type MapMarkerImage = {
+  id: string;
   latitude: number;
   longitude: number;
-  label?: string | null;
-  imageCount: number;
+  title: string;
+  thumbnailUrl: string;
 };
 
 type MapCanvasProps = {
   defaultCenter: [number, number];
-  locations: GroupedLocation[];
-  onSelectLocation: (locationKey: string) => void;
+  images: MapMarkerImage[];
+  onSelectImage: (imageId: string) => void;
 };
 
-function createMarkerIcon(count: number) {
+function createThumbnailIcon(image: MapMarkerImage) {
+  const safeUrl = image.thumbnailUrl.replace(/"/g, "%22");
+
   return L.divIcon({
     className: "",
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:9999px;background:#0f172a;color:white;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,0.75);box-shadow:0 16px 30px rgba(15,23,42,0.25)">${count}</div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
+    html: `<div style="width:28px;height:28px;overflow:hidden;border:2px solid rgba(255,255,255,0.9);background:#0f172a;box-shadow:0 10px 24px rgba(15,23,42,0.35)"><img src="${safeUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
   });
 }
 
-function buildPopupContent(location: GroupedLocation) {
+function buildPopupContent(image: MapMarkerImage) {
   const wrapper = document.createElement("div");
   wrapper.className = "space-y-1";
 
   const title = document.createElement("p");
   title.className = "font-semibold";
-  title.textContent = location.label || "Pinned photos";
+  title.textContent = image.title;
 
-  const count = document.createElement("p");
-  count.textContent = `${location.imageCount} image${location.imageCount === 1 ? "" : "s"}`;
-
-  wrapper.append(title, count);
+  wrapper.append(title);
   return wrapper;
 }
 
-export function MapCanvas({
-  defaultCenter,
-  locations,
-  onSelectLocation
-}: MapCanvasProps) {
+export function MapCanvas({ defaultCenter, images, onSelectImage }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
@@ -97,31 +92,31 @@ export function MapCanvas({
 
     markerLayer.clearLayers();
 
-    if (!locations.length) {
+    if (!images.length) {
       map.setView(defaultCenter, 4);
       return;
     }
 
     const bounds = L.latLngBounds([]);
 
-    for (const location of locations) {
-      const marker = L.marker([location.latitude, location.longitude], {
-        icon: createMarkerIcon(location.imageCount)
+    for (const image of images) {
+      const marker = L.marker([image.latitude, image.longitude], {
+        icon: createThumbnailIcon(image)
       });
 
-      marker.on("click", () => onSelectLocation(location.key));
-      marker.bindPopup(buildPopupContent(location));
+      marker.on("click", () => onSelectImage(image.id));
+      marker.bindPopup(buildPopupContent(image));
       marker.addTo(markerLayer);
-      bounds.extend([location.latitude, location.longitude]);
+      bounds.extend([image.latitude, image.longitude]);
     }
 
-    if (locations.length === 1) {
-      map.setView([locations[0].latitude, locations[0].longitude], 10);
+    if (images.length === 1) {
+      map.setView([images[0].latitude, images[0].longitude], 10);
       return;
     }
 
     map.fitBounds(bounds.pad(0.2));
-  }, [defaultCenter, locations, onSelectLocation]);
+  }, [defaultCenter, images, onSelectImage]);
 
   return <div ref={containerRef} className="h-full w-full bg-surface" />;
 }

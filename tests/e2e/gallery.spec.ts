@@ -13,6 +13,17 @@ test("gallery smoke flow", async ({ page }) => {
   await page.getByRole("button", { name: "登录" }).click();
 
   await expect(page).toHaveURL(/\/dashboard\/library$/);
+  await expect(page.getByRole("link", { name: "图库" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "相册" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "首页" })).toHaveCount(0);
+
+  await page.goto(`${baseUrl}/dashboard`);
+  await expect(page).toHaveURL(/\/dashboard\/library$/);
+
+  await page.goto(`${baseUrl}/dashboard/albums?view=timeline`);
+  await expect(page.getByText("时间线视图")).toBeVisible();
+  await expect(page.getByText("照片总数")).toBeVisible();
+
   await page.goto(`${baseUrl}/dashboard/shares`);
   await page.getByLabel("标题").fill("冒烟分享");
   await page.getByText("家庭").click();

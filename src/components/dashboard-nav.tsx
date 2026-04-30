@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Grid2x2,
-  LayoutDashboard,
+  Images,
   type LucideIcon,
   MapPinned,
   Settings,
@@ -36,12 +36,12 @@ type NavigationItem = {
 };
 
 const navigationItems: NavigationItem[] = [
-  { href: "/dashboard", label: "首页", icon: LayoutDashboard },
   { href: "/dashboard/library", label: "图库", icon: Grid2x2 },
-  { href: "/dashboard/upload", label: "上传", icon: UploadCloud },
-  { href: "/dashboard/tags", label: "标签", icon: Tags },
-  { href: "/dashboard/shares", label: "分享", icon: Share2 },
+  { href: "/dashboard/albums", label: "相册", icon: Images },
   { href: "/dashboard/map", label: "地图", icon: MapPinned },
+  { href: "/dashboard/tags", label: "标签", icon: Tags },
+  { href: "/dashboard/upload", label: "上传", icon: UploadCloud },
+  { href: "/dashboard/shares", label: "分享", icon: Share2 },
   { href: "/dashboard/users", label: "用户", icon: Users, requiresManager: true },
   { href: "/dashboard/settings", label: "设置", icon: Settings }
 ];

@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-import { LocationEditor } from "@/components/location-editor";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { buildOssImageUrl } from "@/lib/oss/urls";
+import type { MapMarkerImage } from "@/components/map-canvas";
 
 type MapImage = {
   id: string;
@@ -22,31 +23,11 @@ type MapImage = {
     label?: string | null;
     source: "manual" | "exif";
   };
-  exifLocation?: {
-    latitude?: number | null;
-    longitude?: number | null;
-  } | null;
-  overrideLocation?: {
-    latitude: number;
-    longitude: number;
-    label?: string | null;
-  } | null;
 };
 
 type MapExplorerProps = {
-  availableTags: Array<{
-    id: string;
-    name: string;
-  }>;
   images: MapImage[];
-};
-
-type GroupedLocation = {
-  key: string;
-  latitude: number;
-  longitude: number;
-  label?: string | null;
-  images: MapImage[];
+  publicBaseUrl: string;
 };
 
 const defaultCenter: [number, number] = [31.2304, 121.4737];
@@ -59,180 +40,162 @@ const ClientMapCanvas = dynamic(
   }
 );
 
-function groupImagesByLocation(images: MapImage[]): GroupedLocation[] {
-  const groups = new Map<string, GroupedLocation>();
-
-  for (const image of images) {
-    const key = [
-      image.effectiveLocation.latitude.toFixed(5),
-      image.effectiveLocation.longitude.toFixed(5),
-      image.effectiveLocation.label ?? ""
-    ].join(":");
-    const existing = groups.get(key);
-
-    if (existing) {
-      existing.images.push(image);
-      continue;
-    }
-
-    groups.set(key, {
-      key,
-      latitude: image.effectiveLocation.latitude,
-      longitude: image.effectiveLocation.longitude,
-      label: image.effectiveLocation.label,
-      images: [image]
-    });
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) {
+    return "未记录";
   }
 
-  return Array.from(groups.values());
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
 }
-export function MapExplorer({ availableTags, images }: MapExplorerProps) {
-  const [selectedTagId, setSelectedTagId] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const filteredImages = images.filter((image) => {
-    if (selectedTagId && !image.tags.some((tag) => tag.id === selectedTagId)) {
-      return false;
-    }
 
-    const comparisonDate = image.takenAt ?? image.createdAt;
+function offsetOverlappingMarkers(images: MapImage[], publicBaseUrl: string): MapMarkerImage[] {
+  const locationCounts = new Map<string, number>();
 
-    if (fromDate && comparisonDate < fromDate) {
-      return false;
-    }
+  return images.map((image) => {
+    const key = [
+      image.effectiveLocation.latitude.toFixed(5),
+      image.effectiveLocation.longitude.toFixed(5)
+    ].join(":");
+    const index = locationCounts.get(key) ?? 0;
+    locationCounts.set(key, index + 1);
+    const offset = index * 0.00008;
 
-    if (toDate && comparisonDate > `${toDate}T23:59:59`) {
-      return false;
-    }
-
-    return true;
+    return {
+      id: image.id,
+      title: image.filename,
+      latitude: image.effectiveLocation.latitude + offset,
+      longitude: image.effectiveLocation.longitude + offset,
+      thumbnailUrl: buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })
+    };
   });
-  const groupedLocations = groupImagesByLocation(filteredImages);
-  const mapLocations = groupedLocations.map((location) => ({
-    key: location.key,
-    latitude: location.latitude,
-    longitude: location.longitude,
-    label: location.label,
-    imageCount: location.images.length
-  }));
-  const [selectedLocationKey, setSelectedLocationKey] = useState<string | null>(groupedLocations[0]?.key ?? null);
-  const selectedLocation =
-    groupedLocations.find((location) => location.key === selectedLocationKey) ?? groupedLocations[0] ?? null;
+}
+
+function MetadataRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3 border-b border-border py-2 text-xs">
+      <span className="text-[color:var(--text-faint)]">{label}</span>
+      <span className="min-w-0 break-words text-[color:var(--text-secondary)]">{value}</span>
+    </div>
+  );
+}
+
+export function MapExplorer({ images, publicBaseUrl }: MapExplorerProps) {
+  const router = useRouter();
+  const markers = useMemo(() => offsetOverlappingMarkers(images, publicBaseUrl), [images, publicBaseUrl]);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(images[0]?.id ?? null);
+  const selectedImage =
+    images.find((image) => image.id === selectedImageId) ?? images[0] ?? null;
 
   useEffect(() => {
-    setSelectedLocationKey((currentKey) =>
-      currentKey && groupedLocations.some((location) => location.key === currentKey)
-        ? currentKey
-        : groupedLocations[0]?.key ?? null
+    setSelectedImageId((currentId) =>
+      currentId && images.some((image) => image.id === currentId) ? currentId : images[0]?.id ?? null
     );
-  }, [groupedLocations]);
+  }, [images]);
+
+  const openSelectedImage = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (!selectedImage) {
+        return;
+      }
+
+      const rect = event.currentTarget.getBoundingClientRect();
+
+      try {
+        sessionStorage.setItem(
+          `image-rect-${selectedImage.id}`,
+          JSON.stringify({
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height
+          })
+        );
+        sessionStorage.setItem("image-detail-return-url", "/dashboard/map");
+      } catch {
+        // Detail navigation still works if sessionStorage is unavailable.
+      }
+
+      router.push(`/dashboard/library/${selectedImage.id}`);
+    },
+    [router, selectedImage]
+  );
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 rounded-[32px] border border-border bg-card p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1fr)_180px_180px]">
-        <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">标签筛选</span>
-          <select
-            value={selectedTagId}
-            onChange={(event) => setSelectedTagId(event.target.value)}
-            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
-          >
-            <option value="">全部标签</option>
-            {availableTags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">起始日期</span>
-          <input
-            value={fromDate}
-            onChange={(event) => setFromDate(event.target.value)}
-            type="date"
-            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
+    <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <section className="min-h-0 overflow-hidden rounded-md border border-border bg-card p-2 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <div className="h-[calc(100vh-8rem)] min-h-[420px] overflow-hidden rounded-md">
+          <ClientMapCanvas
+            defaultCenter={defaultCenter}
+            images={markers}
+            onSelectImage={setSelectedImageId}
           />
-        </label>
-
-        <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">截止日期</span>
-          <input
-            value={toDate}
-            onChange={(event) => setToDate(event.target.value)}
-            type="date"
-            className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-white/90 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
-          />
-        </label>
+        </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_420px]">
-        <section className="overflow-hidden rounded-[32px] border border-border bg-card p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <div className="h-[620px] overflow-hidden rounded-[28px]">
-            <ClientMapCanvas
-              defaultCenter={defaultCenter}
-              locations={mapLocations}
-              onSelectLocation={setSelectedLocationKey}
-            />
-          </div>
-        </section>
+      <aside className="min-h-0 rounded-md border border-border bg-card p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <div className="border-b border-border pb-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[color:var(--text-faint)]">
+            位置面板
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-[color:var(--text-primary)]">
+            {selectedImage?.filename ?? "暂无地理标记图片"}
+          </h3>
+          <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
+            {selectedImage
+              ? `${selectedImage.effectiveLocation.latitude.toFixed(5)}, ${selectedImage.effectiveLocation.longitude.toFixed(5)}`
+              : "图库中没有可展示在地图上的图片。"}
+          </p>
+        </div>
 
-        <aside className="rounded-[32px] border border-border bg-card p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <div className="border-b border-border pb-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[color:var(--text-faint)]">位置面板</p>
-            <h3 className="mt-2 text-2xl font-semibold text-[color:var(--text-primary)]">
-              {selectedLocation?.label || "已选位置"}
-            </h3>
-            <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
-              {selectedLocation
-                ? `${selectedLocation.latitude.toFixed(5)}, ${selectedLocation.longitude.toFixed(5)}`
-                : "点击标记查看该位置的图片"}
-            </p>
-          </div>
-
+        {selectedImage ? (
           <div className="mt-5 space-y-4">
-            {selectedLocation ? (
-              selectedLocation.images.map((image) => (
-                <article
-                  key={image.id}
-                  className="space-y-4 rounded-[28px] border border-border bg-surface p-4"
-                >
-                  <div
-                    className="aspect-[4/3] rounded-[24px] bg-card bg-cover bg-center"
-                    style={{ backgroundImage: `url("${buildOssImageUrl(image.objectKey, "thumb")}")` }}
-                  />
+            <button
+              type="button"
+              onClick={openSelectedImage}
+              className="group aspect-square w-full overflow-hidden rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-[color:var(--text-muted)]"
+            >
+              <img
+                src={buildOssImageUrl(selectedImage.objectKey, "thumb", { publicBaseUrl })}
+                alt={selectedImage.filename}
+                className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03] group-hover:opacity-85"
+              />
+            </button>
 
-                  <div>
-                    <h4 className="font-semibold text-[color:var(--text-primary)]">{image.filename}</h4>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[color:var(--text-faint)]">
-                      Source: {image.effectiveLocation.source === "manual" ? "手动覆盖" : "EXIF GPS"}
-                    </p>
-                  </div>
-
-                  <LocationEditor
-                    imageId={image.id}
-                    fallbackLocation={
-                      image.exifLocation?.latitude != null && image.exifLocation.longitude != null
-                        ? {
-                            latitude: image.exifLocation.latitude,
-                            longitude: image.exifLocation.longitude,
-                            label: null
-                          }
-                        : null
-                    }
-                    overrideLocation={image.overrideLocation}
-                  />
-                </article>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-[color:var(--text-muted)]">
-                没有符合当前筛选条件的地理标记图片。
-              </div>
-            )}
+            <div>
+              <MetadataRow label="文件名" value={selectedImage.filename} />
+              <MetadataRow label="拍摄时间" value={formatDateTime(selectedImage.takenAt)} />
+              <MetadataRow label="上传时间" value={formatDateTime(selectedImage.createdAt)} />
+              <MetadataRow
+                label="标签"
+                value={selectedImage.tags.map((tag) => tag.name).join("、") || "未标记"}
+              />
+              <MetadataRow
+                label="坐标来源"
+                value={selectedImage.effectiveLocation.source === "manual" ? "手动覆盖" : "EXIF GPS"}
+              />
+              <MetadataRow
+                label="纬度"
+                value={selectedImage.effectiveLocation.latitude.toFixed(6)}
+              />
+              <MetadataRow
+                label="经度"
+                value={selectedImage.effectiveLocation.longitude.toFixed(6)}
+              />
+              <MetadataRow
+                label="位置标签"
+                value={selectedImage.effectiveLocation.label || "未设置"}
+              />
+            </div>
           </div>
-        </aside>
-      </div>
+        ) : (
+          <div className="mt-5 rounded-md border border-dashed border-border px-6 py-12 text-center text-sm text-[color:var(--text-muted)]">
+            没有可显示的地理标记图片。
+          </div>
+        )}
+      </aside>
     </div>
   );
 }
