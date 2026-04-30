@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Images, X } from "lucide-react";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 import {
@@ -168,9 +169,12 @@ export function SharePhotoSelector({ images, publicBaseUrl, tags }: SharePhotoSe
                             : "border-white/[0.06] hover:border-white/20"
                         ].join(" ")}
                       >
-                        <img
+                        <Image
                           src={buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}
                           alt={image.filename}
+                          fill
+                          sizes="(min-width: 1280px) 14vw, (min-width: 768px) 20vw, (min-width: 640px) 25vw, 33vw"
+                          unoptimized
                           className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                         />
                         <span

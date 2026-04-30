@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 import type { MapMarkerImage } from "@/components/map-canvas";
@@ -156,11 +157,14 @@ export function MapExplorer({ images, publicBaseUrl }: MapExplorerProps) {
             <button
               type="button"
               onClick={openSelectedImage}
-              className="group aspect-square w-full overflow-hidden rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-[color:var(--text-muted)]"
+              className="group relative aspect-square w-full overflow-hidden rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-[color:var(--text-muted)]"
             >
-              <img
+              <Image
                 src={buildOssImageUrl(selectedImage.objectKey, "thumb", { publicBaseUrl })}
                 alt={selectedImage.filename}
+                fill
+                sizes="(min-width: 1280px) 400px, 100vw"
+                unoptimized
                 className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03] group-hover:opacity-85"
               />
             </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Minus, Plus, RefreshCw, Trash2, X, ZoomIn } from "lucide-react";
@@ -449,9 +450,12 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black lg:flex-row">
       <div className="absolute inset-0 overflow-hidden">
-        <img
+        <Image
           src={previewUrl}
           alt=""
+          fill
+          sizes="100vw"
+          unoptimized
           className="h-full w-full object-cover"
           style={{
             filter: "blur(64px) saturate(1.15)",
@@ -541,10 +545,14 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
                   transition: dragRef.current.isDragging ? "none" : "transform 120ms ease-out"
                 }}
               >
-                <img
+                <Image
                   ref={mainImageRef}
                   src={previewUrl}
                   alt={image.filename}
+                  width={image.width ?? image.exif?.width ?? 1600}
+                  height={image.height ?? image.exif?.height ?? 1200}
+                  sizes="(min-width: 1024px) 66vw, 90vw"
+                  unoptimized
                   className="block max-h-[82vh] max-w-[90vw] rounded-lg object-contain shadow-2xl lg:max-h-[88vh] lg:max-w-[66vw]"
                   draggable={false}
                   onLoad={handleMainImageReady}

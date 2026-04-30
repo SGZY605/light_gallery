@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { buildOssImageUrl } from "@/lib/oss/urls";
@@ -11,6 +12,8 @@ type ShareGalleryImage = {
   objectKey: string;
   filename: string;
   description?: string | null;
+  width?: number | null;
+  height?: number | null;
   tags: Array<{ id: string; name: string; slug: string }>;
   exif?: {
     cameraMake?: string | null;
@@ -98,10 +101,14 @@ export function ShareGallery({
       {/* Masonry grid */}
       <div className="columns-2 md:columns-3 xl:columns-4 gap-0.5">
         {images.map((image, index) => (
-          <img
+          <Image
             key={image.id}
             src={buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}
             alt={image.filename}
+            width={image.width ?? 480}
+            height={image.height ?? 480}
+            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+            unoptimized
             loading="lazy"
             onClick={() => openLightbox(index)}
             className="w-full h-auto break-inside-avoid mb-0.5 cursor-pointer hover:opacity-80 transition-opacity block"
@@ -161,17 +168,24 @@ export function ShareGallery({
                 <ChevronLeft className="size-3.5" />
               </button>
 
-              <motion.img
+              <motion.div
                 key={activeImage.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.15 }}
-                src={buildOssImageUrl(activeImage.objectKey, "preview", {
-                  publicBaseUrl
-                })}
-                alt={activeImage.filename}
-                className="max-h-full max-w-full object-contain"
-              />
+                className="relative h-full w-full"
+              >
+                <Image
+                  src={buildOssImageUrl(activeImage.objectKey, "preview", {
+                    publicBaseUrl
+                  })}
+                  alt={activeImage.filename}
+                  fill
+                  sizes="100vw"
+                  unoptimized
+                  className="object-contain"
+                />
+              </motion.div>
 
               {/* Next button */}
               <button
@@ -207,17 +221,20 @@ export function ShareGallery({
                   key={image.id}
                   type="button"
                   onClick={() => setActiveIndex(index)}
-                  className={`shrink-0 h-10 w-16 overflow-hidden rounded transition ${
+                  className={`relative shrink-0 h-10 w-16 overflow-hidden rounded transition ${
                     index === activeIndex
                       ? "ring-1 ring-white/40 opacity-100"
                       : "opacity-40 hover:opacity-70"
                   }`}
                 >
-                  <img
+                  <Image
                     src={buildOssImageUrl(image.objectKey, "thumb", {
                       publicBaseUrl
                     })}
                     alt={image.filename}
+                    fill
+                    sizes="64px"
+                    unoptimized
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />

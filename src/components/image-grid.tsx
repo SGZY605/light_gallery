@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { clampLibraryColumnCount } from "@/lib/library/columns";
 import { buildOssImageUrl } from "@/lib/oss/urls";
@@ -48,9 +49,8 @@ export function ImageGrid({
   const resolvedColumnCount = clampLibraryColumnCount(columnCount);
 
   const handleImageClick = useCallback(
-    (index: number, e: React.MouseEvent<HTMLImageElement>) => {
-      const img = e.currentTarget;
-      const rect = img.getBoundingClientRect();
+    (index: number, event: React.MouseEvent<HTMLButtonElement>) => {
+      const rect = event.currentTarget.getBoundingClientRect();
 
       try {
         sessionStorage.setItem(
@@ -87,12 +87,21 @@ export function ImageGrid({
     <div className="gap-0.5" style={{ columnCount: resolvedColumnCount }}>
       {images.map((image, index) => (
         <div key={image.id} className="mb-0.5 break-inside-avoid">
-          <img
-            src={buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}
-            alt={image.filename}
-            className="h-auto w-full cursor-pointer transition-opacity hover:opacity-80"
-            onClick={(e) => handleImageClick(index, e)}
-          />
+          <button
+            type="button"
+            className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left transition-opacity hover:opacity-80"
+            onClick={(event) => handleImageClick(index, event)}
+          >
+            <Image
+              src={buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}
+              alt={image.filename}
+              width={image.width ?? 480}
+              height={image.height ?? 480}
+              sizes={`${Math.ceil(100 / resolvedColumnCount)}vw`}
+              unoptimized
+              className="h-auto w-full"
+            />
+          </button>
         </div>
       ))}
     </div>

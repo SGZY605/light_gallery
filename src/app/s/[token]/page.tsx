@@ -102,6 +102,8 @@ export default async function PublicSharePage({ params }: SharePageProps) {
             objectKey: image.objectKey,
             filename: image.filename,
             description: image.description,
+            width: image.width,
+            height: image.height,
             exif: image.exif,
             tags: image.tags.map(({ tag }) => ({
               id: tag.id,

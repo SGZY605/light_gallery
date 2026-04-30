@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import NextImage from "next/image";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parse } from "exifr";
@@ -465,9 +466,12 @@ export function UploadDropzone({ availableTags }: UploadDropzoneProps) {
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-white/[0.03]">
-                      <img
+                      <NextImage
                         src={item.thumbnailUrl}
                         alt={item.filename}
+                        width={item.width ?? 96}
+                        height={item.height ?? 96}
+                        unoptimized
                         className="h-full w-full object-cover"
                       />
                     </div>

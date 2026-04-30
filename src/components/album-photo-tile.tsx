@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 
@@ -58,9 +59,12 @@ export function AlbumPhotoTile({
         className
       ].join(" ")}
     >
-      <img
+      <Image
         src={buildOssImageUrl(objectKey, "thumb", { publicBaseUrl })}
         alt={filename}
+        fill
+        sizes="(min-width: 1536px) 12.5vw, (min-width: 1280px) 14vw, (min-width: 768px) 20vw, (min-width: 640px) 25vw, 33vw"
+        unoptimized
         className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03] group-hover:opacity-85"
       />
     </button>
