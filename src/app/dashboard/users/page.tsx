@@ -157,55 +157,45 @@ async function deleteUserAction(formData: FormData) {
     return;
   }
 
-  const [targetUser, protectedAdmin] = await Promise.all([
-    db.user.findUnique({
-      where: {
-        id: userId
-      },
-      select: {
-        id: true,
-        email: true
-      }
-    }),
-    db.user.findUnique({
-      where: {
-        email: PROTECTED_ADMIN_EMAIL
-      },
-      select: {
-        id: true
-      }
-    })
-  ]);
+  const targetUser = await db.user.findUnique({
+    where: {
+      id: userId
+    },
+    select: {
+      id: true,
+      email: true
+    }
+  });
 
-  if (!targetUser || !protectedAdmin || !canDeleteUserAccount(targetUser.email)) {
+  if (!targetUser || !canDeleteUserAccount(targetUser.email)) {
     return;
   }
 
   await db.$transaction(async (tx) => {
     await Promise.all([
-      tx.image.updateMany({
-        where: { uploaderId: targetUser.id },
-        data: { uploaderId: protectedAdmin.id }
+      tx.userOssConfig.deleteMany({
+        where: { userId: targetUser.id }
       }),
-      tx.tag.updateMany({
-        where: { creatorId: targetUser.id },
-        data: { creatorId: protectedAdmin.id }
+      tx.imageLocationOverride.deleteMany({
+        where: { updatedById: targetUser.id }
       }),
-      tx.share.updateMany({
-        where: { creatorId: targetUser.id },
-        data: { creatorId: protectedAdmin.id }
+      tx.auditLog.deleteMany({
+        where: { actorId: targetUser.id }
+      })
+    ]);
+
+    await Promise.all([
+      tx.uploadSession.deleteMany({
+        where: { creatorId: targetUser.id }
       }),
-      tx.uploadSession.updateMany({
-        where: { creatorId: targetUser.id },
-        data: { creatorId: protectedAdmin.id }
+      tx.share.deleteMany({
+        where: { creatorId: targetUser.id }
       }),
-      tx.imageLocationOverride.updateMany({
-        where: { updatedById: targetUser.id },
-        data: { updatedById: protectedAdmin.id }
+      tx.tag.deleteMany({
+        where: { creatorId: targetUser.id }
       }),
-      tx.auditLog.updateMany({
-        where: { actorId: targetUser.id },
-        data: { actorId: protectedAdmin.id }
+      tx.image.deleteMany({
+        where: { uploaderId: targetUser.id }
       })
     ]);
 
