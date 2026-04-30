@@ -1,8 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { AlbumsBrowser } from "@/components/albums-browser";
+import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
+import { requireUser } from "@/lib/auth/session";
 import { parseAlbumsView } from "@/lib/albums/view";
 import { db } from "@/lib/db";
-import { getOssConfig } from "@/lib/oss/config";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +26,14 @@ function asArray(value: string | string[] | undefined): string[] {
 }
 
 export default async function DashboardAlbumsPage({ searchParams }: AlbumsPageProps) {
+  const user = await requireUser();
   const resolvedSearchParams = (await searchParams) ?? {};
   const view = parseAlbumsView(resolvedSearchParams.view);
   const selectedTagIds = Array.from(new Set(asArray(resolvedSearchParams.tag)));
   const fromDate = asSingleValue(resolvedSearchParams.from);
   const toDate = asSingleValue(resolvedSearchParams.to);
   const activeShareWhere: Prisma.ShareWhereInput = {
+    creatorId: user.id,
     revoked: false,
     OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }]
   };
@@ -38,7 +42,8 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
     await Promise.all([
       db.image.findMany({
         where: {
-          deletedAt: null
+          deletedAt: null,
+          uploaderId: user.id
         },
         orderBy: {
           createdAt: "desc"
@@ -48,27 +53,41 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
           tags: {
             include: {
               tag: true
+            },
+            where: {
+              tag: {
+                creatorId: user.id
+              }
             }
           }
         }
       }),
       db.tag.findMany({
+        where: {
+          creatorId: user.id
+        },
         orderBy: {
           name: "asc"
         }
       }),
       db.image.count({
         where: {
-          deletedAt: null
+          deletedAt: null,
+          uploaderId: user.id
         }
       }),
-      db.tag.count(),
+      db.tag.count({
+        where: {
+          creatorId: user.id
+        }
+      }),
       db.share.count({
         where: activeShareWhere
       }),
       db.image.count({
         where: {
           deletedAt: null,
+          uploaderId: user.id,
           exif: {
             takenAt: {
               not: null
@@ -78,7 +97,13 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
       })
     ]);
 
-  const publicBaseUrl = getOssConfig().publicBaseUrl;
+  const ossConfig = await resolveUserOssConfig({ user });
+
+  if (!ossConfig) {
+    return <OssConfigRequiredNotice />;
+  }
+
+  const publicBaseUrl = ossConfig.publicBaseUrl;
 
   return (
     <AlbumsBrowser

@@ -1,14 +1,18 @@
 import { MapExplorer } from "@/components/map-explorer";
+import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
+import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { resolveEffectiveLocation } from "@/lib/images/location";
-import { getOssConfig } from "@/lib/oss/config";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardMapPage() {
+  const user = await requireUser();
   const images = await db.image.findMany({
     where: {
-      deletedAt: null
+      deletedAt: null,
+      uploaderId: user.id
     },
     orderBy: {
       createdAt: "desc"
@@ -19,6 +23,11 @@ export default async function DashboardMapPage() {
       tags: {
         include: {
           tag: true
+        },
+        where: {
+          tag: {
+            creatorId: user.id
+          }
         }
       }
     }
@@ -50,7 +59,13 @@ export default async function DashboardMapPage() {
       };
     })
     .filter((image): image is NonNullable<typeof image> => image !== null);
-  const publicBaseUrl = getOssConfig().publicBaseUrl;
+  const ossConfig = await resolveUserOssConfig({ user });
+
+  if (!ossConfig) {
+    return <OssConfigRequiredNotice />;
+  }
+
+  const publicBaseUrl = ossConfig.publicBaseUrl;
 
   return (
     <div className="flex min-h-0 flex-col gap-4">

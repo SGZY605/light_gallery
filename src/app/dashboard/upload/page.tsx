@@ -1,8 +1,13 @@
 import { UploadDropzone } from "@/components/upload-dropzone";
+import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 
 export default async function DashboardUploadPage() {
+  const user = await requireUser();
   const tags = await db.tag.findMany({
+    where: {
+      creatorId: user.id
+    },
     orderBy: {
       name: "asc"
     }

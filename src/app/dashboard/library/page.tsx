@@ -1,8 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { ImageGrid } from "@/components/image-grid";
 import { LibraryFilterBar } from "@/components/library-filter-bar";
+import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
+import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { getOssConfig } from "@/lib/oss/config";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 type LibraryPageProps = {
   searchParams?: Promise<{
@@ -20,12 +22,14 @@ function asArray(value: string | string[] | undefined): string[] {
 }
 
 export default async function DashboardLibraryPage({ searchParams }: LibraryPageProps) {
+  const user = await requireUser();
   const resolvedSearchParams = (await searchParams) ?? {};
   const query = asSingleValue(resolvedSearchParams.q).trim();
   const selectedTagIds = Array.from(new Set(asArray(resolvedSearchParams.tag)));
 
   const where: Prisma.ImageWhereInput = {
     deletedAt: null,
+    uploaderId: user.id,
     ...(query
       ? {
           OR: [
@@ -58,18 +62,32 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
         tags: {
           include: {
             tag: true
+          },
+          where: {
+            tag: {
+              creatorId: user.id
+            }
           }
         }
       }
     }),
     db.tag.findMany({
+      where: {
+        creatorId: user.id
+      },
       orderBy: {
         name: "asc"
       }
     })
   ]);
 
-  const publicBaseUrl = getOssConfig().publicBaseUrl;
+  const ossConfig = await resolveUserOssConfig({ user });
+
+  if (!ossConfig) {
+    return <OssConfigRequiredNotice />;
+  }
+
+  const publicBaseUrl = ossConfig.publicBaseUrl;
 
   return (
     <div className="space-y-4">

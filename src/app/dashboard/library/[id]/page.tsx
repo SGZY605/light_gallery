@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { getOssConfig } from "@/lib/oss/config";
 import { ImageDetailView } from "@/components/image-detail-view";
+import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
+import { requireUser } from "@/lib/auth/session";
+import { db } from "@/lib/db";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 type ImageDetailPageProps = {
   params: Promise<{
@@ -10,13 +12,15 @@ type ImageDetailPageProps = {
 };
 
 export default async function ImageDetailPage({ params }: ImageDetailPageProps) {
+  const user = await requireUser();
   const { id } = await params;
 
   const [image, allTags] = await Promise.all([
-    db.image.findUnique({
+    db.image.findFirst({
       where: {
         id,
-        deletedAt: null
+        deletedAt: null,
+        uploaderId: user.id
       },
       include: {
         exif: true,
@@ -24,11 +28,19 @@ export default async function ImageDetailPage({ params }: ImageDetailPageProps) 
         tags: {
           include: {
             tag: true
+          },
+          where: {
+            tag: {
+              creatorId: user.id
+            }
           }
         }
       }
     }),
     db.tag.findMany({
+      where: {
+        creatorId: user.id
+      },
       orderBy: {
         name: "asc"
       }
@@ -39,7 +51,13 @@ export default async function ImageDetailPage({ params }: ImageDetailPageProps) 
     notFound();
   }
 
-  const publicBaseUrl = getOssConfig().publicBaseUrl;
+  const ossConfig = await resolveUserOssConfig({ user });
+
+  if (!ossConfig) {
+    return <OssConfigRequiredNotice />;
+  }
+
+  const publicBaseUrl = ossConfig.publicBaseUrl;
 
   return (
     <ImageDetailView
