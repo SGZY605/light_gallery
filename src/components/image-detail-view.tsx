@@ -104,6 +104,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
   const previewUrl = buildOssImageUrl(image.objectKey, "preview", { publicBaseUrl });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageBoundsRef = useRef<HTMLDivElement | null>(null);
+  const mainImageRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<DragState>(getDefaultDragState());
   const returnUrlRef = useRef(DEFAULT_RETURN_URL);
   const hasUnsavedChangesRef = useRef(false);
@@ -128,6 +129,11 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
       height: rect.height
     });
   }, []);
+
+  const handleMainImageReady = useCallback(() => {
+    setImageLoaded(true);
+    updateBaseImageSize();
+  }, [updateBaseImageSize]);
 
   useEffect(() => {
     hasUnsavedChangesRef.current = hasUnsavedChanges;
@@ -197,6 +203,14 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
     setImageLoaded(false);
     dragRef.current = getDefaultDragState();
   }, [image.id]);
+
+  useEffect(() => {
+    const imageElement = mainImageRef.current;
+
+    if (imageElement?.complete && imageElement.naturalWidth > 0) {
+      handleMainImageReady();
+    }
+  }, [handleMainImageReady, previewUrl]);
 
   const isPannable = useMemo(() => {
     if (!containerRef.current || baseImageSize.width === 0 || baseImageSize.height === 0) {
@@ -460,14 +474,12 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
                 }}
               >
                 <img
+                  ref={mainImageRef}
                   src={previewUrl}
                   alt={image.filename}
                   className="block max-h-[82vh] max-w-[90vw] rounded-lg object-contain shadow-2xl lg:max-h-[88vh] lg:max-w-[66vw]"
                   draggable={false}
-                  onLoad={() => {
-                    setImageLoaded(true);
-                    updateBaseImageSize();
-                  }}
+                  onLoad={handleMainImageReady}
                   style={{ opacity: imageLoaded ? 1 : 0, transition: "opacity 0.18s ease-out" }}
                 />
               </div>
