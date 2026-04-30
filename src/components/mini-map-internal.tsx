@@ -112,7 +112,7 @@ export function MiniMapInternal({
       markerRef.current = null;
       delete (container as HTMLDivElement & { _leaflet_id?: number })._leaflet_id;
     };
-  }, [latitude, longitude]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -136,8 +136,6 @@ export function MiniMapInternal({
 
         markerRef.current = marker;
       }
-
-      map.setView([latitude, longitude], Math.max(map.getZoom(), 10));
       return;
     }
 
@@ -145,8 +143,6 @@ export function MiniMapInternal({
       markerRef.current.remove();
       markerRef.current = null;
     }
-
-    map.setView(DEFAULT_CENTER, 4);
   }, [latitude, longitude]);
 
   return (

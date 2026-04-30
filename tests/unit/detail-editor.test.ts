@@ -147,6 +147,39 @@ describe("detail editor helpers", () => {
     });
   });
 
+  it("rejects partial coordinates when latitude is zero", () => {
+    expect(
+      validateDetailDraftLocation({
+        latitude: "0",
+        longitude: "",
+        label: ""
+      })
+    ).toEqual({
+      ok: false,
+      errors: {
+        latitude: undefined,
+        longitude: "经度不能为空"
+      }
+    });
+  });
+
+  it("accepts zero coordinates as valid location", () => {
+    expect(
+      validateDetailDraftLocation({
+        latitude: "0",
+        longitude: "0",
+        label: ""
+      })
+    ).toEqual({
+      ok: true,
+      value: {
+        latitude: 0,
+        longitude: 0,
+        label: undefined
+      }
+    });
+  });
+
   it("summarizes structured metadata for the sidebar", () => {
     expect(
       summarizeStructuredMetadata({

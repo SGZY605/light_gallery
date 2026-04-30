@@ -431,7 +431,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
         requestClose();
       }
 
-      if (event.key === "0") {
+      if (event.key === "0" && !(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) {
         event.preventDefault();
         resetZoom();
       }

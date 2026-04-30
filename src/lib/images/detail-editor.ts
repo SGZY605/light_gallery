@@ -206,19 +206,19 @@ export function validateDetailDraftLocation(location: DraftLocation):
     } {
   const normalizedLocation = normalizeDraftLocation(location);
 
-  if (!normalizedLocation.latitude && !normalizedLocation.longitude) {
+  if (normalizedLocation.latitude === "" && normalizedLocation.longitude === "") {
     return {
       ok: true,
       value: null
     };
   }
 
-  if (!normalizedLocation.latitude || !normalizedLocation.longitude) {
+  if (normalizedLocation.latitude === "" || normalizedLocation.longitude === "") {
     return {
       ok: false,
       errors: {
-        latitude: normalizedLocation.latitude ? undefined : "纬度不能为空",
-        longitude: normalizedLocation.longitude ? undefined : "经度不能为空"
+        latitude: normalizedLocation.latitude === "" ? "纬度不能为空" : undefined,
+        longitude: normalizedLocation.longitude === "" ? "经度不能为空" : undefined
       }
     };
   }
