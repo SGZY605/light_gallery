@@ -116,10 +116,11 @@ export async function GET(_request: Request, { params }: RouteContext) {
 
   const { id } = await params;
 
-  const image = await db.image.findUnique({
+  const image = await db.image.findFirst({
     where: {
       id,
-      deletedAt: null
+      deletedAt: null,
+      uploaderId: user.id
     },
     include: {
       exif: true,
@@ -161,10 +162,11 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "请求内容无效。" }, { status: 400 });
   }
 
-  const image = await db.image.findUnique({
+  const image = await db.image.findFirst({
     where: {
       id,
-      deletedAt: null
+      deletedAt: null,
+      uploaderId: user.id
     },
     include: {
       tags: {
@@ -185,6 +187,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
   if (tagIds.length > 0) {
     const existingTags = await db.tag.findMany({
       where: {
+        creatorId: user.id,
         id: {
           in: tagIds
         }
@@ -201,7 +204,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
 
   await db.$transaction(async (tx) => {
     await tx.imageTag.deleteMany({
-      where: { imageId: id }
+      where: {
+        imageId: id,
+        image: {
+          uploaderId: user.id
+        }
+      }
     });
 
     if (tagIds.length > 0) {
@@ -234,7 +242,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
       });
     } else {
       await tx.imageLocationOverride.deleteMany({
-        where: { imageId: id }
+        where: {
+          imageId: id,
+          image: {
+            uploaderId: user.id
+          }
+        }
       });
     }
 
@@ -260,10 +273,11 @@ export async function PUT(request: Request, { params }: RouteContext) {
     );
   });
 
-  const updatedImage = await db.image.findUnique({
+  const updatedImage = await db.image.findFirst({
     where: {
       id,
-      deletedAt: null
+      deletedAt: null,
+      uploaderId: user.id
     },
     include: {
       exif: true,

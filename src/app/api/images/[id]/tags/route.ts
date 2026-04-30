@@ -36,8 +36,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "请求内容无效。" }, { status: 400 });
   }
 
-  const image = await db.image.findUnique({
-    where: { id },
+  const image = await db.image.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      uploaderId: user.id
+    },
     select: { id: true }
   });
 
@@ -49,7 +53,10 @@ export async function PUT(request: Request, { params }: RouteContext) {
 
   if (tagIds.length > 0) {
     const existingTags = await db.tag.findMany({
-      where: { id: { in: tagIds } },
+      where: {
+        creatorId: user.id,
+        id: { in: tagIds }
+      },
       select: { id: true }
     });
 
@@ -60,7 +67,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
 
   await db.$transaction(async (tx) => {
     await tx.imageTag.deleteMany({
-      where: { imageId: id }
+      where: {
+        imageId: id,
+        image: {
+          uploaderId: user.id
+        }
+      }
     });
 
     if (tagIds.length > 0) {
@@ -87,8 +99,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
     );
   });
 
-  const updatedImage = await db.image.findUnique({
-    where: { id },
+  const updatedImage = await db.image.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      uploaderId: user.id
+    },
     include: {
       tags: {
         include: { tag: true }

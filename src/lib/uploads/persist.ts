@@ -33,6 +33,7 @@ export async function persistUploadedImage(input: PersistUploadedImageInput, use
     const existingTags = tagIds.length
       ? await tx.tag.findMany({
           where: {
+            creatorId: user.id,
             id: {
               in: tagIds
             }
@@ -98,7 +99,10 @@ export async function persistUploadedImage(input: PersistUploadedImageInput, use
     if (input.uploadItemId) {
       await tx.uploadItem.updateMany({
         where: {
-          id: input.uploadItemId
+          id: input.uploadItemId,
+          session: {
+            creatorId: user.id
+          }
         },
         data: {
           imageId: image.id,

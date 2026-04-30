@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getCurrentUser = vi.fn();
-const imageFindUniqueMock = vi.fn();
+const imageFindFirstMock = vi.fn();
 const imageLocationOverrideUpsertMock = vi.fn();
 const imageLocationOverrideDeleteManyMock = vi.fn();
 const auditLogCreateMock = vi.fn();
@@ -13,7 +13,7 @@ vi.mock("@/lib/auth/session", () => ({
 vi.mock("@/lib/db", () => ({
   db: {
     image: {
-      findUnique: imageFindUniqueMock
+      findFirst: imageFindFirstMock
     },
     imageLocationOverride: {
       upsert: imageLocationOverrideUpsertMock,
@@ -33,7 +33,7 @@ describe("location override route", () => {
       id: "user-1",
       role: "ADMIN"
     });
-    imageFindUniqueMock.mockResolvedValue({ id: "image-1" });
+    imageFindFirstMock.mockResolvedValue({ id: "image-1" });
     imageLocationOverrideUpsertMock.mockResolvedValue({
       imageId: "image-1",
       latitude: 35.6,
@@ -65,6 +65,16 @@ describe("location override route", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(imageFindFirstMock).toHaveBeenCalledWith({
+      where: {
+        id: "image-1",
+        deletedAt: null,
+        uploaderId: "user-1"
+      },
+      select: {
+        id: true
+      }
+    });
     expect(imageLocationOverrideUpsertMock).toHaveBeenCalledWith({
       where: {
         imageId: "image-1"
@@ -97,8 +107,23 @@ describe("location override route", () => {
     expect(response.status).toBe(200);
     expect(imageLocationOverrideDeleteManyMock).toHaveBeenCalledWith({
       where: {
-        imageId: "image-1"
+        imageId: "image-1",
+        image: {
+          uploaderId: "user-1"
+        }
       }
     });
+  });
+
+  it("returns 404 when clearing another user's image location", async () => {
+    imageFindFirstMock.mockResolvedValueOnce(null);
+    const { DELETE } = await import("@/app/api/images/[id]/location/route");
+
+    const response = await DELETE(new Request("http://localhost/api/images/image-2/location", { method: "DELETE" }), {
+      params: Promise.resolve({ id: "image-2" })
+    });
+
+    expect(response.status).toBe(404);
+    expect(imageLocationOverrideDeleteManyMock).not.toHaveBeenCalled();
   });
 });

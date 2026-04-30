@@ -10,17 +10,34 @@ const requestSchema = z.object({
   label: z.string().trim().max(120).optional()
 });
 
+const INVALID_REQUEST = "invalid_request";
+const IMAGE_NOT_FOUND = "image_not_found";
+const UNAUTHORIZED = "unauthorized";
+
 type RouteContext = {
   params: Promise<{
     id: string;
   }>;
 };
 
+async function findOwnedImage(id: string, userId: string) {
+  return db.image.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      uploaderId: userId
+    },
+    select: {
+      id: true
+    }
+  });
+}
+
 export async function PUT(request: Request, { params }: RouteContext) {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ error: "请先登录。" }, { status: 401 });
+    return NextResponse.json({ error: UNAUTHORIZED }, { status: 401 });
   }
 
   const { id } = await params;
@@ -29,26 +46,19 @@ export async function PUT(request: Request, { params }: RouteContext) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "请求内容无效，请输入正确的经纬度。" }, { status: 400 });
+    return NextResponse.json({ error: INVALID_REQUEST }, { status: 400 });
   }
 
   const parsedRequest = requestSchema.safeParse(body);
 
   if (!parsedRequest.success) {
-    return NextResponse.json({ error: "请求内容无效，请输入正确的经纬度。" }, { status: 400 });
+    return NextResponse.json({ error: INVALID_REQUEST }, { status: 400 });
   }
 
-  const image = await db.image.findUnique({
-    where: {
-      id
-    },
-    select: {
-      id: true
-    }
-  });
+  const image = await findOwnedImage(id, user.id);
 
   if (!image) {
-    return NextResponse.json({ error: "未找到对应图片。" }, { status: 404 });
+    return NextResponse.json({ error: IMAGE_NOT_FOUND }, { status: 404 });
   }
 
   const location = await db.imageLocationOverride.upsert({
@@ -94,13 +104,22 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ error: "请先登录。" }, { status: 401 });
+    return NextResponse.json({ error: UNAUTHORIZED }, { status: 401 });
   }
 
   const { id } = await params;
+  const image = await findOwnedImage(id, user.id);
+
+  if (!image) {
+    return NextResponse.json({ error: IMAGE_NOT_FOUND }, { status: 404 });
+  }
+
   await db.imageLocationOverride.deleteMany({
     where: {
-      imageId: id
+      imageId: id,
+      image: {
+        uploaderId: user.id
+      }
     }
   });
 

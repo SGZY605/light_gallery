@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { canUpload } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/session";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 import {
   INVALID_TAGS,
   persistUploadedImage,
@@ -13,6 +14,8 @@ const INVALID_REQUEST = "上传完成请求无效。";
 const UNAUTHORIZED = "请先登录后再完成上传。";
 const FORBIDDEN = "当前账号没有上传图片的权限。";
 const DUPLICATE_OBJECT_KEY = "这个对象键对应的图片已经存在。";
+
+const OSS_CONFIG_REQUIRED = "oss_config_required";
 
 const requestSchema = z.object({
   objectKey: z.string().trim().min(1).max(1024),
@@ -51,6 +54,12 @@ export async function POST(request: Request) {
 
   if (!parsedRequest.success) {
     return NextResponse.json({ error: INVALID_REQUEST }, { status: 400 });
+  }
+
+  const ossConfig = await resolveUserOssConfig({ user });
+
+  if (!ossConfig) {
+    return NextResponse.json({ error: OSS_CONFIG_REQUIRED }, { status: 428 });
   }
 
   try {

@@ -7,6 +7,20 @@ const tagUpsertMock = vi.fn();
 const imageCreateMock = vi.fn();
 const uploadItemUpdateManyMock = vi.fn();
 const auditLogCreateMock = vi.fn();
+const resolveUserOssConfig = vi.fn();
+
+const ossConfig = {
+  accessKeyId: "access-key-id",
+  accessKeySecret: "access-key-secret",
+  allowedMimePrefix: "image/",
+  bucket: "gallery-sgzy",
+  maxUploadBytes: 5 * 1024 * 1024,
+  policyExpiresSeconds: 300,
+  publicBaseUrl: "https://gallery-sgzy.oss-cn-beijing.aliyuncs.com",
+  region: "cn-beijing",
+  uploadBaseUrl: "https://gallery-sgzy.oss-cn-beijing.aliyuncs.com",
+  uploadPrefix: "uploads"
+};
 
 vi.mock("@/lib/auth/session", () => ({
   getCurrentUser
@@ -18,14 +32,20 @@ vi.mock("@/lib/db", () => ({
   }
 }));
 
+vi.mock("@/lib/oss/user-config", () => ({
+  resolveUserOssConfig
+}));
+
 describe("POST /api/uploads/complete", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     getCurrentUser.mockResolvedValue({
+      email: "user@example.com",
       id: "user-1",
       role: "ADMIN"
     });
+    resolveUserOssConfig.mockResolvedValue(ossConfig);
 
     transactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback({
@@ -107,15 +127,21 @@ describe("POST /api/uploads/complete", () => {
     };
 
     expect(response.status).toBe(200);
+    expect(resolveUserOssConfig).toHaveBeenCalledWith({
+      user: expect.objectContaining({
+        id: "user-1"
+      })
+    });
     expect(tagFindManyMock).toHaveBeenCalledWith({
       where: {
+        creatorId: "user-1",
         id: {
           in: ["tag-1"]
         }
       }
     });
     expect(tagUpsertMock).toHaveBeenCalledWith({
-      where: { slug: "travel" },
+      where: { creatorId_slug: { creatorId: "user-1", slug: "travel" } },
       update: { name: "Travel" },
       create: {
         name: "Travel",
@@ -144,7 +170,10 @@ describe("POST /api/uploads/complete", () => {
     );
     expect(uploadItemUpdateManyMock).toHaveBeenCalledWith({
       where: {
-        id: "upload-item-1"
+        id: "upload-item-1",
+        session: {
+          creatorId: "user-1"
+        }
       },
       data: {
         imageId: "image-1",
@@ -172,5 +201,52 @@ describe("POST /api/uploads/complete", () => {
       { id: "tag-1", name: "family", slug: "family" },
       { id: "tag-2", name: "Travel", slug: "travel" }
     ]);
+  });
+
+  it("rejects completion when the user has no usable OSS config", async () => {
+    resolveUserOssConfig.mockResolvedValue(null);
+    const { POST } = await import("@/app/api/uploads/complete/route");
+
+    const response = await POST(
+      new Request("http://localhost/api/uploads/complete", {
+        method: "POST",
+        body: JSON.stringify({
+          objectKey: "uploads/2026/04/demo.jpg",
+          filename: "demo.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    );
+
+    expect(response.status).toBe(428);
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects tag ids that do not belong to the current user", async () => {
+    tagFindManyMock.mockResolvedValue([]);
+    const { POST } = await import("@/app/api/uploads/complete/route");
+
+    const response = await POST(
+      new Request("http://localhost/api/uploads/complete", {
+        method: "POST",
+        body: JSON.stringify({
+          objectKey: "uploads/2026/04/demo.jpg",
+          filename: "demo.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024,
+          tagIds: ["tag-1"]
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(imageCreateMock).not.toHaveBeenCalled();
   });
 });

@@ -8,6 +8,20 @@ const imageCreateMock = vi.fn();
 const uploadItemUpdateManyMock = vi.fn();
 const auditLogCreateMock = vi.fn();
 const fetchMock = vi.fn();
+const resolveUserOssConfig = vi.fn();
+
+const ossConfig = {
+  accessKeyId: "access-key-id",
+  accessKeySecret: "access-key-secret",
+  allowedMimePrefix: "image/",
+  bucket: "gallery-sgzy",
+  maxUploadBytes: 5 * 1024 * 1024,
+  policyExpiresSeconds: 300,
+  publicBaseUrl: "https://gallery-sgzy.oss-cn-beijing.aliyuncs.com",
+  region: "cn-beijing",
+  uploadBaseUrl: "https://gallery-sgzy.oss-cn-beijing.aliyuncs.com",
+  uploadPrefix: "uploads"
+};
 
 vi.mock("@/lib/auth/session", () => ({
   getCurrentUser
@@ -19,19 +33,8 @@ vi.mock("@/lib/db", () => ({
   }
 }));
 
-vi.mock("@/lib/oss/config", () => ({
-  getOssConfig: () => ({
-    accessKeyId: "access-key-id",
-    accessKeySecret: "access-key-secret",
-    allowedMimePrefix: "image/",
-    bucket: "gallery-sgzy",
-    maxUploadBytes: 5 * 1024 * 1024,
-    policyExpiresSeconds: 300,
-    publicBaseUrl: "https://gallery-sgzy.oss-cn-beijing.aliyuncs.com",
-    region: "cn-beijing",
-    uploadBaseUrl: "https://gallery-sgzy.oss-cn-beijing.aliyuncs.com",
-    uploadPrefix: "uploads"
-  })
+vi.mock("@/lib/oss/user-config", () => ({
+  resolveUserOssConfig
 }));
 
 describe("POST /api/uploads/proxy", () => {
@@ -40,9 +43,11 @@ describe("POST /api/uploads/proxy", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     getCurrentUser.mockResolvedValue({
+      email: "user@example.com",
       id: "user-1",
       role: "ADMIN"
     });
+    resolveUserOssConfig.mockResolvedValue(ossConfig);
 
     transactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback({
@@ -105,6 +110,11 @@ describe("POST /api/uploads/proxy", () => {
     const result = (await response.json()) as { image: { id: string; objectKey: string } };
 
     expect(response.status).toBe(200);
+    expect(resolveUserOssConfig).toHaveBeenCalledWith({
+      user: expect.objectContaining({
+        id: "user-1"
+      })
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       "https://gallery-sgzy.oss-cn-beijing.aliyuncs.com",
       expect.objectContaining({
@@ -130,5 +140,75 @@ describe("POST /api/uploads/proxy", () => {
     );
     expect(result.image.id).toBe("image-1");
     expect(result.image.objectKey).toMatch(/^uploads\/\d{4}\/\d{2}\/[a-f0-9]+-image\.png$/);
+  });
+
+  it("rejects proxy uploads when the user has no usable OSS config", async () => {
+    resolveUserOssConfig.mockResolvedValue(null);
+    const { POST } = await import("@/app/api/uploads/proxy/route");
+    const formData = new FormData();
+    const file = new File([new Uint8Array([137, 80, 78, 71])], "avatar.png", {
+      type: "image/png"
+    });
+
+    formData.append("file", file);
+
+    const response = await POST(
+      new Request("http://localhost/api/uploads/proxy", {
+        method: "POST",
+        body: formData
+      })
+    );
+
+    expect(response.status).toBe(428);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it("signs direct uploads with the current user's OSS config", async () => {
+    const { POST } = await import("@/app/api/uploads/sign/route");
+
+    const response = await POST(
+      new Request("http://localhost/api/uploads/sign", {
+        method: "POST",
+        body: JSON.stringify({
+          filename: "demo.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    );
+    const result = (await response.json()) as { uploadUrl: string };
+
+    expect(response.status).toBe(200);
+    expect(resolveUserOssConfig).toHaveBeenCalledWith({
+      user: expect.objectContaining({
+        id: "user-1"
+      })
+    });
+    expect(result.uploadUrl).toBe(ossConfig.uploadBaseUrl);
+  });
+
+  it("rejects direct upload signing when the user has no usable OSS config", async () => {
+    resolveUserOssConfig.mockResolvedValue(null);
+    const { POST } = await import("@/app/api/uploads/sign/route");
+
+    const response = await POST(
+      new Request("http://localhost/api/uploads/sign", {
+        method: "POST",
+        body: JSON.stringify({
+          filename: "demo.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    );
+
+    expect(response.status).toBe(428);
   });
 });

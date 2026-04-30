@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getCurrentUser = vi.fn();
-const imageFindUniqueMock = vi.fn();
+const imageFindFirstMock = vi.fn();
 const tagFindManyMock = vi.fn();
 const transactionMock = vi.fn();
 const imageTagDeleteManyMock = vi.fn();
@@ -17,7 +17,7 @@ vi.mock("@/lib/auth/session", () => ({
 vi.mock("@/lib/db", () => ({
   db: {
     image: {
-      findUnique: imageFindUniqueMock
+      findFirst: imageFindFirstMock
     },
     tag: {
       findMany: tagFindManyMock
@@ -35,7 +35,7 @@ describe("PUT /api/images/[id]", () => {
       role: "ADMIN"
     });
 
-    imageFindUniqueMock
+    imageFindFirstMock
       .mockResolvedValueOnce({
         id: "image-1",
         deletedAt: null,
@@ -109,8 +109,34 @@ describe("PUT /api/images/[id]", () => {
     };
 
     expect(response.status).toBe(200);
+    expect(imageFindFirstMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: {
+          id: "image-1",
+          deletedAt: null,
+          uploaderId: "user-1"
+        }
+      })
+    );
+    expect(tagFindManyMock).toHaveBeenCalledWith({
+      where: {
+        creatorId: "user-1",
+        id: {
+          in: ["tag-1", "tag-2"]
+        }
+      },
+      select: {
+        id: true
+      }
+    });
     expect(imageTagDeleteManyMock).toHaveBeenCalledWith({
-      where: { imageId: "image-1" }
+      where: {
+        imageId: "image-1",
+        image: {
+          uploaderId: "user-1"
+        }
+      }
     });
     expect(imageTagCreateManyMock).toHaveBeenCalledWith({
       data: [
@@ -145,9 +171,9 @@ describe("PUT /api/images/[id]", () => {
   });
 
   it("deletes manual location when payload location is null", async () => {
-    imageFindUniqueMock.mockReset();
+    imageFindFirstMock.mockReset();
     tagFindManyMock.mockResolvedValue([{ id: "tag-1" }]);
-    imageFindUniqueMock
+    imageFindFirstMock
       .mockResolvedValueOnce({
         id: "image-1",
         deletedAt: null,
@@ -183,8 +209,92 @@ describe("PUT /api/images/[id]", () => {
 
     expect(response.status).toBe(200);
     expect(imageLocationOverrideDeleteManyMock).toHaveBeenCalledWith({
-      where: { imageId: "image-1" }
+      where: {
+        imageId: "image-1",
+        image: {
+          uploaderId: "user-1"
+        }
+      }
     });
     expect(result.location).toBeNull();
+  });
+
+  it("returns 404 when updating another user's image", async () => {
+    imageFindFirstMock.mockReset();
+    imageFindFirstMock.mockResolvedValueOnce(null);
+    const { PUT } = await import("@/app/api/images/[id]/route");
+
+    const response = await PUT(
+      new Request("http://localhost/api/images/image-2", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tagIds: [],
+          location: null
+        })
+      }),
+      {
+        params: Promise.resolve({ id: "image-2" })
+      }
+    );
+
+    expect(response.status).toBe(404);
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it("updates tags only for the current user's image and tags", async () => {
+    imageFindFirstMock.mockReset();
+    imageFindFirstMock
+      .mockResolvedValueOnce({ id: "image-1" })
+      .mockResolvedValueOnce({
+        id: "image-1",
+        tags: [{ tag: { id: "tag-1", name: "Travel", slug: "travel", color: null } }]
+      });
+    tagFindManyMock.mockResolvedValue([{ id: "tag-1" }]);
+
+    const { PUT } = await import("@/app/api/images/[id]/tags/route");
+    const response = await PUT(
+      new Request("http://localhost/api/images/image-1/tags", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tagIds: ["tag-1"]
+        })
+      }),
+      {
+        params: Promise.resolve({ id: "image-1" })
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(imageFindFirstMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: {
+          id: "image-1",
+          deletedAt: null,
+          uploaderId: "user-1"
+        }
+      })
+    );
+    expect(tagFindManyMock).toHaveBeenCalledWith({
+      where: {
+        creatorId: "user-1",
+        id: {
+          in: ["tag-1"]
+        }
+      },
+      select: {
+        id: true
+      }
+    });
+    expect(imageTagDeleteManyMock).toHaveBeenCalledWith({
+      where: {
+        imageId: "image-1",
+        image: {
+          uploaderId: "user-1"
+        }
+      }
+    });
   });
 });

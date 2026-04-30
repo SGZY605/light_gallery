@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { canUpload } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getOssConfig } from "@/lib/oss/config";
 import { buildOssObjectKey } from "@/lib/oss/keys";
 import { createOssUploadPolicy } from "@/lib/oss/policy";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 const INVALID_REQUEST = "上传请求无效。";
 const UNAUTHORIZED = "请先登录后再上传图片。";
 const FORBIDDEN = "当前账号没有上传图片的权限。";
 const INVALID_MIME = "只允许上传图片文件。";
 const FILE_TOO_LARGE = "所选文件超过了当前配置的上传大小上限。";
+
+const OSS_CONFIG_REQUIRED = "oss_config_required";
 
 const requestSchema = z.object({
   filename: z.string().trim().min(1).max(255),
@@ -44,7 +46,11 @@ export async function POST(request: Request) {
   }
 
   const { filename, mimeType, sizeBytes } = parsedRequest.data;
-  const config = getOssConfig();
+  const config = await resolveUserOssConfig({ user });
+
+  if (!config) {
+    return NextResponse.json({ error: OSS_CONFIG_REQUIRED }, { status: 428 });
+  }
 
   if (!mimeType.startsWith(config.allowedMimePrefix)) {
     return NextResponse.json({ error: INVALID_MIME }, { status: 400 });

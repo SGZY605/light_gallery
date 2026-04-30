@@ -2,9 +2,12 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { canUpload } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getOssConfig } from "@/lib/oss/config";
 import { buildOssObjectKey } from "@/lib/oss/keys";
 import { createOssUploadPolicy } from "@/lib/oss/policy";
+import {
+  resolveUserOssConfig,
+  type ResolvedOssConfig
+} from "@/lib/oss/user-config";
 import {
   INVALID_TAGS,
   persistUploadedImage,
@@ -18,6 +21,8 @@ const INVALID_MIME = "只允许上传图片文件。";
 const FILE_TOO_LARGE = "所选文件超过了当前配置的上传大小上限。";
 const OSS_UPLOAD_FAILED = "上传到 OSS 失败。";
 const DUPLICATE_OBJECT_KEY = "这个对象键对应的图片已经存在。";
+
+const OSS_CONFIG_REQUIRED = "oss_config_required";
 
 function parseOptionalPositiveInteger(value: FormDataEntryValue | null): number | undefined {
   if (typeof value !== "string" || !value.trim()) {
@@ -59,15 +64,16 @@ function parseOptionalJson(value: FormDataEntryValue | null): unknown {
 }
 
 async function uploadFileToOss({
+  config,
   file,
   objectKey,
   mimeType
 }: {
+  config: ResolvedOssConfig;
   file: File;
   objectKey: string;
   mimeType: string;
 }) {
-  const config = getOssConfig();
   const uploadPolicy = createOssUploadPolicy({
     config,
     key: objectKey,
@@ -115,7 +121,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: INVALID_REQUEST }, { status: 400 });
   }
 
-  const config = getOssConfig();
+  const config = await resolveUserOssConfig({ user });
+
+  if (!config) {
+    return NextResponse.json({ error: OSS_CONFIG_REQUIRED }, { status: 428 });
+  }
+
   const mimeType = file.type || "application/octet-stream";
 
   if (!mimeType.startsWith(config.allowedMimePrefix)) {
@@ -131,6 +142,7 @@ export async function POST(request: Request) {
 
   try {
     await uploadFileToOss({
+      config,
       file,
       objectKey,
       mimeType
