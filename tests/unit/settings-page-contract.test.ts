@@ -13,6 +13,8 @@ describe("OSS settings page contract", () => {
     const content = readProjectFile("src/app/dashboard/settings/page.tsx");
 
     expect(content).toContain("saveOssConfigAction");
+    expect(content).toContain("syncOssAction");
+    expect(content).toContain("syncUserImagesWithOss");
     expect(content).toContain('name="region"');
     expect(content).toContain('name="bucket"');
     expect(content).toContain('name="accessKeyId"');
@@ -25,6 +27,12 @@ describe("OSS settings page contract", () => {
     expect(content).toContain('name="allowedMimePrefix"');
     expect(content).toContain("existing?.accessKeySecret");
     expect(content).not.toContain('defaultValue={config?.accessKeySecret');
+    expect(content).toMatch(
+      /disabled=\{!config\}[\s\S]*className="[^"]*text-\[color:var\(--text-primary\)\]/
+    );
+    expect(content).toContain("执行本地与 OSS 同步");
+    expect(content).toContain("deletedLocalRecords");
+    expect(content).toContain("importedOssObjects");
   });
 
   it("dashboard layout shows a missing OSS config reminder", () => {

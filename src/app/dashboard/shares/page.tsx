@@ -6,6 +6,7 @@ import { SharePhotoSelector } from "@/components/share-photo-selector";
 import { canRevokeShare } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { filterImagesExistingInOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 import { createShareToken, getShareState } from "@/lib/shares/tokens";
 
@@ -210,6 +211,13 @@ export default async function DashboardSharesPage() {
       }
     })
   ]);
+  const visibleImages = ossConfig
+    ? await filterImagesExistingInOss({
+        config: ossConfig,
+        images,
+        userId: user.id
+      })
+    : images;
 
   return (
     <div className="space-y-4">
@@ -247,7 +255,7 @@ export default async function DashboardSharesPage() {
 
             {ossConfig ? (
               <SharePhotoSelector
-                images={images.map((image) => ({
+                images={visibleImages.map((image) => ({
                   id: image.id,
                   objectKey: image.objectKey,
                   filename: image.filename,

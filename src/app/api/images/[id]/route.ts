@@ -3,6 +3,7 @@ import { z } from "zod";
 import { writeAuditLog } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { deleteOwnedImageEverywhere } from "@/lib/images/sync";
 
 type RouteContext = {
   params: Promise<{
@@ -295,4 +296,37 @@ export async function PUT(request: Request, { params }: RouteContext) {
   }
 
   return NextResponse.json(buildImageResponse(updatedImage));
+}
+
+export async function DELETE(_request: Request, { params }: RouteContext) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "请先登录。" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  try {
+    const result = await deleteOwnedImageEverywhere({
+      imageId: id,
+      user
+    });
+
+    if (!result.deleted) {
+      return NextResponse.json({ error: "未找到对应图片。" }, { status: 404 });
+    }
+
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    if (error instanceof Error && error.message === "oss_config_required") {
+      return NextResponse.json({ error: "oss_config_required" }, { status: 428 });
+    }
+
+    if (error instanceof Error && error.message.includes("OSS")) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
+    }
+
+    throw error;
+  }
 }

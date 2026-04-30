@@ -3,6 +3,7 @@ import { LibraryPageShell } from "@/components/library-page-shell";
 import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { filterImagesExistingInOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 type LibraryPageProps = {
@@ -87,6 +88,11 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
   }
 
   const publicBaseUrl = ossConfig.publicBaseUrl;
+  const visibleImages = await filterImagesExistingInOss({
+    config: ossConfig,
+    images,
+    userId: user.id
+  });
 
   return (
     <LibraryPageShell
@@ -95,7 +101,7 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
       query={query}
       selectedTagIds={selectedTagIds}
       tags={tags}
-      images={images.map((image) => ({
+      images={visibleImages.map((image) => ({
         id: image.id,
         objectKey: image.objectKey,
         filename: image.filename,

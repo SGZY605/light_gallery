@@ -21,6 +21,8 @@ export function DeleteUserForm({ userId, userName, serverAction }: DeleteUserFor
         title={`删除用户「${userName}」？`}
         description="该用户的所有数据将转移至超级管理员账号。此操作不可撤销。"
         confirmLabel="删除"
+        confirmationLabel="输入账户名以确认删除"
+        confirmationText={userName}
         onConfirm={() => formRef.current?.requestSubmit()}
       >
         <button

@@ -100,7 +100,7 @@ export function LibraryColumnControl({
               className="h-1 w-24 cursor-ew-resize accent-white md:w-28"
               aria-label="Library column count"
             />
-            <span className="w-4 text-center text-xs font-medium tabular-nums text-white/45">
+            <span className="w-4 text-center text-xs font-medium tabular-nums text-[color:var(--text-primary)]">
               {resolvedColumnCount}
             </span>
           </motion.div>

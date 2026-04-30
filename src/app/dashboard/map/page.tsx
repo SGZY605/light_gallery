@@ -3,6 +3,7 @@ import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { resolveEffectiveLocation } from "@/lib/images/location";
+import { filterImagesExistingInOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,18 @@ export default async function DashboardMapPage() {
     }
   });
 
-  const mapImages = images
+  const ossConfig = await resolveUserOssConfig({ user });
+
+  if (!ossConfig) {
+    return <OssConfigRequiredNotice />;
+  }
+
+  const visibleImages = await filterImagesExistingInOss({
+    config: ossConfig,
+    images,
+    userId: user.id
+  });
+  const mapImages = visibleImages
     .map((image) => {
       const effectiveLocation = resolveEffectiveLocation({
         exif: image.exif,
@@ -59,12 +71,6 @@ export default async function DashboardMapPage() {
       };
     })
     .filter((image): image is NonNullable<typeof image> => image !== null);
-  const ossConfig = await resolveUserOssConfig({ user });
-
-  if (!ossConfig) {
-    return <OssConfigRequiredNotice />;
-  }
-
   const publicBaseUrl = ossConfig.publicBaseUrl;
 
   return (

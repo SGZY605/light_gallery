@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { syncUserImagesWithOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,19 @@ async function saveOssConfigAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
+}
+
+async function syncOssAction() {
+  "use server";
+
+  const user = await requireUser();
+  await syncUserImagesWithOss(user);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/library");
+  revalidatePath("/dashboard/albums");
+  revalidatePath("/dashboard/map");
   revalidatePath("/dashboard/settings");
 }
 
@@ -142,6 +156,29 @@ export default async function DashboardSettingsPage() {
           </p>
           <p className="mt-1 text-[10px] text-white/25">用于上传签名和服务端上传校验。</p>
         </article>
+      </section>
+
+      <section className="border-t border-white/[0.04] pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-white/35">本地与 OSS 同步</h3>
+            <p className="mt-1 text-[10px] leading-4 text-white/20">
+              云端不存在但本地有记录时会删除本地记录；云端存在但本地没有记录时会同步导入本地。
+            </p>
+            <p className="mt-1 text-[10px] text-white/18">
+              同步结果包含 deletedLocalRecords、importedOssObjects 和 restoredLocalRecords。
+            </p>
+          </div>
+          <form action={syncOssAction}>
+            <button
+              type="submit"
+              disabled={!config}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-[color:var(--text-primary)] transition hover:border-white/20 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              执行本地与 OSS 同步
+            </button>
+          </form>
+        </div>
       </section>
 
       <form action={saveOssConfigAction} className="border-t border-white/[0.04] pt-4">

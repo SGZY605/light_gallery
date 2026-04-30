@@ -4,6 +4,7 @@ import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice
 import { requireUser } from "@/lib/auth/session";
 import { parseAlbumsView } from "@/lib/albums/view";
 import { db } from "@/lib/db";
+import { filterImagesExistingInOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
     OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }]
   };
 
-  const [images, tags, imageCount, tagCount, activeShareCount, capturedImageCount] =
+  const [images, tags, tagCount, activeShareCount] =
     await Promise.all([
       db.image.findMany({
         where: {
@@ -70,12 +71,6 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
           name: "asc"
         }
       }),
-      db.image.count({
-        where: {
-          deletedAt: null,
-          uploaderId: user.id
-        }
-      }),
       db.tag.count({
         where: {
           creatorId: user.id
@@ -83,17 +78,6 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
       }),
       db.share.count({
         where: activeShareWhere
-      }),
-      db.image.count({
-        where: {
-          deletedAt: null,
-          uploaderId: user.id,
-          exif: {
-            takenAt: {
-              not: null
-            }
-          }
-        }
       })
     ]);
 
@@ -104,6 +88,11 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
   }
 
   const publicBaseUrl = ossConfig.publicBaseUrl;
+  const visibleImages = await filterImagesExistingInOss({
+    config: ossConfig,
+    images,
+    userId: user.id
+  });
 
   return (
     <AlbumsBrowser
@@ -113,10 +102,10 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
       toDate={toDate}
       publicBaseUrl={publicBaseUrl}
       stats={{
-        imageCount,
+        imageCount: visibleImages.length,
         tagCount,
         activeShareCount,
-        capturedImageCount
+        capturedImageCount: visibleImages.filter((image) => image.exif?.takenAt).length
       }}
       tags={tags.map((tag) => ({
         id: tag.id,
@@ -124,7 +113,7 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
         slug: tag.slug,
         color: tag.color
       }))}
-      images={images.map((image) => ({
+      images={visibleImages.map((image) => ({
         id: image.id,
         objectKey: image.objectKey,
         filename: image.filename,

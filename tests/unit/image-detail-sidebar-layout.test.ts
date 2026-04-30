@@ -26,4 +26,22 @@ describe("image detail sidebar layout", () => {
     expect(sidebarContent).toContain("download={filename}");
     expect(detailViewContent).toContain("buildOssImageUrl(image.objectKey, \"original\"");
   });
+
+  it("keeps deletion in the top-right toolbar behind a second and final destructive confirmation", () => {
+    const detailViewContent = readProjectFile("src/components/image-detail-view.tsx");
+    const deleteButtonIndex = detailViewContent.indexOf('aria-label="删除图片"');
+    const zoomToolbarIndex = detailViewContent.indexOf("Math.round(transform.scale * 100)");
+    const deleteDialogIndex = detailViewContent.indexOf("showDeleteDialog");
+    const finalDeleteDialogIndex = detailViewContent.indexOf("showFinalDeleteDialog");
+
+    expect(deleteButtonIndex).toBeGreaterThan(zoomToolbarIndex);
+    expect(finalDeleteDialogIndex).toBeGreaterThan(deleteDialogIndex);
+    expect(detailViewContent).toContain("setShowFinalDeleteDialog(true)");
+    expect(detailViewContent).toContain("setShowDeleteDialog(false)");
+    expect(detailViewContent).toContain("这一步会删除 OSS 中的原图/预览图，并删除本机数据库记录。请慎重操作！");
+    expect(detailViewContent).toContain("deleteConfirmationName === image.filename");
+    expect(detailViewContent).toContain('placeholder="输入图片名以确认删除"');
+    expect(detailViewContent).toMatch(/showFinalDeleteDialog[\s\S]*onClick=\{\(\) => void confirmDelete\(\)\}/);
+    expect(detailViewContent).toMatch(/showFinalDeleteDialog[\s\S]*disabled=\{isDeleting \|\| !canConfirmImageDelete\}/);
+  });
 });

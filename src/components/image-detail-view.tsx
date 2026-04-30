@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Minus, Plus, RefreshCw, X, ZoomIn } from "lucide-react";
+import { Minus, Plus, RefreshCw, Trash2, X, ZoomIn } from "lucide-react";
 import { ImageDetailSidebar } from "@/components/image-detail-sidebar";
 import {
   clampViewerOffset,
@@ -118,6 +118,11 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
   const [transform, setTransform] = useState<ViewerTransform>({ x: 0, y: 0, scale: 1 });
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showFinalDeleteDialog, setShowFinalDeleteDialog] = useState(false);
+  const [deleteConfirmationName, setDeleteConfirmationName] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const updateBaseImageSize = useCallback(() => {
     if (!imageBoundsRef.current) {
@@ -224,6 +229,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
       baseImageSize.height * transform.scale > rect.height
     );
   }, [baseImageSize.height, baseImageSize.width, transform.scale]);
+  const canConfirmImageDelete = deleteConfirmationName === image.filename;
 
   const imageInitial = useMemo(() => {
     if (!animRect || !viewport) {
@@ -249,6 +255,47 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
 
     navigateBackToLibrary();
   }, [navigateBackToLibrary]);
+
+  const requestDelete = useCallback(() => {
+    setDeleteError(null);
+    setDeleteConfirmationName("");
+    setShowDeleteDialog(true);
+    setShowFinalDeleteDialog(false);
+  }, []);
+
+  const requestFinalDeleteConfirmation = useCallback(() => {
+    setDeleteError(null);
+    setDeleteConfirmationName("");
+    setShowDeleteDialog(false);
+    setShowFinalDeleteDialog(true);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!canConfirmImageDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch(`/api/images/${image.id}`, {
+        method: "DELETE"
+      });
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "删除图片失败。");
+      }
+
+      navigateBackToLibrary();
+      router.refresh();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "删除图片失败。");
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [canConfirmImageDelete, image.id, navigateBackToLibrary, router]);
 
   const resetZoom = useCallback(() => {
     setTransform({ x: 0, y: 0, scale: 1 });
@@ -372,6 +419,14 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
           setShowDiscardDialog(false);
           return;
         }
+        if (showFinalDeleteDialog) {
+          setShowFinalDeleteDialog(false);
+          return;
+        }
+        if (showDeleteDialog) {
+          setShowDeleteDialog(false);
+          return;
+        }
         requestClose();
       }
 
@@ -383,7 +438,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [requestClose, resetZoom, showDiscardDialog]);
+  }, [requestClose, resetZoom, showDeleteDialog, showDiscardDialog, showFinalDeleteDialog]);
 
   const cursor = getViewerCursorState({
     scale: transform.scale,
@@ -409,14 +464,16 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
 
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="relative z-10 flex items-center justify-between px-4 py-3 lg:px-6">
-          <button
-            type="button"
-            onClick={requestClose}
-            className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-medium text-white/70 transition hover:bg-white/20 hover:text-white"
-          >
-            <X className="h-3.5 w-3.5" />
-            关闭
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={requestClose}
+              className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-medium text-white/70 transition hover:bg-white/20 hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" />
+              关闭
+            </button>
+          </div>
 
           <div className="flex items-center gap-1 rounded-full bg-black/25 px-2 py-1">
             <button
@@ -445,6 +502,16 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
               aria-label="重置缩放"
             >
               <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+            <span className="mx-1 h-4 w-px bg-white/10" />
+            <button
+              type="button"
+              onClick={requestDelete}
+              className="rounded-full p-1.5 text-red-200/70 transition hover:bg-red-500/15 hover:text-red-100"
+              aria-label="删除图片"
+              title="删除图片"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -539,6 +606,86 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
                 className="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-500/25 hover:text-red-200"
               >
                 放弃更改
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showDeleteDialog ? (
+        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg border border-white/10 bg-[color:var(--bg-card)] p-5 shadow-2xl">
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-[color:var(--text-primary)]">确认删除图片</h2>
+              <p className="text-xs leading-5 text-[color:var(--text-faint)]">
+                这会同时删除本地记录和 OSS 中的对应图片。删除后图库、相册、地图和分享中都不会再显示这张图片。
+              </p>
+              <p className="truncate text-xs text-[color:var(--text-secondary)]">{image.filename}</p>
+            </div>
+
+            {deleteError ? <p className="mt-3 text-xs text-red-300">{deleteError}</p> : null}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeleting}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-[color:var(--text-faint)] transition hover:bg-[color:var(--control-hover-bg)] hover:text-[color:var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={requestFinalDeleteConfirmation}
+                disabled={isDeleting}
+                className="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-500/25 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                继续删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showFinalDeleteDialog ? (
+        <div className="absolute inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg border border-red-400/30 bg-[color:var(--bg-card)] p-6 shadow-2xl">
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-red-300">最终确认删除</h2>
+              <p className="text-base font-semibold leading-7 text-[color:var(--text-primary)]">
+                这一步会删除 OSS 中的原图/预览图，并删除本机数据库记录。请慎重操作！
+              </p>
+              <p className="truncate text-sm text-[color:var(--text-secondary)]">{image.filename}</p>
+            </div>
+
+            <label className="mt-5 block space-y-2">
+              <span className="text-xs font-medium text-[color:var(--text-secondary)]">输入图片名以确认删除</span>
+              <input
+                value={deleteConfirmationName}
+                onChange={(event) => setDeleteConfirmationName(event.target.value)}
+                placeholder="输入图片名以确认删除"
+                className="w-full rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none transition placeholder:text-[color:var(--text-faint)] focus:border-red-400/40 focus:ring-2 focus:ring-red-500/10"
+              />
+            </label>
+
+            {deleteError ? <p className="mt-4 text-sm text-red-300">{deleteError}</p> : null}
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFinalDeleteDialog(false)}
+                disabled={isDeleting}
+                className="rounded-lg px-3 py-2 text-xs font-medium text-[color:var(--text-faint)] transition hover:bg-[color:var(--control-hover-bg)] hover:text-[color:var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDelete()}
+                disabled={isDeleting || !canConfirmImageDelete}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isDeleting ? "删除中..." : "确认删除 OSS 和本机记录"}
               </button>
             </div>
           </div>

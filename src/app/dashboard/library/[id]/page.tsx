@@ -3,6 +3,7 @@ import { ImageDetailView } from "@/components/image-detail-view";
 import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { filterImagesExistingInOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 type ImageDetailPageProps = {
@@ -57,45 +58,55 @@ export default async function ImageDetailPage({ params }: ImageDetailPageProps) 
     return <OssConfigRequiredNotice />;
   }
 
+  const [visibleImage] = await filterImagesExistingInOss({
+    config: ossConfig,
+    images: [image],
+    userId: user.id
+  });
+
+  if (!visibleImage) {
+    notFound();
+  }
+
   const publicBaseUrl = ossConfig.publicBaseUrl;
 
   return (
     <ImageDetailView
       image={{
-        id: image.id,
-        objectKey: image.objectKey,
-        filename: image.filename,
-        mimeType: image.mimeType,
-        sizeBytes: image.sizeBytes,
-        width: image.width,
-        height: image.height,
-        description: image.description,
-        createdAt: image.createdAt.toISOString(),
-        exif: image.exif
+        id: visibleImage.id,
+        objectKey: visibleImage.objectKey,
+        filename: visibleImage.filename,
+        mimeType: visibleImage.mimeType,
+        sizeBytes: visibleImage.sizeBytes,
+        width: visibleImage.width,
+        height: visibleImage.height,
+        description: visibleImage.description,
+        createdAt: visibleImage.createdAt.toISOString(),
+        exif: visibleImage.exif
           ? {
-              cameraMake: image.exif.cameraMake,
-              cameraModel: image.exif.cameraModel,
-              lensModel: image.exif.lensModel,
-              focalLength: image.exif.focalLength,
-              fNumber: image.exif.fNumber,
-              exposureTime: image.exif.exposureTime,
-              iso: image.exif.iso,
-              takenAt: image.exif.takenAt?.toISOString() ?? null,
-              width: image.exif.width,
-              height: image.exif.height,
-              latitude: image.exif.latitude,
-              longitude: image.exif.longitude,
-              raw: image.exif.raw
+              cameraMake: visibleImage.exif.cameraMake,
+              cameraModel: visibleImage.exif.cameraModel,
+              lensModel: visibleImage.exif.lensModel,
+              focalLength: visibleImage.exif.focalLength,
+              fNumber: visibleImage.exif.fNumber,
+              exposureTime: visibleImage.exif.exposureTime,
+              iso: visibleImage.exif.iso,
+              takenAt: visibleImage.exif.takenAt?.toISOString() ?? null,
+              width: visibleImage.exif.width,
+              height: visibleImage.exif.height,
+              latitude: visibleImage.exif.latitude,
+              longitude: visibleImage.exif.longitude,
+              raw: visibleImage.exif.raw
             }
           : null,
-        location: image.location
+        location: visibleImage.location
           ? {
-              latitude: image.location.latitude,
-              longitude: image.location.longitude,
-              label: image.location.label
+              latitude: visibleImage.location.latitude,
+              longitude: visibleImage.location.longitude,
+              label: visibleImage.location.label
             }
           : null,
-        tags: image.tags.map(({ tag }) => ({
+        tags: visibleImage.tags.map(({ tag }) => ({
           id: tag.id,
           name: tag.name,
           slug: tag.slug,

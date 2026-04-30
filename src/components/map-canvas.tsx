@@ -11,7 +11,7 @@ export type MapMarkerImage = {
   thumbnailUrl: string;
 };
 
-const THUMBNAIL_MARKER_SIZE = 34;
+const THUMBNAIL_MARKER_SIZE = 51;
 const THUMBNAIL_MARKER_ANCHOR = THUMBNAIL_MARKER_SIZE / 2;
 
 type MapCanvasProps = {
@@ -29,18 +29,6 @@ function createThumbnailIcon(image: MapMarkerImage) {
     iconSize: [THUMBNAIL_MARKER_SIZE, THUMBNAIL_MARKER_SIZE],
     iconAnchor: [THUMBNAIL_MARKER_ANCHOR, THUMBNAIL_MARKER_ANCHOR]
   });
-}
-
-function buildPopupContent(image: MapMarkerImage) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "space-y-1";
-
-  const title = document.createElement("p");
-  title.className = "font-semibold";
-  title.textContent = image.title;
-
-  wrapper.append(title);
-  return wrapper;
 }
 
 export function MapCanvas({ defaultCenter, images, onSelectImage }: MapCanvasProps) {
@@ -108,7 +96,6 @@ export function MapCanvas({ defaultCenter, images, onSelectImage }: MapCanvasPro
       });
 
       marker.on("click", () => onSelectImage(image.id));
-      marker.bindPopup(buildPopupContent(image));
       marker.addTo(markerLayer);
       bounds.extend([image.latitude, image.longitude]);
     }

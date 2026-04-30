@@ -49,6 +49,9 @@ describe("library page source contracts", () => {
     expect(controlSource).toContain("MIN_LIBRARY_COLUMN_COUNT");
     expect(controlSource).toContain("MAX_LIBRARY_COLUMN_COUNT");
     expect(controlSource).toContain('transformOrigin: "left"');
+    expect(controlSource).toMatch(
+      /<span className="[^"]*text-\[color:var\(--text-primary\)\][^"]*"/
+    );
     expect(controlSource).toContain('document.addEventListener("mousedown", handlePointerDown)');
     expect(controlSource).toContain('document.addEventListener("keydown", handleKeyDown)');
   });

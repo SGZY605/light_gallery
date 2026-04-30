@@ -1,5 +1,6 @@
 import { ShareGallery } from "@/components/share-gallery";
 import { db } from "@/lib/db";
+import { filterImagesExistingInOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 import { getImagesForShare } from "@/lib/shares/query";
 import { getShareState } from "@/lib/shares/tokens";
@@ -61,6 +62,12 @@ export default async function PublicSharePage({ params }: SharePageProps) {
     return <UnavailableShare title={share.title} message="姝ゅ垎浜殑瀛樺偍閰嶇疆涓嶅彲鐢紝鏆傛椂鏃犳硶鎵撳紑銆?" />;
   }
 
+  const visibleImages = await filterImagesExistingInOss({
+    config: ossConfig,
+    images,
+    userId: share.creatorId
+  });
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="space-y-4">
@@ -70,7 +77,7 @@ export default async function PublicSharePage({ params }: SharePageProps) {
           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-white/25">
             <span>{share.creator.name}</span>
             <span className="text-white/10">·</span>
-            <span>{images.length} 张图片</span>
+            <span>{visibleImages.length} 张图片</span>
           </div>
           {share.tags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
@@ -90,7 +97,7 @@ export default async function PublicSharePage({ params }: SharePageProps) {
         <ShareGallery
           allowDownload={share.allowDownload}
           publicBaseUrl={ossConfig.publicBaseUrl}
-          images={images.map((image) => ({
+          images={visibleImages.map((image) => ({
             id: image.id,
             objectKey: image.objectKey,
             filename: image.filename,
