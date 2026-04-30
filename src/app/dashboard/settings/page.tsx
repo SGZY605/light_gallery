@@ -1,104 +1,172 @@
+import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth/session";
+import { db } from "@/lib/db";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
+
 export const dynamic = "force-dynamic";
 
-type SettingRowProps = {
-  label: string;
-  value: string;
+function stringValue(formData: FormData, key: string): string {
+  return String(formData.get(key) ?? "").trim();
+}
+
+function positiveIntegerValue(formData: FormData, key: string, fallback: number): number {
+  const value = Number.parseInt(stringValue(formData, key), 10);
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
+async function saveOssConfigAction(formData: FormData) {
+  "use server";
+
+  const user = await requireUser();
+  const existing = await db.userOssConfig.findUnique({
+    where: {
+      userId: user.id
+    }
+  });
+  const accessKeySecret = stringValue(formData, "accessKeySecret") || existing?.accessKeySecret || "";
+  const region = stringValue(formData, "region");
+  const bucket = stringValue(formData, "bucket");
+  const accessKeyId = stringValue(formData, "accessKeyId");
+  const publicBaseUrl = stringValue(formData, "publicBaseUrl");
+  const uploadBaseUrl = stringValue(formData, "uploadBaseUrl");
+
+  if (!region || !bucket || !accessKeyId || !accessKeySecret || !publicBaseUrl || !uploadBaseUrl) {
+    return;
+  }
+
+  await db.userOssConfig.upsert({
+    where: {
+      userId: user.id
+    },
+    update: {
+      accessKeyId,
+      accessKeySecret,
+      allowedMimePrefix: stringValue(formData, "allowedMimePrefix") || "image/",
+      bucket,
+      maxUploadBytes: positiveIntegerValue(formData, "maxUploadBytes", 25 * 1024 * 1024),
+      policyExpiresSeconds: positiveIntegerValue(formData, "policyExpiresSeconds", 300),
+      publicBaseUrl,
+      region,
+      uploadBaseUrl,
+      uploadPrefix: stringValue(formData, "uploadPrefix") || "uploads"
+    },
+    create: {
+      accessKeyId,
+      accessKeySecret,
+      allowedMimePrefix: stringValue(formData, "allowedMimePrefix") || "image/",
+      bucket,
+      maxUploadBytes: positiveIntegerValue(formData, "maxUploadBytes", 25 * 1024 * 1024),
+      policyExpiresSeconds: positiveIntegerValue(formData, "policyExpiresSeconds", 300),
+      publicBaseUrl,
+      region,
+      uploadBaseUrl,
+      uploadPrefix: stringValue(formData, "uploadPrefix") || "uploads",
+      userId: user.id
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
+}
+
+type InputFieldProps = {
+  defaultValue?: string | number | null;
   description: string;
+  label: string;
+  name: string;
+  placeholder?: string;
+  required?: boolean;
+  type?: string;
 };
 
-function SettingRow({ label, value, description }: SettingRowProps) {
+function InputField({
+  defaultValue,
+  description,
+  label,
+  name,
+  placeholder,
+  required,
+  type = "text"
+}: InputFieldProps) {
   return (
-    <article className="border border-white/[0.04] p-3">
-      <p className="text-[10px] text-white/20">{label}</p>
-      <p className="mt-1 text-sm font-medium text-white/50">{value}</p>
-      <p className="mt-1 text-[10px] leading-4 text-white/25">{description}</p>
-    </article>
+    <label className="block space-y-1">
+      <span className="text-[10px] text-white/25">{label}</span>
+      <input
+        name={name}
+        type={type}
+        defaultValue={defaultValue ?? ""}
+        placeholder={placeholder}
+        required={required}
+        className="w-full border-b border-white/[0.06] bg-transparent py-1.5 text-xs text-white/60 outline-none transition placeholder:text-white/15 focus:border-white/20"
+      />
+      <span className="block text-[10px] leading-4 text-white/18">{description}</span>
+    </label>
   );
 }
 
-export default function DashboardSettingsPage() {
-  const hasOssBaseConfig = Boolean(
-    process.env.OSS_REGION &&
-      process.env.OSS_BUCKET &&
-      process.env.OSS_ACCESS_KEY_ID &&
-      process.env.OSS_ACCESS_KEY_SECRET
-  );
-  const publicBaseUrl = process.env.OSS_PUBLIC_BASE_URL || "未配置";
-  const uploadBaseUrl = process.env.OSS_UPLOAD_BASE_URL || "从存储桶和区域派生";
-  const maxUploadBytes = process.env.OSS_MAX_UPLOAD_BYTES || "26214400";
+export default async function DashboardSettingsPage() {
+  const user = await requireUser();
+  const config = await resolveUserOssConfig({ user });
+  const savedConfig = await db.userOssConfig.findUnique({
+    where: {
+      userId: user.id
+    }
+  });
 
   return (
     <div className="space-y-4">
       <section>
         <h2 className="text-base font-semibold text-white/40">设置</h2>
         <p className="mt-1 text-xs text-white/20">
-          基于环境变量的配置。密钥不会暴露。
+          配置当前账号自己的 OSS。密钥不会回显；留空表示保持原密钥。
         </p>
       </section>
 
       <section className="grid gap-3 lg:grid-cols-3">
-        <SettingRow
-          label="OSS 状态"
-          value={hasOssBaseConfig ? "已配置" : "缺少必需的值"}
-          description="检查区域、存储桶、访问密钥 ID 和访问密钥密钥。"
-        />
-        <SettingRow
-          label="公共基础 URL"
-          value={publicBaseUrl}
-          description="用于生成缩略图、预览和原始 URL。"
-        />
-        <SettingRow
-          label="上传大小限制"
-          value={`${(Number(maxUploadBytes) / (1024 * 1024)).toFixed(0)} MB`}
-          description="上传签名路由接受的最大文件大小。"
-        />
-      </section>
-
-      <section className="grid gap-3 xl:grid-cols-2">
-        <article className="border border-white/[0.04] p-4">
-          <p className="text-[10px] text-amber-500/40">分享默认设置</p>
-          <div className="mt-4 space-y-3">
-            <SettingRow
-              label="匹配模式"
-              value="ALL"
-              description="所有选定标签都必须匹配，图片才会显示。"
-            />
-            <SettingRow
-              label="允许下载"
-              value="默认禁用"
-              description="公开分享默认不提供原图下载权限。"
-            />
-            <SettingRow
-              label="上传端点"
-              value={uploadBaseUrl}
-              description="浏览器直接上传至此 OSS 端点。"
-            />
-          </div>
+        <article className="border border-white/[0.04] p-3">
+          <p className="text-[10px] text-white/20">OSS 状态</p>
+          <p className="mt-1 text-sm font-medium text-white/50">{config ? "已配置" : "未配置"}</p>
+          <p className="mt-1 text-[10px] text-white/25">当前账号独立使用这一份存储配置。</p>
         </article>
-
-        <article className="border border-white/[0.04] p-4">
-          <p className="text-[10px] text-white/20">保留的元数据回写</p>
-          <h3 className="mt-2 text-base font-medium text-white/50">EXIF 回写保持禁用。</h3>
-          <p className="mt-1 text-[10px] leading-4 text-white/25">
-            位置编辑和未来的元数据调整仅存储为应用程序元数据。
+        <article className="border border-white/[0.04] p-3">
+          <p className="text-[10px] text-white/20">AccessKey Secret</p>
+          <p className="mt-1 text-sm font-medium text-white/50">
+            {savedConfig?.accessKeySecret ? "已保存" : "未保存"}
           </p>
-          <div className="mt-4 border border-dashed border-white/[0.04] p-3">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-medium text-white/40">将 EXIF 写回原始文件</p>
-                <p className="text-[10px] text-white/20">预留给未来版本。</p>
-              </div>
-              <button
-                type="button"
-                disabled
-                className="px-2 py-1 text-[10px] text-white/15"
-              >
-                禁用
-              </button>
-            </div>
-          </div>
+          <p className="mt-1 text-[10px] text-white/25">不会明文显示；留空保留原值。</p>
+        </article>
+        <article className="border border-white/[0.04] p-3">
+          <p className="text-[10px] text-white/20">上传大小限制</p>
+          <p className="mt-1 text-sm font-medium text-white/50">
+            {config ? `${(config.maxUploadBytes / (1024 * 1024)).toFixed(0)} MB` : "未配置"}
+          </p>
+          <p className="mt-1 text-[10px] text-white/25">用于上传签名和服务端上传校验。</p>
         </article>
       </section>
+
+      <form action={saveOssConfigAction} className="border-t border-white/[0.04] pt-4">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <InputField name="region" label="OSS 区域" required defaultValue={config?.region} placeholder="cn-shanghai" description="例如 cn-shanghai。" />
+          <InputField name="bucket" label="Bucket" required defaultValue={config?.bucket} placeholder="light-gallery" description="当前账号使用的 OSS Bucket。" />
+          <InputField name="accessKeyId" label="AccessKey ID" required defaultValue={config?.accessKeyId} description="用于签名上传策略。" />
+          <InputField name="accessKeySecret" label="AccessKey Secret" type="password" placeholder={savedConfig?.accessKeySecret ? "留空保持原密钥" : "首次配置必须填写"} required={!savedConfig?.accessKeySecret} description="不会回显保存值。" />
+          <InputField name="publicBaseUrl" label="公共访问 URL" required defaultValue={config?.publicBaseUrl} placeholder="https://example.com" description="用于生成缩略图、预览和原图 URL。" />
+          <InputField name="uploadBaseUrl" label="上传 URL" required defaultValue={config?.uploadBaseUrl} placeholder="https://bucket.oss-cn-shanghai.aliyuncs.com" description="浏览器或服务端上传到此端点。" />
+          <InputField name="uploadPrefix" label="上传前缀" defaultValue={config?.uploadPrefix ?? "uploads"} description="对象 key 前缀，例如 uploads。" />
+          <InputField name="maxUploadBytes" label="上传大小上限" type="number" defaultValue={config?.maxUploadBytes ?? 26214400} description="单位字节，默认 26214400。" />
+          <InputField name="policyExpiresSeconds" label="上传策略有效期" type="number" defaultValue={config?.policyExpiresSeconds ?? 300} description="单位秒，默认 300。" />
+          <InputField name="allowedMimePrefix" label="允许 MIME 前缀" defaultValue={config?.allowedMimePrefix ?? "image/"} description="默认 image/。" />
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            type="submit"
+            className="px-4 py-2 text-xs font-semibold text-white/50 transition hover:text-white/80"
+          >
+            保存 OSS 配置
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

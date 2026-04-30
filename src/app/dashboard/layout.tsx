@@ -1,7 +1,9 @@
 import { DashboardShellControls } from "@/components/dashboard-shell-controls";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
+import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,7 @@ export default async function DashboardLayout({
 }>) {
   const user = await requireUser();
   const canOpenUsersPage = canManageUsers(user.role);
+  const ossConfig = await resolveUserOssConfig({ user });
 
   return (
     <div className="dashboard-root h-screen overflow-hidden bg-[color:var(--page-bg)] text-[color:var(--text-primary)]">
@@ -44,7 +47,10 @@ export default async function DashboardLayout({
           <DashboardShellControls />
         </aside>
 
-        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 xl:px-7 xl:py-6">{children}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 xl:px-7 xl:py-6">
+          {!ossConfig ? <OssConfigRequiredNotice /> : null}
+          {children}
+        </main>
       </div>
     </div>
   );
