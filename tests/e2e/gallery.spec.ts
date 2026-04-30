@@ -34,7 +34,7 @@ test("gallery smoke flow", async ({ page }) => {
 
   if (sharePath) {
     await page.goto(`${baseUrl}${sharePath}`);
-    await expect(page.getByText("共享图库")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "冒烟分享" })).toBeVisible();
   }
 
   await page.goto(`${baseUrl}/dashboard/map`);
