@@ -1,8 +1,15 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildShareImageWhere, getImagesForShare } from "@/lib/shares/query";
 
+const projectRoot = process.cwd();
 const shareFindUniqueMock = vi.fn();
 const imageFindManyMock = vi.fn();
+
+function readProjectFile(path: string): string {
+  return readFileSync(join(projectRoot, path), "utf8");
+}
 
 function expectSourceToMatch(content: string, pattern: RegExp) {
   expect(content.replace(/\s+/g, " ")).toMatch(pattern);
@@ -102,11 +109,6 @@ describe("getImagesForShare", () => {
   });
 
   it("keeps share dashboard and API routes scoped to the current user", () => {
-    const { readFileSync } = require("node:fs") as typeof import("node:fs");
-    const { join } = require("node:path") as typeof import("node:path");
-    const projectRoot = process.cwd();
-    const readProjectFile = (path: string) => readFileSync(join(projectRoot, path), "utf8");
-
     const tagsPage = readProjectFile("src/app/dashboard/tags/page.tsx");
     expect(tagsPage).toContain("const user = await requireUser()");
     expect(tagsPage).toContain("creatorId: user.id");
