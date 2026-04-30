@@ -11,6 +11,9 @@ export type MapMarkerImage = {
   thumbnailUrl: string;
 };
 
+const THUMBNAIL_MARKER_SIZE = 34;
+const THUMBNAIL_MARKER_ANCHOR = THUMBNAIL_MARKER_SIZE / 2;
+
 type MapCanvasProps = {
   defaultCenter: [number, number];
   images: MapMarkerImage[];
@@ -22,9 +25,9 @@ function createThumbnailIcon(image: MapMarkerImage) {
 
   return L.divIcon({
     className: "",
-    html: `<div style="width:28px;height:28px;overflow:hidden;border:2px solid rgba(255,255,255,0.9);background:#0f172a;box-shadow:0 10px 24px rgba(15,23,42,0.35)"><img src="${safeUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14]
+    html: `<div style="width:${THUMBNAIL_MARKER_SIZE}px;height:${THUMBNAIL_MARKER_SIZE}px;overflow:hidden;border:2px solid rgba(255,255,255,0.9);background:#0f172a;box-shadow:0 10px 24px rgba(15,23,42,0.35)"><img src="${safeUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`,
+    iconSize: [THUMBNAIL_MARKER_SIZE, THUMBNAIL_MARKER_SIZE],
+    iconAnchor: [THUMBNAIL_MARKER_ANCHOR, THUMBNAIL_MARKER_ANCHOR]
   });
 }
 

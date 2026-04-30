@@ -44,6 +44,11 @@ describe("map explorer theme styling", () => {
 
     expect(canvas).toContain("thumbnailUrl");
     expect(canvas).toContain("createThumbnailIcon");
+    expect(canvas).toContain("const THUMBNAIL_MARKER_SIZE = 34");
+    expect(canvas).toContain("const THUMBNAIL_MARKER_ANCHOR = THUMBNAIL_MARKER_SIZE / 2");
+    expect(canvas).toContain("width:${THUMBNAIL_MARKER_SIZE}px;height:${THUMBNAIL_MARKER_SIZE}px");
+    expect(canvas).toContain("iconSize: [THUMBNAIL_MARKER_SIZE, THUMBNAIL_MARKER_SIZE]");
+    expect(canvas).toContain("iconAnchor: [THUMBNAIL_MARKER_ANCHOR, THUMBNAIL_MARKER_ANCHOR]");
     expect(canvas).not.toContain("createMarkerIcon(count");
     expect(explorer).toContain("selectedImage");
     expect(explorer).toContain("image-detail-return-url");
