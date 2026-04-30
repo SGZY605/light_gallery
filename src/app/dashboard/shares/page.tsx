@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { CopyShareButton } from "@/components/copy-share-button";
 import { DeleteShareButton } from "@/components/delete-share-button";
-import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { SharePhotoSelector } from "@/components/share-photo-selector";
 import { canRevokeShare } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -229,8 +228,6 @@ export default async function DashboardSharesPage() {
         <div className="max-w-2xl">
           <h3 className="text-sm font-semibold text-white/30">创建分享</h3>
         </div>
-
-        {!ossConfig ? <OssConfigRequiredNotice /> : null}
 
         <form action={createShareAction} className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px]">
           <div className="space-y-2">

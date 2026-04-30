@@ -1,6 +1,5 @@
 import type { Prisma } from "@prisma/client";
 import { LibraryPageShell } from "@/components/library-page-shell";
-import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { filterImagesExistingInOss } from "@/lib/images/sync";
@@ -84,7 +83,7 @@ export default async function DashboardLibraryPage({ searchParams }: LibraryPage
   const ossConfig = await resolveUserOssConfig({ user });
 
   if (!ossConfig) {
-    return <OssConfigRequiredNotice />;
+    return null;
   }
 
   const publicBaseUrl = ossConfig.publicBaseUrl;

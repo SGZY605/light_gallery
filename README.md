@@ -38,6 +38,7 @@
 ```powershell
 # 查找占用 3001 端口的进程
 netstat -ano | findstr :3001
+netstat -ano | grep -E ":3000|:3001" | head -10
 
 # 用找到的 PID 停掉进程（替换 12345 为实际 PID）
 taskkill /PID 12345 /F

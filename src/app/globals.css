@@ -25,6 +25,15 @@
   color-scheme: light;
 }
 
+:root {
+  --warning-bg: #fef3c7;
+  --warning-bg-subtle: rgba(251, 191, 36, 0.08);
+  --warning-border: rgba(217, 119, 6, 0.35);
+  --warning-text: #92400e;
+  --warning-text-muted: rgba(146, 64, 14, 0.7);
+  --warning-link: #b45309;
+}
+
 :root.dark,
 :root[data-theme="dark"] {
   --page-bg: #050505;
@@ -46,6 +55,12 @@
   --shell-nav-indicator: rgba(255, 255, 255, 0.34);
   --control-hover-bg: rgba(255, 255, 255, 0.08);
   --overlay-bg: rgba(5, 5, 5, 0.68);
+  --warning-bg: rgba(251, 191, 36, 0.06);
+  --warning-bg-subtle: rgba(251, 191, 36, 0.03);
+  --warning-border: rgba(217, 119, 6, 0.25);
+  --warning-text: #fbbf24;
+  --warning-text-muted: rgba(251, 191, 36, 0.7);
+  --warning-link: #fcd34d;
   color-scheme: dark;
 }
 

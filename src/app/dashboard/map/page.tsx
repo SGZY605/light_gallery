@@ -1,5 +1,4 @@
 import { MapExplorer } from "@/components/map-explorer";
-import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { resolveEffectiveLocation } from "@/lib/images/location";
@@ -37,7 +36,7 @@ export default async function DashboardMapPage() {
   const ossConfig = await resolveUserOssConfig({ user });
 
   if (!ossConfig) {
-    return <OssConfigRequiredNotice />;
+    return null;
   }
 
   const visibleImages = await filterImagesExistingInOss({

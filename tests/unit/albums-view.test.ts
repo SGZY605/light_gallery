@@ -80,7 +80,6 @@ describe("albums page source contracts", () => {
     expect(source).toContain("activeShareCount");
     expect(source).toContain("capturedImageCount");
     expect(source).toContain("resolveUserOssConfig");
-    expect(source).toContain("OssConfigRequiredNotice");
   });
 
   it("uses square reusable album thumbnails that open the existing detail route", () => {

@@ -1,6 +1,5 @@
 import type { Prisma } from "@prisma/client";
 import { AlbumsBrowser } from "@/components/albums-browser";
-import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { requireUser } from "@/lib/auth/session";
 import { parseAlbumsView } from "@/lib/albums/view";
 import { db } from "@/lib/db";
@@ -84,7 +83,7 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
   const ossConfig = await resolveUserOssConfig({ user });
 
   if (!ossConfig) {
-    return <OssConfigRequiredNotice />;
+    return null;
   }
 
   const publicBaseUrl = ossConfig.publicBaseUrl;

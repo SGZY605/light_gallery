@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { ImageDetailView } from "@/components/image-detail-view";
-import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { filterImagesExistingInOss } from "@/lib/images/sync";
@@ -55,7 +54,7 @@ export default async function ImageDetailPage({ params }: ImageDetailPageProps) 
   const ossConfig = await resolveUserOssConfig({ user });
 
   if (!ossConfig) {
-    return <OssConfigRequiredNotice />;
+    return null;
   }
 
   const [visibleImage] = await filterImagesExistingInOss({
