@@ -32,6 +32,14 @@ type BuildDetailSavePayloadInput = {
   draftLocation: DraftLocation;
 };
 
+type ValidatedLocationValue =
+  | {
+      latitude: number;
+      longitude: number;
+      label?: string;
+    }
+  | null;
+
 type StructuredMetadataInput = {
   filename: string;
   mimeType: string;
@@ -174,21 +182,71 @@ export function hasDetailDraftChanges({
 }
 
 export function buildDetailSavePayload({ draftTagIds, draftLocation }: BuildDetailSavePayloadInput) {
-  const normalizedLocation = normalizeDraftLocation(draftLocation);
   const tagIds = normalizeTagIds(draftTagIds);
+  const validation = validateDetailDraftLocation(draftLocation);
 
-  if (!normalizedLocation.latitude && !normalizedLocation.longitude) {
-    return {
-      tagIds,
-      location: null
-    };
+  if (!validation.ok) {
+    throw new Error("invalid_detail_draft_location");
   }
 
   return {
     tagIds,
-    location: {
-      latitude: Number(normalizedLocation.latitude),
-      longitude: Number(normalizedLocation.longitude),
+    location: validation.value
+  };
+}
+
+export function validateDetailDraftLocation(location: DraftLocation):
+  | { ok: true; value: ValidatedLocationValue }
+  | {
+      ok: false;
+      errors: {
+        latitude?: string;
+        longitude?: string;
+      };
+    } {
+  const normalizedLocation = normalizeDraftLocation(location);
+
+  if (!normalizedLocation.latitude && !normalizedLocation.longitude) {
+    return {
+      ok: true,
+      value: null
+    };
+  }
+
+  if (!normalizedLocation.latitude || !normalizedLocation.longitude) {
+    return {
+      ok: false,
+      errors: {
+        latitude: normalizedLocation.latitude ? undefined : "纬度不能为空",
+        longitude: normalizedLocation.longitude ? undefined : "经度不能为空"
+      }
+    };
+  }
+
+  const latitude = Number(normalizedLocation.latitude);
+  const longitude = Number(normalizedLocation.longitude);
+  const errors: { latitude?: string; longitude?: string } = {};
+
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    errors.latitude = "纬度必须在 -90 到 90 之间";
+  }
+
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    errors.longitude = "经度必须在 -180 到 180 之间";
+  }
+
+  if (errors.latitude || errors.longitude) {
+    return {
+      ok: false,
+      errors
+    };
+  }
+
+  return {
+    ok: true,
+    value: {
+      latitude,
+      longitude,
       label: normalizedLocation.label || undefined
     }
   };

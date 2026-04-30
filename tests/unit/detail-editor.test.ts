@@ -3,7 +3,8 @@ import {
   buildDetailSavePayload,
   getEditableLocationSeed,
   hasDetailDraftChanges,
-  summarizeStructuredMetadata
+  summarizeStructuredMetadata,
+  validateDetailDraftLocation
 } from "@/lib/images/detail-editor";
 
 describe("detail editor helpers", () => {
@@ -98,6 +99,51 @@ describe("detail editor helpers", () => {
     ).toEqual({
       tagIds: ["tag-1"],
       location: { latitude: 35.6, longitude: 139.7, label: undefined }
+    });
+  });
+
+  it("accepts empty coordinates as clearing manual location", () => {
+    expect(
+      validateDetailDraftLocation({
+        latitude: "",
+        longitude: "",
+        label: ""
+      })
+    ).toEqual({
+      ok: true,
+      value: null
+    });
+  });
+
+  it("rejects invalid coordinate ranges", () => {
+    expect(
+      validateDetailDraftLocation({
+        latitude: "91",
+        longitude: "181",
+        label: ""
+      })
+    ).toEqual({
+      ok: false,
+      errors: {
+        latitude: "纬度必须在 -90 到 90 之间",
+        longitude: "经度必须在 -180 到 180 之间"
+      }
+    });
+  });
+
+  it("rejects partial coordinates instead of coercing empty text to zero", () => {
+    expect(
+      validateDetailDraftLocation({
+        latitude: "",
+        longitude: "121.4737",
+        label: ""
+      })
+    ).toEqual({
+      ok: false,
+      errors: {
+        latitude: "纬度不能为空",
+        longitude: undefined
+      }
     });
   });
 
