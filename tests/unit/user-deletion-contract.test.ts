@@ -30,6 +30,8 @@ describe("user deletion isolation contract", () => {
 
     expect(content).toContain("canDeleteUserAccount(targetUser.email)");
     expect(content).toContain("PROTECTED_ADMIN_EMAIL");
+    expect(content).toContain("支持创建其他账户、修改管理员、重置密码和删除账户等管理操作");
+    expect(content).not.toContain("进入其他用户");
   });
 
   it("requires typing the exact account name before the delete user confirmation can submit", () => {

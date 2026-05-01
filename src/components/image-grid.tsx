@@ -39,6 +39,14 @@ export type ImageGridProps = {
   publicBaseUrl: string;
 };
 
+function formatImageDimensions(width?: number | null, height?: number | null): string {
+  if (!width || !height) {
+    return "尺寸未知";
+  }
+
+  return `${width}×${height}px`;
+}
+
 export function ImageGrid({
   columnCount,
   images,
@@ -89,7 +97,7 @@ export function ImageGrid({
         <div key={image.id} className="mb-0.5 break-inside-avoid">
           <button
             type="button"
-            className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left transition-opacity hover:opacity-80"
+            className="group/image-tile relative block w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 text-left"
             onClick={(event) => handleImageClick(index, event)}
           >
             <Image
@@ -99,8 +107,16 @@ export function ImageGrid({
               height={image.height ?? 480}
               sizes={`${Math.ceil(100 / resolvedColumnCount)}vw`}
               unoptimized
-              className="h-auto w-full"
+              className="h-auto w-full transition duration-300 ease-out group-hover/image-tile:scale-[1.035]"
             />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 bg-gradient-to-t from-black/65 via-black/36 to-transparent px-3 pb-2 pt-10 opacity-0 transition duration-200 ease-out group-hover/image-tile:translate-y-0 group-hover/image-tile:opacity-100">
+              <p className="gallery-hover-overlay-title truncate text-[11px] font-medium leading-4">
+                {image.filename}
+              </p>
+              <p className="gallery-hover-overlay-meta text-[10px] leading-4">
+                {formatImageDimensions(image.width, image.height)}
+              </p>
+            </div>
           </button>
         </div>
       ))}

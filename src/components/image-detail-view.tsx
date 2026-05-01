@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Minus, Plus, RefreshCw, Trash2, X, ZoomIn } from "lucide-react";
+import { Heart, Minus, Plus, RefreshCw, Trash2, X, ZoomIn } from "lucide-react";
 import { ImageDetailSidebar } from "@/components/image-detail-sidebar";
 import {
   clampViewerOffset,
@@ -52,6 +52,7 @@ type ImageData = {
   width?: number | null;
   height?: number | null;
   description?: string | null;
+  featured: boolean;
   createdAt: string;
   exif?: ExifData | null;
   location?: LocationData | null;
@@ -124,6 +125,8 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
   const [deleteConfirmationName, setDeleteConfirmationName] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(image.featured);
+  const [isFavoriteUpdating, setIsFavoriteUpdating] = useState(false);
 
   const updateBaseImageSize = useCallback(() => {
     if (!imageBoundsRef.current) {
@@ -270,6 +273,40 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
     setShowDeleteDialog(false);
     setShowFinalDeleteDialog(true);
   }, []);
+
+  const toggleFavorite = useCallback(async () => {
+    const nextFavorite = !isFavorite;
+
+    setIsFavorite(nextFavorite);
+    setIsFavoriteUpdating(true);
+
+    try {
+      const response = await fetch(`/api/images/${image.id}/favorite`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          featured: nextFavorite
+        })
+      });
+      const payload = (await response.json().catch(() => null)) as { featured?: boolean; error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "更新收藏失败。");
+      }
+
+      if (typeof payload?.featured === "boolean") {
+        setIsFavorite(payload.featured);
+      }
+
+      router.refresh();
+    } catch {
+      setIsFavorite(!nextFavorite);
+    } finally {
+      setIsFavoriteUpdating(false);
+    }
+  }, [image.id, isFavorite, router]);
 
   const confirmDelete = useCallback(async () => {
     if (!canConfirmImageDelete) {
@@ -508,6 +545,21 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
               <RefreshCw className="h-3.5 w-3.5" />
             </button>
             <span className="mx-1 h-4 w-px bg-white/10" />
+            <button
+              type="button"
+              onClick={() => void toggleFavorite()}
+              disabled={isFavoriteUpdating}
+              className={[
+                "rounded-full p-1.5 transition disabled:cursor-not-allowed disabled:opacity-50",
+                isFavorite
+                  ? "text-red-400 hover:bg-red-500/15 hover:text-red-300"
+                  : "text-white/55 hover:bg-white/10 hover:text-red-200"
+              ].join(" ")}
+              aria-label={isFavorite ? "取消收藏" : "收藏图片"}
+              title={isFavorite ? "取消收藏" : "收藏图片"}
+            >
+              <Heart className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
+            </button>
             <button
               type="button"
               onClick={requestDelete}

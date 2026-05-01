@@ -44,4 +44,21 @@ describe("image detail sidebar layout", () => {
     expect(detailViewContent).toMatch(/showFinalDeleteDialog[\s\S]*onClick=\{\(\) => void confirmDelete\(\)\}/);
     expect(detailViewContent).toMatch(/showFinalDeleteDialog[\s\S]*disabled=\{isDeleting \|\| !canConfirmImageDelete\}/);
   });
+
+  it("adds a favorite heart before the destructive delete action", () => {
+    const detailPageContent = readProjectFile("src/app/dashboard/library/[id]/page.tsx");
+    const detailViewContent = readProjectFile("src/components/image-detail-view.tsx");
+    const routeContent = readProjectFile("src/app/api/images/[id]/favorite/route.ts");
+    const favoriteIndex = detailViewContent.indexOf('aria-label={isFavorite ? "取消收藏" : "收藏图片"}');
+    const deleteIndex = detailViewContent.indexOf('aria-label="删除图片"');
+
+    expect(detailPageContent).toContain("featured: visibleImage.featured");
+    expect(detailViewContent).toContain("Heart");
+    expect(detailViewContent).toContain("isFavorite");
+    expect(detailViewContent).toContain("toggleFavorite");
+    expect(favoriteIndex).toBeGreaterThan(-1);
+    expect(favoriteIndex).toBeLessThan(deleteIndex);
+    expect(routeContent).toContain("featured");
+    expect(routeContent).toContain("db.image.update");
+  });
 });

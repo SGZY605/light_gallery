@@ -28,6 +28,7 @@ describe("OSS settings page contract", () => {
     expect(content).toContain("existing?.accessKeySecret");
     expect(content).not.toContain('defaultValue={config?.accessKeySecret');
     expect(content).toContain('<SyncButton disabled={!config} />');
+    expect(content).toContain("当前仅支持阿里云 OSS");
   });
 
   it("SyncButton component has sync UI with progress", () => {

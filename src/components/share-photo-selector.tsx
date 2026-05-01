@@ -7,6 +7,7 @@ import { buildOssImageUrl } from "@/lib/oss/urls";
 import {
   deselectVisibleShareImages,
   filterShareSelectionImages,
+  getSelectedShareImages,
   selectVisibleShareImages,
   toggleShareSelection
 } from "@/lib/shares/selection";
@@ -30,18 +31,33 @@ type ShareSelectorImage = {
 
 type SharePhotoSelectorProps = {
   images: ShareSelectorImage[];
+  initialSelectedImageIds?: string[];
   publicBaseUrl: string;
   tags: ShareSelectorTag[];
 };
 
-export function SharePhotoSelector({ images, publicBaseUrl, tags }: SharePhotoSelectorProps) {
+export function SharePhotoSelector({
+  images,
+  initialSelectedImageIds = [],
+  publicBaseUrl,
+  tags
+}: SharePhotoSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>(() => {
+    const availableImageIds = new Set(images.map((image) => image.id));
+    return Array.from(new Set(initialSelectedImageIds)).filter((imageId) =>
+      availableImageIds.has(imageId)
+    );
+  });
 
   const visibleImages = useMemo(
     () => filterShareSelectionImages(images, selectedTagIds),
     [images, selectedTagIds]
+  );
+  const selectedShareImages = useMemo(
+    () => getSelectedShareImages(images, selectedImageIds),
+    [images, selectedImageIds]
   );
 
   function toggleTagFilter(tagId: string) {
@@ -83,6 +99,35 @@ export function SharePhotoSelector({ images, publicBaseUrl, tags }: SharePhotoSe
           选择照片
         </button>
       </div>
+
+      {selectedShareImages.length ? (
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 md:grid-cols-8">
+          {selectedShareImages.map((image) => (
+            <button
+              key={image.id}
+              type="button"
+              onClick={() => toggleImage(image.id)}
+              className="group relative aspect-square overflow-hidden rounded-md border border-emerald-400/35 bg-black/10 text-left ring-1 ring-emerald-400/20 transition hover:border-red-300/45"
+              aria-label={`取消选择 ${image.filename}`}
+            >
+              <Image
+                src={buildOssImageUrl(image.objectKey, "thumb", { publicBaseUrl })}
+                alt={image.filename}
+                fill
+                sizes="96px"
+                unoptimized
+                className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03] group-hover:opacity-80"
+              />
+              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-1.5 pb-1 pt-4 text-[9px] leading-3 text-white/85">
+                <span className="block truncate">{image.filename}</span>
+              </span>
+              <span className="absolute right-1 top-1 rounded-full bg-emerald-400/85 px-1 text-[9px] font-semibold text-black">
+                已选
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {isOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">

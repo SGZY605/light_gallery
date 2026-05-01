@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { AlbumPhotoTile } from "@/components/album-photo-tile";
 import {
+  buildMemoryHighlights,
   filterAlbumImages,
   groupImagesByTimelineDate,
-  type AlbumsViewMode
+  type AlbumsViewMode,
+  type MemoryHighlight
 } from "@/lib/albums/view";
 
 type TagItem = {
@@ -33,6 +35,7 @@ type AlbumStats = {
 };
 
 type AlbumsBrowserProps = {
+  favoriteImages: AlbumBrowserImage[];
   images: AlbumBrowserImage[];
   tags: TagItem[];
   stats: AlbumStats;
@@ -76,7 +79,144 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+function getMemoryHighlightAccent(kind: MemoryHighlight<AlbumBrowserImage>["kind"]): string {
+  if (kind === "anniversary") {
+    return "from-rose-400/20 via-amber-300/10 to-transparent";
+  }
+
+  if (kind === "month") {
+    return "from-sky-400/20 via-emerald-300/10 to-transparent";
+  }
+
+  return "from-violet-400/20 via-fuchsia-300/10 to-transparent";
+}
+
+function MemoryPhotoPreview({
+  images,
+  publicBaseUrl
+}: {
+  images: AlbumBrowserImage[];
+  publicBaseUrl: string;
+}) {
+  const previewImages = images.slice(0, 10);
+  const heroImage = previewImages[0];
+  const supportingImages = previewImages.slice(1, 10);
+
+  return (
+    <div className="grid min-h-48 grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-1 p-1">
+      {heroImage ? (
+        <AlbumPhotoTile
+          {...heroImage}
+          publicBaseUrl={publicBaseUrl}
+          className="h-full min-h-0"
+        />
+      ) : (
+        <div className="flex min-h-40 items-center justify-center rounded-md border border-dashed border-border bg-surface text-xs text-[color:var(--text-faint)]">
+          暂无照片
+        </div>
+      )}
+      <div className="grid grid-cols-3 gap-1">
+        {supportingImages.map((image) => (
+          <AlbumPhotoTile key={image.id} {...image} publicBaseUrl={publicBaseUrl} />
+        ))}
+        {Array.from({ length: Math.max(0, 9 - supportingImages.length) }, (_, index) => (
+          <div
+            key={`empty-${index}`}
+            className="aspect-square rounded-md border border-dashed border-border bg-surface/50"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MemoryHighlightCard({
+  highlight,
+  publicBaseUrl
+}: {
+  highlight: MemoryHighlight<AlbumBrowserImage>;
+  publicBaseUrl: string;
+}) {
+  return (
+    <article className="flex min-h-96 flex-col overflow-hidden rounded-md border border-border bg-card transition hover:border-[color:var(--text-faint)]">
+      <div className={["bg-gradient-to-br p-4", getMemoryHighlightAccent(highlight.kind)].join(" ")}>
+        <div className="flex min-h-28 flex-col justify-between gap-4">
+          <div className="space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-faint)]">
+              {highlight.kind === "anniversary" ? "今日回望" : highlight.kind === "month" ? "月度片段" : "心情标签"}
+            </p>
+            <Link
+              href={`/dashboard/albums/memories/${highlight.id}`}
+              className="block space-y-1 rounded-sm outline-none transition hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[color:var(--text-muted)]"
+            >
+              <h3 className="text-lg font-semibold leading-6 text-[color:var(--text-primary)]">
+                {highlight.title}
+              </h3>
+              <p className="text-xs leading-5 text-[color:var(--text-muted)]">
+                {highlight.description}
+              </p>
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/dashboard/albums/memories/${highlight.id}`}
+              className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-[color:var(--text-secondary)] transition hover:bg-[color:var(--control-hover-bg)] hover:text-[color:var(--text-primary)]"
+            >
+              打开回忆
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <MemoryPhotoPreview images={highlight.previewImages} publicBaseUrl={publicBaseUrl} />
+    </article>
+  );
+}
+
+function FavoriteAlbumCard({
+  favoriteImages,
+  publicBaseUrl
+}: {
+  favoriteImages: AlbumBrowserImage[];
+  publicBaseUrl: string;
+}) {
+  const favoritePreviewImages = favoriteImages.slice(0, 10);
+
+  return (
+    <article className="flex min-h-96 flex-col overflow-hidden rounded-md border border-border bg-card transition hover:border-[color:var(--text-faint)]">
+      <Link
+        href="/dashboard/albums/favorites"
+        className="block bg-gradient-to-br from-red-400/20 via-pink-300/10 to-transparent p-4 transition hover:bg-[color:var(--control-hover-bg)]"
+      >
+        <div className="flex min-h-28 flex-col justify-between gap-4">
+          <div className="space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-faint)]">
+              收藏相册
+            </p>
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold leading-6 text-[color:var(--text-primary)]">
+                被红心留下的照片
+              </h3>
+              <p className="text-xs leading-5 text-[color:var(--text-muted)]">
+                最近收藏的 {favoriteImages.length} 张照片，会优先把新点亮的瞬间放在这里。
+              </p>
+            </div>
+          </div>
+
+          <span className="w-fit rounded-md border border-border px-3 py-1.5 text-xs font-medium text-[color:var(--text-secondary)]">
+            打开收藏
+          </span>
+        </div>
+      </Link>
+
+      <MemoryPhotoPreview images={favoritePreviewImages} publicBaseUrl={publicBaseUrl} />
+    </article>
+  );
+}
+
 export function AlbumsBrowser({
+  favoriteImages,
   images,
   tags,
   stats,
@@ -96,6 +236,7 @@ export function AlbumsBrowser({
     [fromDate, images, selectedTagIds, toDate]
   );
   const timelineGroups = useMemo(() => groupImagesByTimelineDate(images), [images]);
+  const memoryHighlights = useMemo(() => buildMemoryHighlights(images), [images]);
 
   return (
     <div className="space-y-5">
@@ -104,6 +245,33 @@ export function AlbumsBrowser({
         <StatCard label="标签数量" value={stats.tagCount} />
         <StatCard label="活跃分享链接" value={stats.activeShareCount} />
         <StatCard label="有拍摄时间" value={stats.capturedImageCount} />
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-faint)]">
+              回忆精选
+            </p>
+            <h2 className="mt-1 text-base font-semibold text-[color:var(--text-primary)]">
+              今天适合重新打开的几段照片
+            </h2>
+          </div>
+          <p className="max-w-md text-xs leading-5 text-[color:var(--text-muted)]">
+            根据拍摄日期、月份密度和标签自动整理，适合回看，也适合直接分享给在场的人。
+          </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {memoryHighlights.map((highlight) => (
+            <MemoryHighlightCard
+              key={highlight.id}
+              highlight={highlight}
+              publicBaseUrl={publicBaseUrl}
+            />
+          ))}
+          <FavoriteAlbumCard favoriteImages={favoriteImages} publicBaseUrl={publicBaseUrl} />
+        </div>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

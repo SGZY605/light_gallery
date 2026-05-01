@@ -4,7 +4,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "光影画廊",
-  description: "私人照片画廊"
+  description: "私人照片画廊",
+  icons: {
+    icon: "/brand/gallery_logo.png",
+    shortcut: "/brand/gallery_logo.png",
+    apple: "/brand/gallery_logo.png"
+  }
 };
 
 export default function RootLayout({

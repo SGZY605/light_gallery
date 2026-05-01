@@ -129,7 +129,7 @@ export default function LoginPage() {
       {/* 背景图片 */}
       <div
         className="fixed inset-0 z-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/TheStarryNight.png')" }}
+        style={{ backgroundImage: "url('/login_background.png')" }}
       />
 
       {/* 暗色遮罩 + 鼠标光 spotlight */}

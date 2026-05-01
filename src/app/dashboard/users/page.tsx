@@ -246,7 +246,7 @@ export default async function DashboardUsersPage() {
       <section>
         <h2 className="text-base font-semibold text-white/40">用户</h2>
         <p className="mt-1 text-xs text-white/20">
-          管理允许访问画廊的私有账户，超级管理员固定为 {PROTECTED_ADMIN_EMAIL}。
+          管理允许访问画廊的私有账户，支持创建其他账户、修改管理员、重置密码和删除账户等管理操作；超级管理员固定为 {PROTECTED_ADMIN_EMAIL}。
         </p>
       </section>
 

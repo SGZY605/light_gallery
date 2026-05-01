@@ -80,6 +80,7 @@ export default async function ImageDetailPage({ params }: ImageDetailPageProps) 
         width: visibleImage.width,
         height: visibleImage.height,
         description: visibleImage.description,
+        featured: visibleImage.featured,
         createdAt: visibleImage.createdAt.toISOString(),
         exif: visibleImage.exif
           ? {

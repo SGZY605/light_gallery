@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   filterShareSelectionImages,
   deselectVisibleShareImages,
+  getSelectedShareImages,
   selectVisibleShareImages,
   toggleShareSelection
 } from "@/lib/shares/selection";
@@ -56,5 +57,12 @@ describe("share selection helpers", () => {
     const visibleImages = filterShareSelectionImages(images, ["tag-family"]);
 
     expect(deselectVisibleShareImages(["image-1", "image-2", "image-3"], visibleImages)).toEqual(["image-3"]);
+  });
+
+  it("returns selected images in the current selection order for the outside preview strip", () => {
+    expect(getSelectedShareImages(images, ["image-3", "image-1", "missing"])).toEqual([
+      images[2],
+      images[0]
+    ]);
   });
 });

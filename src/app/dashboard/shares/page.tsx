@@ -11,6 +11,22 @@ import { createShareToken, getShareState } from "@/lib/shares/tokens";
 
 export const dynamic = "force-dynamic";
 
+type DashboardSharesPageProps = {
+  searchParams?: Promise<{
+    title?: string | string[];
+    description?: string | string[];
+    imageId?: string | string[];
+  }>;
+};
+
+function asSingleValue(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+function asArray(value: string | string[] | undefined): string[] {
+  return Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
+}
+
 async function createShareAction(formData: FormData) {
   "use server";
 
@@ -150,9 +166,13 @@ async function revokeShareAction(formData: FormData) {
   revalidatePath("/dashboard/shares");
 }
 
-export default async function DashboardSharesPage() {
+export default async function DashboardSharesPage({ searchParams }: DashboardSharesPageProps) {
   const user = await requireUser();
   const ossConfig = await resolveUserOssConfig({ user });
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const initialTitle = asSingleValue(resolvedSearchParams.title);
+  const initialDescription = asSingleValue(resolvedSearchParams.description);
+  const initialSelectedImageIds = Array.from(new Set(asArray(resolvedSearchParams.imageId)));
   const [tags, images, shares] = await Promise.all([
     db.tag.findMany({
       where: {
@@ -235,6 +255,7 @@ export default async function DashboardSharesPage() {
               <span className="text-[10px] text-white/20">标题</span>
               <input
                 name="title"
+                defaultValue={initialTitle}
                 className="w-full bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10"
                 placeholder="家庭旅行精选"
               />
@@ -245,6 +266,7 @@ export default async function DashboardSharesPage() {
               <textarea
                 name="description"
                 rows={2}
+                defaultValue={initialDescription}
                 className="w-full bg-transparent py-1 text-xs text-white/50 placeholder:text-white/15 outline-none border-b border-white/[0.04] transition focus:border-white/10 resize-none"
                 placeholder="可选说明"
               />
@@ -263,6 +285,7 @@ export default async function DashboardSharesPage() {
                     color: tag.color
                   }))
                 }))}
+                initialSelectedImageIds={initialSelectedImageIds}
                 publicBaseUrl={ossConfig.publicBaseUrl}
                 tags={tags.map((tag) => ({
                   id: tag.id,

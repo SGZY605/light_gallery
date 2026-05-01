@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { DashboardShellControls } from "@/components/dashboard-shell-controls";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
@@ -23,17 +24,35 @@ export default async function DashboardLayout({
         data-sidebar="expanded"
         className="dashboard-shell flex h-full w-full flex-col xl:flex-row"
       >
-        <aside className="dashboard-sidebar shrink-0 flex flex-col items-center border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-2 py-4 text-center text-[color:var(--text-primary)] xl:h-full xl:w-32 xl:border-b-0 xl:border-r xl:min-h-0">
-          <div className="dashboard-shell-brand mb-6 w-full space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--shell-caption)]">光影画廊</p>
-            <p className="text-[10px] leading-relaxed text-[color:var(--shell-subtle)]">
-              已登录为 {user.name}
-            </p>
+        <aside className="dashboard-sidebar shrink-0 flex flex-col items-center border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-2 py-4 text-center text-[color:var(--text-primary)] xl:h-full xl:w-40 xl:border-b-0 xl:border-r xl:min-h-0">
+          <div className="dashboard-shell-brand mb-7 w-full">
+            <div className="dashboard-brand-mark" aria-label="光影画廊">
+              <Image
+                src="/brand/gallery_light.png"
+                alt=""
+                width={2048}
+                height={2048}
+                priority
+                className="dashboard-brand-image dashboard-brand-image-light"
+              />
+              <Image
+                src="/brand/gallery_dark.png"
+                alt=""
+                width={2048}
+                height={2048}
+                priority
+                className="dashboard-brand-image dashboard-brand-image-dark"
+              />
+            </div>
           </div>
 
           <DashboardNav canManageUsers={canOpenUsersPage} />
 
           <div className="flex-1" />
+
+          <p className="dashboard-login-caption mb-2 w-full px-2 text-[10px] leading-relaxed text-[color:var(--shell-subtle)]">
+            已登录为 {user.name}
+          </p>
 
           <form action="/api/auth/logout" method="post" className="dashboard-logout mb-3 w-full">
             <button

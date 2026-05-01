@@ -62,7 +62,7 @@ export function DashboardNav({ canManageUsers }: DashboardNavProps) {
   }, []);
 
   return (
-    <nav className="w-full space-y-0.5">
+    <nav className="w-full space-y-1.5">
       {navigationItems
         .filter((item) => (item.requiresManager ? canManageUsers : true))
         .map((item) => {
@@ -84,7 +84,7 @@ export function DashboardNav({ canManageUsers }: DashboardNavProps) {
               {isActive && (
                 <span className="dashboard-nav-indicator" />
               )}
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
               <span className="dashboard-nav-label">{item.label}</span>
             </Link>
           );

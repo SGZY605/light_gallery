@@ -38,7 +38,7 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
     OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }]
   };
 
-  const [images, tags, tagCount, activeShareCount] =
+  const [images, favoriteImages, tags, tagCount, activeShareCount] =
     await Promise.all([
       db.image.findMany({
         where: {
@@ -61,6 +61,17 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
             }
           }
         }
+      }),
+      db.image.findMany({
+        where: {
+          deletedAt: null,
+          featured: true,
+          uploaderId: user.id
+        },
+        orderBy: {
+          updatedAt: "desc"
+        },
+        take: 10
       }),
       db.tag.findMany({
         where: {
@@ -92,6 +103,11 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
     images,
     userId: user.id
   });
+  const visibleFavoriteImages = await filterImagesExistingInOss({
+    config: ossConfig,
+    images: favoriteImages,
+    userId: user.id
+  });
 
   return (
     <AlbumsBrowser
@@ -100,6 +116,14 @@ export default async function DashboardAlbumsPage({ searchParams }: AlbumsPagePr
       fromDate={fromDate}
       toDate={toDate}
       publicBaseUrl={publicBaseUrl}
+      favoriteImages={visibleFavoriteImages.map((image) => ({
+        id: image.id,
+        objectKey: image.objectKey,
+        filename: image.filename,
+        createdAt: image.createdAt.toISOString(),
+        takenAt: null,
+        tags: []
+      }))}
       stats={{
         imageCount: visibleImages.length,
         tagCount,

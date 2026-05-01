@@ -50,3 +50,14 @@ export function deselectVisibleShareImages<TImage extends ShareSelectionImage>(
 
   return selectedImageIds.filter((selectedImageId) => !visibleImageIds.has(selectedImageId));
 }
+
+export function getSelectedShareImages<TImage extends ShareSelectionImage>(
+  images: TImage[],
+  selectedImageIds: string[]
+): TImage[] {
+  const imagesById = new Map(images.map((image) => [image.id, image]));
+
+  return selectedImageIds
+    .map((imageId) => imagesById.get(imageId))
+    .filter((image): image is TImage => Boolean(image));
+}

@@ -121,7 +121,7 @@ export default async function DashboardSettingsPage() {
       <section>
         <h2 className="text-base font-semibold text-white/40">设置</h2>
         <p className="mt-1 text-xs text-white/20">
-          配置当前账号自己的 OSS。密钥不会回显；留空表示保持原密钥。
+          配置当前账号自己的 OSS。当前仅支持阿里云 OSS；密钥不会回显，留空表示保持原密钥。
         </p>
       </section>
 
