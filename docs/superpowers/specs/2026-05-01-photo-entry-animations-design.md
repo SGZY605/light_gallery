@@ -10,7 +10,7 @@ The animation should make photos feel like they are loading into place instead o
 
 The user selected two different motion treatments:
 
-- Gallery waterfall grid: use option B, a waterfall-style staggered fade-in.
+- Gallery grid: use the same softer staggered fade-in as album thumbnails.
 - Albums pages: use option A, a softer staggered fade-in.
 
 ## Current Context
@@ -23,13 +23,13 @@ The app already uses CSS transitions for image hover states and has `framer-moti
 
 ## Design
 
-### Gallery Waterfall Animation
+### Gallery Soft Animation
 
 Each gallery tile should animate when `ImageGrid` mounts:
 
-- Start with low opacity, slight downward offset, subtle scale reduction, and a light blur.
+- Start with low opacity, small downward offset, very slight scale reduction, and minimal blur.
 - End at full opacity, original position, full scale, and no blur.
-- Use an emphasized but controlled easing curve so the grid reads as flowing into place.
+- Use the same gentle easing curve and delay cadence as album thumbnails.
 - Stagger tiles by image index using a CSS custom property, with a bounded delay so large galleries do not keep animating for too long.
 
 The animation belongs on the tile wrapper or button frame, while the existing hover zoom remains on the internal `Image` element. This preserves the current hover behavior and metadata overlay.
@@ -62,7 +62,7 @@ No JavaScript timers, intersection observers, or client-side state are required.
 
 Use existing source-contract style unit tests because this is a narrow presentation change:
 
-- `image-grid` tests should assert the gallery tile has the new waterfall entry class and index-based CSS variable.
+- `image-grid` tests should assert the gallery tile has the soft entry class and index-based CSS variable.
 - album tests should assert `AlbumPhotoTile` exposes the softer entry class, supports `entryIndex`, and album list call sites pass indexes.
 - global style tests should assert both keyframes/classes exist and `prefers-reduced-motion` disables the entry animation.
 

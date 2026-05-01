@@ -27,7 +27,7 @@ describe("image grid hover treatment", () => {
     expect(styles).toContain("color: rgba(255, 255, 255, 0.96) !important");
   });
 
-  it("adds a staggered waterfall entry animation without moving the hover zoom off the image", () => {
+  it("uses the same soft staggered entry motion as album thumbnails", () => {
     const source = readProjectFile("src/components/image-grid.tsx");
     const styles = readProjectFile("src/app/globals.css");
 
@@ -35,9 +35,10 @@ describe("image grid hover treatment", () => {
     expect(source).toContain("--entry-index");
     expect(source).toContain("index");
     expect(source).toContain("group-hover/image-tile:scale");
-    expect(styles).toContain("@keyframes gallery-waterfall-entry");
     expect(styles).toContain(".gallery-entry-tile");
-    expect(styles).toContain("animation-delay: min(calc(var(--entry-index, 0) * 58ms), 520ms)");
+    expect(styles).toContain("animation: album-soft-entry 520ms cubic-bezier(0.22, 1, 0.36, 1) both");
+    expect(styles).toContain("animation-delay: min(calc(var(--entry-index, 0) * 46ms), 360ms)");
+    expect(styles).not.toContain("@keyframes gallery-waterfall-entry");
     expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
     expect(styles).toContain(".gallery-entry-tile");
     expect(styles).toContain("animation: none");

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add refresh-time entry animations to the gallery waterfall grid and albums thumbnails.
+**Goal:** Add refresh-time entry animations to the gallery grid and albums thumbnails.
 
-**Architecture:** Use CSS keyframes and CSS custom properties for index-based stagger timing. Keep the gallery animation in `ImageGrid`, keep album animation in `AlbumPhotoTile`, and pass `entryIndex` from album list call sites.
+**Architecture:** Use CSS keyframes and CSS custom properties for index-based stagger timing. Keep the gallery animation in `ImageGrid`, keep album animation in `AlbumPhotoTile`, and pass `entryIndex` from album list call sites. The gallery and album tiles now share the same soft entry timing.
 
 **Tech Stack:** Next.js, React, TypeScript, Tailwind CSS, Vitest source-contract tests.
 
@@ -12,14 +12,14 @@
 
 ## File Structure
 
-- Modify `tests/unit/image-grid-hover.test.ts` to add failing source-contract assertions for the gallery waterfall entry class, index CSS variable, and global keyframes.
+- Modify `tests/unit/image-grid-hover.test.ts` to add failing source-contract assertions for the gallery soft entry class, index CSS variable, and shared global keyframes.
 - Modify `tests/unit/albums-view.test.ts` to add failing source-contract assertions for album soft entry behavior and index propagation.
 - Modify `src/components/image-grid.tsx` to set `gallery-entry-tile` and `--entry-index` on each gallery tile.
 - Modify `src/components/album-photo-tile.tsx` to accept `entryIndex`, set `album-entry-tile`, and set `--entry-index`.
 - Modify `src/components/albums-browser.tsx`, `src/app/dashboard/albums/favorites/page.tsx`, and `src/app/dashboard/albums/memories/[memoryId]/page.tsx` to pass list indexes to `AlbumPhotoTile`.
 - Modify `src/app/globals.css` to define gallery and album entry keyframes/classes plus `prefers-reduced-motion`.
 
-## Task 1: Gallery Waterfall Entry Contract
+## Task 1: Gallery Soft Entry Contract
 
 **Files:**
 - Modify: `tests/unit/image-grid-hover.test.ts`
@@ -28,7 +28,7 @@
 
 - [ ] **Step 1: Write the failing test**
 
-Add assertions that `ImageGrid` uses `gallery-entry-tile`, sets `--entry-index`, and global CSS defines `gallery-waterfall-entry`.
+Add assertions that `ImageGrid` uses `gallery-entry-tile`, sets `--entry-index`, and global CSS points the gallery tile at `album-soft-entry`.
 
 - [ ] **Step 2: Run the focused test and verify it fails**
 
