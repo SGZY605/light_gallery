@@ -43,4 +43,12 @@ describe("image grid hover treatment", () => {
     expect(styles).toContain(".gallery-entry-tile");
     expect(styles).toContain("animation: none");
   });
+
+  it("preserves the dashboard scroll position before opening image details", () => {
+    const source = readProjectFile("src/components/image-grid.tsx");
+
+    expect(source).toContain("storeImageDetailReturnState");
+    expect(source).toContain("event.currentTarget.getBoundingClientRect()");
+    expect(source).toContain("router.push(`/dashboard/library/${images[index].id}`)");
+  });
 });

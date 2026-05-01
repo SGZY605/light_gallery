@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { DashboardShellControls } from "@/components/dashboard-shell-controls";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { ImageDetailScrollRestorer } from "@/components/image-detail-scroll-restorer";
 import { OssConfigRequiredNotice } from "@/components/oss-config-required-notice";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -66,7 +67,11 @@ export default async function DashboardLayout({
           <DashboardShellControls />
         </aside>
 
-        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 xl:px-7 xl:py-6">
+        <main
+          data-dashboard-content
+          className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 xl:px-7 xl:py-6"
+        >
+          <ImageDetailScrollRestorer />
           {!ossConfig ? <OssConfigRequiredNotice /> : null}
           {children}
         </main>

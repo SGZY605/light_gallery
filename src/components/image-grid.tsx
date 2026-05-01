@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { storeImageDetailReturnState } from "@/lib/images/detail-return";
 import { clampLibraryColumnCount } from "@/lib/library/columns";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 
@@ -61,19 +62,7 @@ export function ImageGrid({
       const rect = event.currentTarget.getBoundingClientRect();
 
       try {
-        sessionStorage.setItem(
-          `image-rect-${images[index].id}`,
-          JSON.stringify({
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height
-          })
-        );
-        sessionStorage.setItem(
-          "image-detail-return-url",
-          `${window.location.pathname}${window.location.search}`
-        );
+        storeImageDetailReturnState(images[index].id, rect);
       } catch {
         // sessionStorage may be unavailable
       }

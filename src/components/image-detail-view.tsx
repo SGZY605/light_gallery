@@ -7,6 +7,10 @@ import { motion } from "framer-motion";
 import { Heart, Minus, Plus, RefreshCw, Trash2, X, ZoomIn } from "lucide-react";
 import { ImageDetailSidebar } from "@/components/image-detail-sidebar";
 import {
+  IMAGE_DETAIL_RETURN_URL_KEY,
+  markImageDetailReturnScrollPending
+} from "@/lib/images/detail-return";
+import {
   clampViewerOffset,
   createWheelZoomTransform,
   getViewerCursorState,
@@ -89,7 +93,6 @@ const MIN_SCALE = 0.25;
 const MAX_SCALE = 6;
 const DEFAULT_RETURN_URL = "/dashboard/library";
 const HISTORY_GUARD_KEY = "image-detail-guard";
-const RETURN_URL_KEY = "image-detail-return-url";
 
 function getDefaultDragState(): DragState {
   return {
@@ -156,7 +159,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
     });
 
     try {
-      const storedReturnUrl = sessionStorage.getItem(RETURN_URL_KEY);
+      const storedReturnUrl = sessionStorage.getItem(IMAGE_DETAIL_RETURN_URL_KEY);
       if (storedReturnUrl) {
         returnUrlRef.current = storedReturnUrl;
       }
@@ -201,7 +204,8 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
         return;
       }
 
-      router.replace(returnUrlRef.current || DEFAULT_RETURN_URL);
+      markImageDetailReturnScrollPending(returnUrlRef.current || DEFAULT_RETURN_URL);
+      router.replace(returnUrlRef.current || DEFAULT_RETURN_URL, { scroll: false });
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -248,7 +252,8 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
   }, [animRect, viewport]);
 
   const navigateBackToLibrary = useCallback(() => {
-    router.replace(returnUrlRef.current || DEFAULT_RETURN_URL);
+    markImageDetailReturnScrollPending(returnUrlRef.current || DEFAULT_RETURN_URL);
+    router.replace(returnUrlRef.current || DEFAULT_RETURN_URL, { scroll: false });
   }, [router]);
 
   const requestClose = useCallback(() => {
@@ -605,7 +610,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
                   height={image.height ?? image.exif?.height ?? 1200}
                   sizes="(min-width: 1024px) 66vw, 90vw"
                   unoptimized
-                  className="block max-h-[82vh] max-w-[90vw] rounded-lg object-contain shadow-2xl lg:max-h-[88vh] lg:max-w-[66vw]"
+                  className="block max-h-[82vh] max-w-[90vw] object-contain lg:max-h-[88vh] lg:max-w-[66vw]"
                   draggable={false}
                   onLoad={handleMainImageReady}
                   style={{ opacity: imageLoaded ? 1 : 0, transition: "opacity 0.18s ease-out" }}

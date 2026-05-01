@@ -27,6 +27,25 @@ describe("image detail sidebar layout", () => {
     expect(detailViewContent).toContain("buildOssImageUrl(image.objectKey, \"original\"");
   });
 
+  it("shows the detail image without an extra framed shadow treatment", () => {
+    const detailViewContent = readProjectFile("src/components/image-detail-view.tsx");
+    const mainImageClass = detailViewContent.match(/className="block max-h-\[82vh\][^"]*"/)?.[0];
+
+    expect(mainImageClass).toBeTruthy();
+    expect(mainImageClass).not.toContain("shadow-2xl");
+    expect(mainImageClass).not.toContain("rounded-lg");
+  });
+
+  it("restores the dashboard scroll container after closing image details", () => {
+    const layoutContent = readProjectFile("src/app/dashboard/layout.tsx");
+    const detailViewContent = readProjectFile("src/components/image-detail-view.tsx");
+
+    expect(layoutContent).toContain("ImageDetailScrollRestorer");
+    expect(layoutContent).toContain("data-dashboard-content");
+    expect(detailViewContent).toContain("IMAGE_DETAIL_RETURN_URL_KEY");
+    expect(detailViewContent).toContain("router.replace(returnUrlRef.current || DEFAULT_RETURN_URL, { scroll: false })");
+  });
+
   it("keeps deletion in the top-right toolbar behind a second and final destructive confirmation", () => {
     const detailViewContent = readProjectFile("src/components/image-detail-view.tsx");
     const deleteButtonIndex = detailViewContent.indexOf('aria-label="删除图片"');

@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { storeImageDetailReturnState } from "@/lib/images/detail-return";
 import { buildOssImageUrl } from "@/lib/oss/urls";
 
 type AlbumPhotoTileProps = {
@@ -29,19 +30,7 @@ export function AlbumPhotoTile({
       const rect = event.currentTarget.getBoundingClientRect();
 
       try {
-        sessionStorage.setItem(
-          `image-rect-${id}`,
-          JSON.stringify({
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height
-          })
-        );
-        sessionStorage.setItem(
-          "image-detail-return-url",
-          `${window.location.pathname}${window.location.search}`
-        );
+        storeImageDetailReturnState(id, rect);
       } catch {
         // Detail navigation still works if sessionStorage is unavailable.
       }

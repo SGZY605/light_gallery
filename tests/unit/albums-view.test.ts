@@ -174,10 +174,13 @@ describe("albums page source contracts", () => {
 
   it("uses square reusable album thumbnails that open the existing detail route", () => {
     const tileSource = readProjectFile("src/components/album-photo-tile.tsx");
+    const returnStateSource = readProjectFile("src/lib/images/detail-return.ts");
 
     expect(tileSource).toContain("aspect-square");
     expect(tileSource).toContain("/dashboard/library/");
-    expect(tileSource).toContain("image-detail-return-url");
+    expect(tileSource).toContain("storeImageDetailReturnState");
+    expect(tileSource).toContain("event.currentTarget.getBoundingClientRect()");
+    expect(returnStateSource).toContain("image-detail-return-url");
   });
 
   it("adds soft staggered entry animation support to reusable album thumbnails", () => {
