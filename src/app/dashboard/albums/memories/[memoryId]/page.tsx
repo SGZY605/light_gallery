@@ -109,8 +109,13 @@ export default async function AlbumMemoryPage({ params }: MemoryPageProps) {
       </section>
 
       <section className="grid grid-cols-3 gap-1 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
-        {memory.images.map((image) => (
-          <AlbumPhotoTile key={image.id} {...image} publicBaseUrl={ossConfig.publicBaseUrl} />
+        {memory.images.map((image, index) => (
+          <AlbumPhotoTile
+            key={image.id}
+            {...image}
+            publicBaseUrl={ossConfig.publicBaseUrl}
+            entryIndex={index}
+          />
         ))}
       </section>
     </div>

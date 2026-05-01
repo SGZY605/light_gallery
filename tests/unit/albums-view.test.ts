@@ -180,6 +180,20 @@ describe("albums page source contracts", () => {
     expect(tileSource).toContain("image-detail-return-url");
   });
 
+  it("adds soft staggered entry animation support to reusable album thumbnails", () => {
+    const tileSource = readProjectFile("src/components/album-photo-tile.tsx");
+    const styles = readProjectFile("src/app/globals.css");
+
+    expect(tileSource).toContain("entryIndex = 0");
+    expect(tileSource).toContain("album-entry-tile");
+    expect(tileSource).toContain("--entry-index");
+    expect(styles).toContain("@keyframes album-soft-entry");
+    expect(styles).toContain(".album-entry-tile");
+    expect(styles).toContain("animation-delay: min(calc(var(--entry-index, 0) * 46ms), 360ms)");
+    expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(styles).toContain(".album-entry-tile");
+  });
+
   it("renders filter and timeline controls in the albums browser", () => {
     const browserSource = readProjectFile("src/components/albums-browser.tsx");
 
@@ -228,5 +242,22 @@ describe("albums page source contracts", () => {
     expect(pageSource).toContain("updatedAt: \"desc\"");
     expect(pageSource).toContain("take: 10");
     expect(pageSource).toContain("favoriteImages={");
+  });
+
+  it("passes local entry indexes to album thumbnail lists", () => {
+    const browserSource = readProjectFile("src/components/albums-browser.tsx");
+    const favoritesPageSource = readProjectFile("src/app/dashboard/albums/favorites/page.tsx");
+    const memoryPageSource = readProjectFile("src/app/dashboard/albums/memories/[memoryId]/page.tsx");
+
+    expect(browserSource).toContain("entryIndex={0}");
+    expect(browserSource).toContain("supportingImages.map((image, index)");
+    expect(browserSource).toContain("entryIndex={index + 1}");
+    expect(browserSource).toContain("filteredImages.map((image, index)");
+    expect(browserSource).toContain("group.images.map((image, index)");
+    expect(browserSource).toContain("entryIndex={index}");
+    expect(favoritesPageSource).toContain("visibleImages.map((image, index)");
+    expect(favoritesPageSource).toContain("entryIndex={index}");
+    expect(memoryPageSource).toContain("memory.images.map((image, index)");
+    expect(memoryPageSource).toContain("entryIndex={index}");
   });
 });

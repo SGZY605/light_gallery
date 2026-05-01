@@ -55,13 +55,14 @@ export default async function FavoriteAlbumPage() {
 
       {visibleImages.length ? (
         <section className="grid grid-cols-3 gap-1 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
-          {visibleImages.map((image) => (
+          {visibleImages.map((image, index) => (
             <AlbumPhotoTile
               key={image.id}
               id={image.id}
               objectKey={image.objectKey}
               filename={image.filename}
               publicBaseUrl={ossConfig.publicBaseUrl}
+              entryIndex={index}
             />
           ))}
         </section>

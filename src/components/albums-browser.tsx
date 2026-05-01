@@ -108,6 +108,7 @@ function MemoryPhotoPreview({
         <AlbumPhotoTile
           {...heroImage}
           publicBaseUrl={publicBaseUrl}
+          entryIndex={0}
           className="h-full min-h-0"
         />
       ) : (
@@ -116,8 +117,13 @@ function MemoryPhotoPreview({
         </div>
       )}
       <div className="grid grid-cols-3 gap-1">
-        {supportingImages.map((image) => (
-          <AlbumPhotoTile key={image.id} {...image} publicBaseUrl={publicBaseUrl} />
+        {supportingImages.map((image, index) => (
+          <AlbumPhotoTile
+            key={image.id}
+            {...image}
+            publicBaseUrl={publicBaseUrl}
+            entryIndex={index + 1}
+          />
         ))}
         {Array.from({ length: Math.max(0, 9 - supportingImages.length) }, (_, index) => (
           <div
@@ -372,8 +378,13 @@ export function AlbumsBrowser({
 
           {filteredImages.length ? (
             <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
-              {filteredImages.map((image) => (
-                <AlbumPhotoTile key={image.id} {...image} publicBaseUrl={publicBaseUrl} />
+              {filteredImages.map((image, index) => (
+                <AlbumPhotoTile
+                  key={image.id}
+                  {...image}
+                  publicBaseUrl={publicBaseUrl}
+                  entryIndex={index}
+                />
               ))}
             </div>
           ) : (
@@ -394,8 +405,13 @@ export function AlbumsBrowser({
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
-                  {group.images.map((image) => (
-                    <AlbumPhotoTile key={image.id} {...image} publicBaseUrl={publicBaseUrl} />
+                  {group.images.map((image, index) => (
+                    <AlbumPhotoTile
+                      key={image.id}
+                      {...image}
+                      publicBaseUrl={publicBaseUrl}
+                      entryIndex={index}
+                    />
                   ))}
                 </div>
               </div>

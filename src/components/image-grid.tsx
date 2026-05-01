@@ -94,7 +94,11 @@ export function ImageGrid({
   return (
     <div className="gap-0.5" style={{ columnCount: resolvedColumnCount }}>
       {images.map((image, index) => (
-        <div key={image.id} className="mb-0.5 break-inside-avoid">
+        <div
+          key={image.id}
+          className="gallery-entry-tile mb-0.5 break-inside-avoid"
+          style={{ "--entry-index": index } as React.CSSProperties}
+        >
           <button
             type="button"
             className="group/image-tile relative block w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 text-left"

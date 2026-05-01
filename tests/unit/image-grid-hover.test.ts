@@ -26,4 +26,20 @@ describe("image grid hover treatment", () => {
     expect(styles).toContain(".gallery-hover-overlay-title");
     expect(styles).toContain("color: rgba(255, 255, 255, 0.96) !important");
   });
+
+  it("adds a staggered waterfall entry animation without moving the hover zoom off the image", () => {
+    const source = readProjectFile("src/components/image-grid.tsx");
+    const styles = readProjectFile("src/app/globals.css");
+
+    expect(source).toContain("gallery-entry-tile");
+    expect(source).toContain("--entry-index");
+    expect(source).toContain("index");
+    expect(source).toContain("group-hover/image-tile:scale");
+    expect(styles).toContain("@keyframes gallery-waterfall-entry");
+    expect(styles).toContain(".gallery-entry-tile");
+    expect(styles).toContain("animation-delay: min(calc(var(--entry-index, 0) * 58ms), 520ms)");
+    expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(styles).toContain(".gallery-entry-tile");
+    expect(styles).toContain("animation: none");
+  });
 });

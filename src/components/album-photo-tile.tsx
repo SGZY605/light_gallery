@@ -11,6 +11,7 @@ type AlbumPhotoTileProps = {
   filename: string;
   publicBaseUrl: string;
   className?: string;
+  entryIndex?: number;
 };
 
 export function AlbumPhotoTile({
@@ -18,7 +19,8 @@ export function AlbumPhotoTile({
   objectKey,
   filename,
   publicBaseUrl,
-  className = ""
+  className = "",
+  entryIndex = 0
 }: AlbumPhotoTileProps) {
   const router = useRouter();
 
@@ -53,8 +55,9 @@ export function AlbumPhotoTile({
     <button
       type="button"
       onClick={handleOpen}
+      style={{ "--entry-index": entryIndex } as React.CSSProperties}
       className={[
-        "group relative aspect-square overflow-hidden rounded-md border border-border bg-surface",
+        "album-entry-tile group relative aspect-square overflow-hidden rounded-md border border-border bg-surface",
         "focus:outline-none focus:ring-2 focus:ring-[color:var(--text-muted)]",
         className
       ].join(" ")}
