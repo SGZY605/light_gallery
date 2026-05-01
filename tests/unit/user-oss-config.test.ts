@@ -27,6 +27,7 @@ function userConfig(overrides: Partial<UserOssConfigRecord> = {}): UserOssConfig
     allowedMimePrefix: "image/",
     bucket: "user-bucket",
     maxUploadBytes: 25 * 1024 * 1024,
+    metadataPrefix: "metadata",
     policyExpiresSeconds: 300,
     publicBaseUrl: "https://user-cdn.example.com",
     region: "cn-hangzhou",
@@ -95,5 +96,33 @@ describe("user OSS config resolution", () => {
     });
 
     expect(getMissingOssConfigFields(incompleteConfig)).toEqual(["accessKeySecret", "publicBaseUrl"]);
+  });
+
+  it("normalizes upload and metadata prefixes without leading or trailing slashes", async () => {
+    const config = buildEnvOssConfig({
+      OSS_REGION: "cn-shanghai",
+      OSS_BUCKET: "gallery",
+      OSS_ACCESS_KEY_ID: "key",
+      OSS_ACCESS_KEY_SECRET: "secret",
+      OSS_UPLOAD_PREFIX: " /uploads/ ",
+      OSS_METADATA_PREFIX: " /metadata/ "
+    });
+    const savedConfig = userConfig({
+      metadataPrefix: " /meta-backups/ ",
+      uploadPrefix: " /user-uploads/ "
+    });
+
+    expect(config?.uploadPrefix).toBe("uploads");
+    expect(config?.metadataPrefix).toBe("metadata");
+    await expect(resolveUserOssConfig({
+      user: {
+        email: "member@example.com",
+        id: "member"
+      },
+      findConfig: vi.fn().mockResolvedValue(savedConfig)
+    })).resolves.toMatchObject({
+      metadataPrefix: "meta-backups",
+      uploadPrefix: "user-uploads"
+    });
   });
 });

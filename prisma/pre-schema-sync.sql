@@ -201,3 +201,19 @@ BEGIN
     ADD COLUMN "libraryColumnCount" INTEGER NOT NULL DEFAULT 4;
   END IF;
 END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'UserOssConfig'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'UserOssConfig' AND column_name = 'metadataPrefix'
+  ) THEN
+    ALTER TABLE "UserOssConfig"
+    ADD COLUMN "metadataPrefix" TEXT NOT NULL DEFAULT 'metadata';
+  END IF;
+END $$;

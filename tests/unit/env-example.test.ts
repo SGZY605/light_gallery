@@ -59,7 +59,8 @@ describe(".env.example", () => {
       "OSS_MAX_UPLOAD_BYTES",
       "OSS_POLICY_EXPIRES_SECONDS",
       "OSS_ALLOWED_MIME_PREFIX",
-      "OSS_UPLOAD_PREFIX"
+      "OSS_UPLOAD_PREFIX",
+      "OSS_METADATA_PREFIX"
     ];
 
     expect([...keys].sort()).toEqual(expect.arrayContaining(requiredKeys));

@@ -54,30 +54,36 @@ function buildListUrl(config: ResolvedOssConfig, prefix: string, marker?: string
 
 function buildAuthorizationHeader({
   config,
+  contentType,
   date,
   method,
   resource
 }: {
   config: ResolvedOssConfig;
+  contentType: string;
   date: string;
   method: string;
   resource: string;
 }): string {
-  const stringToSign = `${method}\n\n\n${date}\n${resource}`;
+  const stringToSign = `${method}\n\n${contentType}\n${date}\n${resource}`;
   const signature = createHmac("sha1", config.accessKeySecret).update(stringToSign).digest("base64");
 
   return `OSS ${config.accessKeyId}:${signature}`;
 }
 
-function buildSignedHeaders(config: ResolvedOssConfig, method: string, resource: string): Headers {
+function buildSignedHeaders(config: ResolvedOssConfig, method: string, resource: string, contentType = ""): Headers {
   const date = new Date().toUTCString();
   const headers = new Headers();
 
   headers.set("Date", date);
+  if (contentType) {
+    headers.set("Content-Type", contentType);
+  }
   headers.set(
     "Authorization",
     buildAuthorizationHeader({
       config,
+      contentType,
       date,
       method,
       resource
@@ -149,6 +155,32 @@ export async function headOssObject(config: ResolvedOssConfig, objectKey: string
 
   assertOssResponse(response, "OSS HEAD object");
   return true;
+}
+
+export async function getOssObject(config: ResolvedOssConfig, objectKey: string): Promise<string | null> {
+  const response = await fetch(buildObjectUrl(config, objectKey), {
+    method: "GET",
+    headers: buildSignedHeaders(config, "GET", `/${config.bucket}/${objectKey}`)
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  assertOssResponse(response, "OSS GET object");
+  return response.text();
+}
+
+export async function putOssObject(config: ResolvedOssConfig, objectKey: string, body: string): Promise<void> {
+  const headers = buildSignedHeaders(config, "PUT", `/${config.bucket}/${objectKey}`, "application/json");
+
+  const response = await fetch(buildObjectUrl(config, objectKey), {
+    method: "PUT",
+    headers,
+    body
+  });
+
+  assertOssResponse(response, "OSS PUT object");
 }
 
 export async function deleteOssObject(config: ResolvedOssConfig, objectKey: string): Promise<void> {

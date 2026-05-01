@@ -152,6 +152,7 @@ model UserOssConfig {
   publicBaseUrl        String
   uploadBaseUrl        String
   uploadPrefix         String   @default("uploads")
+  metadataPrefix       String   @default("metadata")
   maxUploadBytes       Int      @default(26214400)
   policyExpiresSeconds Int      @default(300)
   allowedMimePrefix    String   @default("image/")

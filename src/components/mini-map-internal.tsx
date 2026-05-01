@@ -53,6 +53,7 @@ export function MiniMapInternal({
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const onLocationChangeRef = useRef(onLocationChange);
+  const initialLocationRef = useRef({ latitude, longitude });
 
   onLocationChangeRef.current = onLocationChange;
 
@@ -64,8 +65,11 @@ export function MiniMapInternal({
 
     delete (container as HTMLDivElement & { _leaflet_id?: number })._leaflet_id;
 
-    const hasLocation = latitude !== null && longitude !== null;
-    const center: [number, number] = hasLocation ? [latitude, longitude] : DEFAULT_CENTER;
+    const { latitude: initialLatitude, longitude: initialLongitude } = initialLocationRef.current;
+    const hasLocation = initialLatitude !== null && initialLongitude !== null;
+    const center: [number, number] = hasLocation
+      ? [initialLatitude, initialLongitude]
+      : DEFAULT_CENTER;
     const zoom = hasLocation ? 12 : 4;
 
     const map = L.map(container, {

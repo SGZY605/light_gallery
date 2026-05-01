@@ -26,6 +26,7 @@ const config: ResolvedOssConfig = {
   allowedMimePrefix: "image/",
   bucket: "gallery",
   maxUploadBytes: 25 * 1024 * 1024,
+  metadataPrefix: "metadata",
   policyExpiresSeconds: 300,
   publicBaseUrl: "https://cdn.example.com",
   region: "cn-shanghai",
@@ -56,6 +57,10 @@ vi.mock("@/lib/oss/client", () => ({
   deleteOssObject: deleteOssObjectMock,
   headOssObject: headOssObjectMock,
   listOssObjects: listOssObjectsMock
+}));
+
+vi.mock("@/lib/images/metadata-sync", () => ({
+  deleteMetadataSidecar: vi.fn().mockResolvedValue(undefined)
 }));
 
 describe("image OSS synchronization", () => {
@@ -170,6 +175,8 @@ describe("image OSS synchronization", () => {
 
     expect(result).toEqual({ deleted: true });
     expect(deleteOssObjectMock).toHaveBeenCalledWith(config, "uploads/2026/04/delete-me.jpg");
+    const { deleteMetadataSidecar } = await import("@/lib/images/metadata-sync");
+    expect(deleteMetadataSidecar).toHaveBeenCalledWith(config, "uploads/2026/04/delete-me.jpg");
     expect(imageUpdateMock).toHaveBeenCalledWith({
       where: {
         id: "image-4"

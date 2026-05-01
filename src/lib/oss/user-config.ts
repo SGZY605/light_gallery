@@ -8,6 +8,7 @@ export type ResolvedOssConfig = {
   allowedMimePrefix: string;
   bucket: string;
   maxUploadBytes: number;
+  metadataPrefix: string;
   policyExpiresSeconds: number;
   publicBaseUrl: string;
   region: string;
@@ -26,6 +27,7 @@ type ResolveUserOssConfigInput = {
 };
 
 const DEFAULT_MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const DEFAULT_METADATA_PREFIX = "metadata";
 const DEFAULT_POLICY_EXPIRES_SECONDS = 300;
 const DEFAULT_ALLOWED_MIME_PREFIX = "image/";
 const DEFAULT_UPLOAD_PREFIX = "uploads";
@@ -41,6 +43,10 @@ const requiredFields = [
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, "");
+}
+
+function normalizeObjectPrefix(value: string | undefined, fallback: string): string {
+  return value?.trim().replace(/^\/+|\/+$/g, "") || fallback;
 }
 
 function readPositiveInteger(value: string | undefined, fallback: number): number {
@@ -106,6 +112,7 @@ export function buildEnvOssConfig(env: NodeJS.ProcessEnv | Record<string, string
     allowedMimePrefix: env.OSS_ALLOWED_MIME_PREFIX?.trim() || DEFAULT_ALLOWED_MIME_PREFIX,
     bucket,
     maxUploadBytes: readPositiveInteger(env.OSS_MAX_UPLOAD_BYTES, DEFAULT_MAX_UPLOAD_BYTES),
+    metadataPrefix: normalizeObjectPrefix(env.OSS_METADATA_PREFIX, DEFAULT_METADATA_PREFIX),
     policyExpiresSeconds: readPositiveInteger(
       env.OSS_POLICY_EXPIRES_SECONDS,
       DEFAULT_POLICY_EXPIRES_SECONDS
@@ -113,7 +120,7 @@ export function buildEnvOssConfig(env: NodeJS.ProcessEnv | Record<string, string
     publicBaseUrl: normalizeOssBaseUrl(env.OSS_PUBLIC_BASE_URL?.trim() || uploadBaseUrl, bucket, region),
     region,
     uploadBaseUrl,
-    uploadPrefix: env.OSS_UPLOAD_PREFIX?.trim() || DEFAULT_UPLOAD_PREFIX
+    uploadPrefix: normalizeObjectPrefix(env.OSS_UPLOAD_PREFIX, DEFAULT_UPLOAD_PREFIX)
   } satisfies ResolvedOssConfig;
 }
 
@@ -124,11 +131,12 @@ export function normalizeUserOssConfig(config: UserOssConfigRecord): ResolvedOss
     allowedMimePrefix: config.allowedMimePrefix.trim() || DEFAULT_ALLOWED_MIME_PREFIX,
     bucket: config.bucket.trim(),
     maxUploadBytes: config.maxUploadBytes || DEFAULT_MAX_UPLOAD_BYTES,
+    metadataPrefix: normalizeObjectPrefix(config.metadataPrefix, DEFAULT_METADATA_PREFIX),
     policyExpiresSeconds: config.policyExpiresSeconds || DEFAULT_POLICY_EXPIRES_SECONDS,
     publicBaseUrl: normalizeOssBaseUrl(config.publicBaseUrl, config.bucket, config.region),
     region: config.region.trim(),
     uploadBaseUrl: normalizeOssBaseUrl(config.uploadBaseUrl, config.bucket, config.region),
-    uploadPrefix: config.uploadPrefix.trim() || DEFAULT_UPLOAD_PREFIX
+    uploadPrefix: normalizeObjectPrefix(config.uploadPrefix, DEFAULT_UPLOAD_PREFIX)
   };
 }
 

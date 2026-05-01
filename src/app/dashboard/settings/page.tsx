@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
+import { SyncButton } from "@/components/sync-button";
 import { db } from "@/lib/db";
-import { syncUserImagesWithOss } from "@/lib/images/sync";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,8 @@ async function saveOssConfigAction(formData: FormData) {
       publicBaseUrl,
       region,
       uploadBaseUrl,
-      uploadPrefix: stringValue(formData, "uploadPrefix") || "uploads"
+      uploadPrefix: stringValue(formData, "uploadPrefix") || "uploads",
+      metadataPrefix: stringValue(formData, "metadataPrefix") || "metadata"
     },
     create: {
       accessKeyId,
@@ -57,6 +58,7 @@ async function saveOssConfigAction(formData: FormData) {
       allowedMimePrefix: stringValue(formData, "allowedMimePrefix") || "image/",
       bucket,
       maxUploadBytes: positiveIntegerValue(formData, "maxUploadBytes", 25 * 1024 * 1024),
+      metadataPrefix: stringValue(formData, "metadataPrefix") || "metadata",
       policyExpiresSeconds: positiveIntegerValue(formData, "policyExpiresSeconds", 300),
       publicBaseUrl,
       region,
@@ -67,19 +69,6 @@ async function saveOssConfigAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/settings");
-}
-
-async function syncOssAction() {
-  "use server";
-
-  const user = await requireUser();
-  await syncUserImagesWithOss(user);
-
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/library");
-  revalidatePath("/dashboard/albums");
-  revalidatePath("/dashboard/map");
   revalidatePath("/dashboard/settings");
 }
 
@@ -164,20 +153,13 @@ export default async function DashboardSettingsPage() {
             <h3 className="text-sm font-semibold text-white/35">本地与 OSS 同步</h3>
             <p className="mt-1 text-[10px] leading-4 text-white/20">
               云端不存在但本地有记录时会删除本地记录；云端存在但本地没有记录时会同步导入本地。
+              同时会同步图片的配置信息（标签、描述、位置等）到 OSS 元数据备份。
             </p>
             <p className="mt-1 text-[10px] text-white/18">
-              同步结果包含 deletedLocalRecords、importedOssObjects 和 restoredLocalRecords。
+              同步结果包含图片同步（deletedLocalRecords、importedOssObjects、restoredLocalRecords）和元数据同步（exportedCount、importedCount）。
             </p>
           </div>
-          <form action={syncOssAction}>
-            <button
-              type="submit"
-              disabled={!config}
-              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-[color:var(--text-primary)] transition hover:border-white/20 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              执行本地与 OSS 同步
-            </button>
-          </form>
+          <SyncButton disabled={!config} />
         </div>
       </section>
 
@@ -190,6 +172,7 @@ export default async function DashboardSettingsPage() {
           <InputField name="publicBaseUrl" label="公共访问 URL" required defaultValue={config?.publicBaseUrl} placeholder="https://example.com" description="用于生成缩略图、预览和原图 URL。" />
           <InputField name="uploadBaseUrl" label="上传 URL" required defaultValue={config?.uploadBaseUrl} placeholder="https://bucket.oss-cn-shanghai.aliyuncs.com" description="浏览器或服务端上传到此端点。" />
           <InputField name="uploadPrefix" label="上传前缀" defaultValue={config?.uploadPrefix ?? "uploads"} description="对象 key 前缀，例如 uploads。" />
+          <InputField name="metadataPrefix" label="元数据前缀" defaultValue={config?.metadataPrefix ?? "metadata"} description="图片配置信息备份前缀，例如 metadata。" />
           <InputField name="maxUploadBytes" label="上传大小上限" type="number" defaultValue={config?.maxUploadBytes ?? 26214400} description="单位字节，默认 26214400。" />
           <InputField name="policyExpiresSeconds" label="上传策略有效期" type="number" defaultValue={config?.policyExpiresSeconds ?? 300} description="单位秒，默认 300。" />
           <InputField name="allowedMimePrefix" label="允许 MIME 前缀" defaultValue={config?.allowedMimePrefix ?? "image/"} description="默认 image/。" />

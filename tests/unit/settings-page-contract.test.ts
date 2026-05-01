@@ -13,8 +13,7 @@ describe("OSS settings page contract", () => {
     const content = readProjectFile("src/app/dashboard/settings/page.tsx");
 
     expect(content).toContain("saveOssConfigAction");
-    expect(content).toContain("syncOssAction");
-    expect(content).toContain("syncUserImagesWithOss");
+    expect(content).toContain("SyncButton");
     expect(content).toContain('name="region"');
     expect(content).toContain('name="bucket"');
     expect(content).toContain('name="accessKeyId"');
@@ -22,17 +21,22 @@ describe("OSS settings page contract", () => {
     expect(content).toContain('name="publicBaseUrl"');
     expect(content).toContain('name="uploadBaseUrl"');
     expect(content).toContain('name="uploadPrefix"');
+    expect(content).toContain('name="metadataPrefix"');
     expect(content).toContain('name="maxUploadBytes"');
     expect(content).toContain('name="policyExpiresSeconds"');
     expect(content).toContain('name="allowedMimePrefix"');
     expect(content).toContain("existing?.accessKeySecret");
     expect(content).not.toContain('defaultValue={config?.accessKeySecret');
-    expect(content).toMatch(
-      /disabled=\{!config\}[\s\S]*className="[^"]*text-\[color:var\(--text-primary\)\]/
-    );
-    expect(content).toContain("执行本地与 OSS 同步");
-    expect(content).toContain("deletedLocalRecords");
-    expect(content).toContain("importedOssObjects");
+    expect(content).toContain('<SyncButton disabled={!config} />');
+  });
+
+  it("SyncButton component has sync UI with progress", () => {
+    const syncButton = readProjectFile("src/components/sync-button.tsx");
+
+    expect(syncButton).toContain('"use client"');
+    expect(syncButton).toContain("执行本地与 OSS 同步");
+    expect(syncButton).toContain("同步中...");
+    expect(syncButton).toContain("/api/sync");
   });
 
   it("dashboard layout shows a missing OSS config reminder", () => {

@@ -8,6 +8,7 @@ const config: ResolvedOssConfig = {
   allowedMimePrefix: "image/",
   bucket: "gallery-bucket",
   maxUploadBytes: 25 * 1024 * 1024,
+  metadataPrefix: "metadata",
   policyExpiresSeconds: 300,
   publicBaseUrl: "https://cdn.example.com/gallery",
   region: "cn-shanghai",
