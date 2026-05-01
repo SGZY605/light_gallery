@@ -8,7 +8,9 @@
       "Bash(curl:*)",
       "Bash(netstat -ano)",
       "Bash(taskkill //F //PID 19316)",
-      "Bash(rm -rf E:/Docker_Projects/apps/.next)"
+      "Bash(rm -rf E:/Docker_Projects/apps/.next)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

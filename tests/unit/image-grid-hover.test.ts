@@ -37,7 +37,7 @@ describe("image grid hover treatment", () => {
     expect(source).toContain("group-hover/image-tile:scale");
     expect(styles).toContain(".gallery-entry-tile");
     expect(styles).toContain("animation: album-soft-entry 520ms cubic-bezier(0.22, 1, 0.36, 1) both");
-    expect(styles).toContain("animation-delay: min(calc(var(--entry-index, 0) * 46ms), 360ms)");
+    expect(styles).toContain("animation-delay: min(calc(var(--entry-index, 0) * 46ms), 600ms)");
     expect(styles).not.toContain("@keyframes gallery-waterfall-entry");
     expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
     expect(styles).toContain(".gallery-entry-tile");

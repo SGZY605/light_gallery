@@ -136,7 +136,7 @@ body {
 
   .gallery-entry-tile {
     animation: album-soft-entry 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: min(calc(var(--entry-index, 0) * 46ms), 360ms);
+    animation-delay: min(calc(var(--entry-index, 0) * 46ms), 600ms);
     will-change: opacity, transform, filter;
   }
 
