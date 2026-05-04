@@ -12,7 +12,7 @@ type RouteContext = {
 };
 
 const updateRequestSchema = z.object({
-  tagIds: z.array(z.string().min(1)),
+  tagIds: z.array(z.string().min(1)).optional(),
   location: z
     .object({
       latitude: z.number().min(-90).max(90),
@@ -20,6 +20,8 @@ const updateRequestSchema = z.object({
       label: z.string().trim().max(120).optional()
     })
     .nullable()
+    .optional(),
+  filename: z.string().min(1).max(255).optional()
 });
 
 type ImageResponseShape = {
@@ -183,7 +185,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "未找到对应图片。" }, { status: 404 });
   }
 
-  const tagIds = Array.from(new Set(parsed.data.tagIds));
+  const tagIds = Array.from(new Set(parsed.data.tagIds ?? []));
 
   if (tagIds.length > 0) {
     const existingTags = await db.tag.findMany({
@@ -249,6 +251,13 @@ export async function PUT(request: Request, { params }: RouteContext) {
             uploaderId: user.id
           }
         }
+      });
+    }
+
+    if (parsed.data.filename) {
+      await tx.image.update({
+        where: { id },
+        data: { filename: parsed.data.filename }
       });
     }
 

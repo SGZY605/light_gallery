@@ -30,6 +30,7 @@ type DraftChangesInput = {
 type BuildDetailSavePayloadInput = {
   draftTagIds: string[];
   draftLocation: DraftLocation;
+  filename?: string;
 };
 
 type ValidatedLocationValue =
@@ -181,7 +182,7 @@ export function hasDetailDraftChanges({
   );
 }
 
-export function buildDetailSavePayload({ draftTagIds, draftLocation }: BuildDetailSavePayloadInput) {
+export function buildDetailSavePayload({ draftTagIds, draftLocation, filename }: BuildDetailSavePayloadInput) {
   const tagIds = normalizeTagIds(draftTagIds);
   const validation = validateDetailDraftLocation(draftLocation);
 
@@ -189,10 +190,16 @@ export function buildDetailSavePayload({ draftTagIds, draftLocation }: BuildDeta
     throw new Error("invalid_detail_draft_location");
   }
 
-  return {
+  const payload: { tagIds: string[]; location: ValidatedLocationValue; filename?: string } = {
     tagIds,
     location: validation.value
   };
+
+  if (filename) {
+    payload.filename = filename;
+  }
+
+  return payload;
 }
 
 export function validateDetailDraftLocation(location: DraftLocation):

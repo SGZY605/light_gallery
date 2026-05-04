@@ -6,7 +6,7 @@ describe("session cookie security", () => {
     expect(
       resolveSessionCookieSecure({
         nodeEnv: "production",
-        requestUrl: "http://127.0.0.1:3000/api/auth/login"
+        requestUrl: "http://127.0.0.1:13000/api/auth/login"
       })
     ).toBe(false);
   });
@@ -24,7 +24,7 @@ describe("session cookie security", () => {
     expect(
       resolveSessionCookieSecure({
         nodeEnv: "production",
-        requestUrl: "http://app:3000/api/auth/login",
+        requestUrl: "http://app:13000/api/auth/login",
         forwardedProto: "https"
       })
     ).toBe(true);
@@ -42,7 +42,7 @@ describe("session cookie security", () => {
     expect(
       resolveSessionCookieSecure({
         nodeEnv: "development",
-        requestUrl: "http://127.0.0.1:3000/api/auth/login",
+        requestUrl: "http://127.0.0.1:13000/api/auth/login",
         explicitSecure: "true"
       })
     ).toBe(true);

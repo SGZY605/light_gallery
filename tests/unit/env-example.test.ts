@@ -25,7 +25,7 @@ describe(".env.example", () => {
     const content = readProjectFile(".env.example");
 
     expect(content).toContain(
-      'DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55432/light_gallery?schema=public"'
+      'DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:15432/light_gallery?schema=public"'
     );
   });
 
@@ -75,18 +75,24 @@ describe(".env.example", () => {
   it("publishes the Docker app on the configured host port while keeping the container port stable", () => {
     const compose = readProjectFile("docker-compose.yml");
 
-    expect(compose).toContain("PORT: 3000");
-    expect(compose).toContain('"127.0.0.1:${APP_PORT}:3000"');
+    expect(compose).toContain("PORT: 13000");
+    expect(compose).toContain('"127.0.0.1:${APP_PORT}:13000"');
   });
 
-  it("keeps Docker on port 3000 and local development on port 3001", () => {
+  it("keeps Docker on port 13000 and local development on port 13001", () => {
     const envExample = readProjectFile(".env.example");
     const packageJson = JSON.parse(readProjectFile("package.json")) as {
       scripts: Record<string, string>;
     };
 
-    expect(envExample).toContain('APP_PORT="3000"');
-    expect(envExample).toContain('DEV_PORT="3001"');
+    expect(envExample).toContain('APP_PORT="13000"');
+    expect(envExample).toContain('DEV_PORT="13001"');
     expect(packageJson.scripts.dev).toBe("node scripts/dev-server.mjs");
+  });
+
+  it("uses PostgreSQL port 15432", () => {
+    const envExample = readProjectFile(".env.example");
+
+    expect(envExample).toContain('POSTGRES_PORT="15432"');
   });
 });

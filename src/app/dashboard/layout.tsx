@@ -27,23 +27,18 @@ export default async function DashboardLayout({
       >
         <aside className="dashboard-sidebar shrink-0 flex flex-col items-center border-b border-[color:var(--shell-border)] bg-[color:var(--shell-bg)] px-2 py-4 text-center text-[color:var(--text-primary)] xl:h-full xl:w-40 xl:border-b-0 xl:border-r xl:min-h-0">
           <div className="dashboard-shell-brand mb-7 w-full">
-            <div className="dashboard-brand-mark" aria-label="光影画廊">
+            <div className="flex flex-col items-center gap-2">
               <Image
-                src="/brand/gallery_light.png"
-                alt=""
-                width={2048}
-                height={2048}
+                src="/brand/gallery_logo.png"
+                alt="光影画廊"
+                width={48}
+                height={48}
                 priority
-                className="dashboard-brand-image dashboard-brand-image-light"
+                className="h-12 w-12 object-contain"
               />
-              <Image
-                src="/brand/gallery_dark.png"
-                alt=""
-                width={2048}
-                height={2048}
-                priority
-                className="dashboard-brand-image dashboard-brand-image-dark"
-              />
+              <span className="text-sm font-semibold tracking-wide text-[color:var(--text-primary)]">
+                光影画廊
+              </span>
             </div>
           </div>
 

@@ -35,32 +35,28 @@ describe("dashboard navigation", () => {
     expect(source).toContain("requiresManager: true");
   });
 
-  it("uses a wider expanded rail, larger centered nav items, and theme-aware brand images", () => {
+  it("uses a wider expanded rail, larger centered nav items, and single logo image", () => {
     const navSource = readProjectFile("src/components/dashboard-nav.tsx");
     const layoutSource = readProjectFile("src/app/dashboard/layout.tsx");
-    const styles = readProjectFile("src/app/globals.css");
 
     expect(layoutSource).toContain("xl:w-40");
-    expect(layoutSource).toContain("dashboard-brand-mark");
-    expect(layoutSource).toContain("/brand/gallery_light.png");
-    expect(layoutSource).toContain("/brand/gallery_dark.png");
-    expect(layoutSource).not.toContain("dashboard-brand-grid");
-    expect(layoutSource).not.toContain("dashboard-brand-glyph");
-    expect(layoutSource.indexOf("已登录为")).toBeGreaterThan(layoutSource.indexOf("DashboardNav"));
-    expect(layoutSource.indexOf("已登录为")).toBeLessThan(layoutSource.indexOf("退出登录"));
+    expect(layoutSource).toContain("/brand/gallery_logo.png");
+    expect(layoutSource).toContain("光影画廊");
+    expect(layoutSource).not.toContain("/brand/gallery_light.png");
+    expect(layoutSource).not.toContain("/brand/gallery_dark.png");
+    expect(layoutSource).not.toContain("dashboard-brand-mark");
+    expect(layoutSource).not.toContain("dashboard-brand-image");
+    expect(layoutSource).toContain('alt="光影画廊"');
+    expect(layoutSource).toContain("width={48}");
+    expect(layoutSource).toContain("height={48}");
+    expect(layoutSource).toContain("h-12 w-12");
+    expect(layoutSource).toContain("text-sm font-semibold");
+    expect(layoutSource).toContain("flex flex-col items-center gap-2");
+    expect(layoutSource).toContain("已登录为");
+    expect(layoutSource).toContain("退出登录");
     expect(navSource).toContain("space-y-1.5");
     expect(navSource).toContain("h-4 w-4");
-    expect(styles).toContain("font-size: 0.875rem");
-    expect(styles).toContain("padding: 0.5625rem 0.625rem");
-    expect(styles).toContain("width: 4.5rem");
-    expect(styles).toContain(".dashboard-brand-image-light");
-    expect(styles).toContain(".dashboard-brand-image-dark");
-    expect(styles).toContain(':root[data-theme="light"] .dashboard-brand-image-light');
-    expect(styles).not.toContain(".dashboard-brand-mark::before");
-    expect(styles).not.toContain("@keyframes dashboardBrandGleam");
-    expect(styles).not.toContain("drop-shadow");
-    expectPublicBrandAsset("gallery_light.png");
-    expectPublicBrandAsset("gallery_dark.png");
+    expectPublicBrandAsset("gallery_logo.png");
   });
 
   it("declares the browser logo and keeps public images in the Docker runtime image", () => {

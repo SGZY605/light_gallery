@@ -31,13 +31,13 @@
    npm run dev
    ```
 
-开发地址固定是 `http://127.0.0.1:3001/login`，端口来自 `.env` 的 `DEV_PORT=3001`。默认管理员账号是 `admin@example.com`，密码来自 `.env` 的 `SEED_ADMIN_PASSWORD`，模板默认值为 `admin`。
+开发地址固定是 `http://127.0.0.1:13001/login`，端口来自 `.env` 的 `DEV_PORT=13001`。默认管理员账号是 `admin@example.com`，密码来自 `.env` 的 `SEED_ADMIN_PASSWORD`，模板默认值为 `admin`。
 
 如果启动时报端口被占用（`EADDRINUSE`），可以查找并停掉旧进程：
 
 ```powershell
-# 查找占用 3001 端口的进程
-netstat -ano | findstr :3001
+# 查找占用 13001 端口的进程
+netstat -ano | findstr :13001
 
 # 用找到的 PID 停掉进程（替换 12345 为实际 PID）
 taskkill /PID 12345 /F
@@ -54,6 +54,6 @@ taskkill /IM node.exe /F
 docker compose up -d --build
 ```
 
-Docker app 固定使用 `http://127.0.0.1:3000/login`，端口来自 `.env` 的 `APP_PORT=3000`。本机开发固定使用 `3001`，所以 Docker app 和 dev server 可以同时运行。
+Docker app 固定使用 `http://127.0.0.1:13000/login`，端口来自 `.env` 的 `APP_PORT=13000`。本机开发固定使用 `13001`，所以 Docker app 和 dev server 可以同时运行。
 
 HTTP 本地部署不需要 HTTPS cookie。`SESSION_COOKIE_SECURE` 留空时应用会按请求协议自动判断：`http://127.0.0.1` 不加 `Secure`，HTTPS 或反向代理传入 `x-forwarded-proto=https` 时会加 `Secure`。

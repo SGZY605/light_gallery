@@ -3,8 +3,8 @@
 ## 前置条件
 
 - Docker Desktop 或其他 Docker 引擎正在运行。
-- 应用端口 `3000` 可用，除非你修改 `APP_PORT`。
-- 宿主机上的 Postgres 端口 `55432` 可用，除非你修改 `POSTGRES_PORT`。
+- 应用端口 `13000` 可用，除非你修改 `APP_PORT`。
+- 宿主机上的 Postgres 端口 `15432` 可用，除非你修改 `POSTGRES_PORT`。
 
 ## 环境变量
 
@@ -36,7 +36,7 @@ npm run db:seed
 npm run dev
 ```
 
-打开 `http://localhost:3000`，或使用 `APP_PORT` 配置的端口。
+打开 `http://localhost:13001`，或使用 `DEV_PORT` 配置的端口。
 
 ## Docker app 启动
 
@@ -49,9 +49,9 @@ app 容器会自动：
 - 等待 Postgres 健康检查通过
 - 运行旧管理员数据迁移和 `prisma db push`
 - 创建受保护管理员账号 `admin@example.com` 并初始化默认标签
-- 在端口 `3000` 启动 Next.js
+- 在端口 `13000` 启动 Next.js
 
-打开 `http://localhost:3000`，或使用 `APP_PORT` 配置的端口。
+打开 `http://localhost:13001`，或使用 `DEV_PORT` 配置的端口。
 
 ## 查看日志
 

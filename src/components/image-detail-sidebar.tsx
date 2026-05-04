@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Download, MapPin, Plus, RotateCcw, Save, Tag, X } from "lucide-react";
+import { ChevronDown, Download, MapPin, Pencil, Plus, RotateCcw, Save, Tag, X } from "lucide-react";
 import { MiniMap } from "@/components/mini-map";
 import {
   buildDetailSavePayload,
@@ -243,6 +243,9 @@ export function ImageDetailSidebar({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showTagMenu, setShowTagMenu] = useState(false);
+  const [isEditingFilename, setIsEditingFilename] = useState(false);
+  const [draftFilename, setDraftFilename] = useState(filename);
+  const [savedFilename, setSavedFilename] = useState(filename);
 
   useEffect(() => {
     const nextSeed = getEditableLocationSeed({
@@ -257,7 +260,10 @@ export function ImageDetailSidebar({
     setCoordinateErrors({});
     setSaveError(null);
     setShowTagMenu(false);
-  }, [exifLocation, imageId, imageTags, location, toDraftLocationState]);
+    setSavedFilename(filename);
+    setDraftFilename(filename);
+    setIsEditingFilename(false);
+  }, [exifLocation, imageId, imageTags, location, filename, toDraftLocationState]);
 
   const initialLocationSeed = useMemo(
     () =>
@@ -388,7 +394,8 @@ export function ImageDetailSidebar({
               latitude: draftLocation.latitude,
               longitude: draftLocation.longitude,
               label: draftLocation.label
-            }
+            },
+            filename: draftFilename !== savedFilename ? draftFilename : undefined
           })
         )
       });
@@ -418,6 +425,8 @@ export function ImageDetailSidebar({
       setSavedLocation(nextLocation);
       setDraftTagIds(nextTags.map((tag) => tag.id));
       setDraftLocation(nextSeed);
+      setSavedFilename(draftFilename);
+      setIsEditingFilename(false);
       setShowTagMenu(false);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "无法保存图片详情更改。");
@@ -431,7 +440,59 @@ export function ImageDetailSidebar({
       <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-6">
         <section>
           <SectionTitle>文件信息</SectionTitle>
-          <MetaRow label="名称" value={filename} />
+          <div className="grid grid-cols-[92px_24px_minmax(0,1fr)] items-center gap-1 py-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-faint)]">
+              名称
+            </span>
+            {!isEditingFilename && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftFilename(savedFilename);
+                  setIsEditingFilename(true);
+                }}
+                className="rounded-full p-1 text-[color:var(--text-faint)] transition hover:bg-white/10 hover:text-[color:var(--text-secondary)]"
+                aria-label="编辑名称"
+                title="编辑名称"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+            )}
+            {isEditingFilename ? (
+              <div className="col-span-2 flex items-center gap-2">
+                <input
+                  value={draftFilename}
+                  onChange={(event) => setDraftFilename(event.target.value)}
+                  className="flex-1 rounded-lg border border-white/10 bg-black/10 px-3 py-1.5 text-xs text-[color:var(--text-primary)] outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
+                  autoFocus
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      void saveChanges();
+                    } else if (event.key === "Escape") {
+                      setIsEditingFilename(false);
+                      setDraftFilename(savedFilename);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    void saveChanges();
+                  }}
+                  disabled={isSaving || draftFilename === savedFilename}
+                  className="shrink-0 rounded-full p-1.5 text-green-400 transition hover:bg-green-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="保存名称"
+                  title="保存名称"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <span className="min-w-0 truncate break-words text-right text-xs leading-5 text-[color:var(--text-secondary)]">
+                {savedFilename}
+              </span>
+            )}
+          </div>
           <MetaRow label="格式" value={mimeType} />
           <MetaRow label="大小" value={structuredMeta.fileSize} />
           <MetaRow label="像素" value={structuredMeta.dimensions} />
