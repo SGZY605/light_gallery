@@ -1,9 +1,9 @@
 import type { User } from "@prisma/client";
 import { writeAuditLog } from "@/lib/audit";
 import { db } from "@/lib/db";
-import { deleteMetadataSidecar } from "@/lib/images/metadata-sync";
+import { buildMetadataOssKey, deleteMetadataSidecar } from "@/lib/images/metadata-sync";
 import type { SyncProgress } from "@/lib/images/sync-progress";
-import { deleteOssObject, headOssObject, listOssObjects, type OssListedObject } from "@/lib/oss/client";
+import { deleteOssObject, getOssObject, headOssObject, listOssObjects, type OssListedObject } from "@/lib/oss/client";
 import { resolveUserOssConfig, type ResolvedOssConfig } from "@/lib/oss/user-config";
 
 export type ImageOssSyncResult = {
@@ -181,10 +181,26 @@ export async function syncUserImagesWithOss(
       restored: restoredLocalRecords
     });
 
+    // 文件名优先级：OSS 元数据中的用户自定义名称 > OSS 自动分配的名称。
+    // 先尝试从元数据获取用户自定义名称，回退到 objectKey 提取的名称。
+    let filename = getFilenameFromObjectKey(object.key);
+    try {
+      const metadataKey = buildMetadataOssKey(config.metadataPrefix, object.key);
+      const metadataJson = await getOssObject(config, metadataKey);
+      if (metadataJson) {
+        const metadata = JSON.parse(metadataJson) as { filename?: string | null };
+        if (metadata.filename) {
+          filename = metadata.filename;
+        }
+      }
+    } catch {
+      // Metadata may not exist or be invalid; use fallback filename
+    }
+
     await db.image.create({
       data: {
         createdAt: object.lastModified ?? now,
-        filename: getFilenameFromObjectKey(object.key),
+        filename,
         mimeType: getMimeTypeFromObjectKey(object.key),
         objectKey: object.key,
         sizeBytes: object.size,

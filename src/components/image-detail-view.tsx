@@ -124,7 +124,6 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showFinalDeleteDialog, setShowFinalDeleteDialog] = useState(false);
   const [deleteConfirmationName, setDeleteConfirmationName] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -269,14 +268,6 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
     setDeleteError(null);
     setDeleteConfirmationName("");
     setShowDeleteDialog(true);
-    setShowFinalDeleteDialog(false);
-  }, []);
-
-  const requestFinalDeleteConfirmation = useCallback(() => {
-    setDeleteError(null);
-    setDeleteConfirmationName("");
-    setShowDeleteDialog(false);
-    setShowFinalDeleteDialog(true);
   }, []);
 
   const toggleFavorite = useCallback(async () => {
@@ -462,10 +453,6 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
           setShowDiscardDialog(false);
           return;
         }
-        if (showFinalDeleteDialog) {
-          setShowFinalDeleteDialog(false);
-          return;
-        }
         if (showDeleteDialog) {
           setShowDeleteDialog(false);
           return;
@@ -481,7 +468,7 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [requestClose, resetZoom, showDeleteDialog, showDiscardDialog, showFinalDeleteDialog]);
+  }, [requestClose, resetZoom, showDeleteDialog, showDiscardDialog]);
 
   const cursor = getViewerCursorState({
     scale: transform.scale,
@@ -679,14 +666,30 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
 
       {showDeleteDialog ? (
         <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-lg border border-white/10 bg-[color:var(--bg-card)] p-5 shadow-2xl">
+          <div className="w-full max-w-sm rounded-lg border border-red-400/30 bg-[color:var(--bg-card)] p-5 shadow-2xl">
             <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-[color:var(--text-primary)]">确认删除图片</h2>
+              <h2 className="text-sm font-semibold text-red-300">确认删除图片</h2>
               <p className="text-xs leading-5 text-[color:var(--text-faint)]">
                 这会同时删除本地记录和 OSS 中的对应图片。删除后图库、相册、地图和分享中都不会再显示这张图片。
               </p>
-              <p className="truncate text-xs text-[color:var(--text-secondary)]">{image.filename}</p>
+              <p className="break-words text-xs text-[color:var(--text-secondary)]">{image.filename}</p>
             </div>
+
+            <label className="mt-4 block space-y-2">
+              <span className="text-xs font-medium text-[color:var(--text-secondary)]">输入图片名以确认删除</span>
+              <input
+                value={deleteConfirmationName}
+                onChange={(event) => setDeleteConfirmationName(event.target.value)}
+                placeholder="输入图片名以确认删除"
+                className="w-full rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none transition placeholder:text-[color:var(--text-faint)] focus:border-red-400/40 focus:ring-2 focus:ring-red-500/10"
+                autoFocus
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && canConfirmImageDelete) {
+                    void confirmDelete();
+                  }
+                }}
+              />
+            </label>
 
             {deleteError ? <p className="mt-3 text-xs text-red-300">{deleteError}</p> : null}
 
@@ -701,56 +704,11 @@ export function ImageDetailView({ image, allTags, publicBaseUrl }: ImageDetailVi
               </button>
               <button
                 type="button"
-                onClick={requestFinalDeleteConfirmation}
-                disabled={isDeleting}
-                className="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-500/25 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                继续删除
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {showFinalDeleteDialog ? (
-        <div className="absolute inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg border border-red-400/30 bg-[color:var(--bg-card)] p-6 shadow-2xl">
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-red-300">最终确认删除</h2>
-              <p className="text-base font-semibold leading-7 text-[color:var(--text-primary)]">
-                这一步会删除 OSS 中的原图/预览图，并删除本机数据库记录。请慎重操作！
-              </p>
-              <p className="truncate text-sm text-[color:var(--text-secondary)]">{image.filename}</p>
-            </div>
-
-            <label className="mt-5 block space-y-2">
-              <span className="text-xs font-medium text-[color:var(--text-secondary)]">输入图片名以确认删除</span>
-              <input
-                value={deleteConfirmationName}
-                onChange={(event) => setDeleteConfirmationName(event.target.value)}
-                placeholder="输入图片名以确认删除"
-                className="w-full rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none transition placeholder:text-[color:var(--text-faint)] focus:border-red-400/40 focus:ring-2 focus:ring-red-500/10"
-              />
-            </label>
-
-            {deleteError ? <p className="mt-4 text-sm text-red-300">{deleteError}</p> : null}
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowFinalDeleteDialog(false)}
-                disabled={isDeleting}
-                className="rounded-lg px-3 py-2 text-xs font-medium text-[color:var(--text-faint)] transition hover:bg-[color:var(--control-hover-bg)] hover:text-[color:var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                取消
-              </button>
-              <button
-                type="button"
                 onClick={() => void confirmDelete()}
                 disabled={isDeleting || !canConfirmImageDelete}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {isDeleting ? "删除中..." : "确认删除 OSS 和本机记录"}
+                {isDeleting ? "删除中..." : "确认删除"}
               </button>
             </div>
           </div>

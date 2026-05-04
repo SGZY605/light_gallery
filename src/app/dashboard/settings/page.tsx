@@ -1,10 +1,16 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { SyncButton } from "@/components/sync-button";
+import { ChangePasswordForm } from "@/components/change-password-form";
 import { db } from "@/lib/db";
 import { resolveUserOssConfig } from "@/lib/oss/user-config";
 
 export const dynamic = "force-dynamic";
+
+const DEFAULT_UPLOAD_PREFIX = "uploads";
+const DEFAULT_METADATA_PREFIX = "metadata";
+const DEFAULT_ALLOWED_MIME_PREFIX = "image/";
+const BYTES_PER_MB = 1024 * 1024;
 
 function stringValue(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -13,6 +19,14 @@ function stringValue(formData: FormData, key: string): string {
 function positiveIntegerValue(formData: FormData, key: string, fallback: number): number {
   const value = Number.parseInt(stringValue(formData, key), 10);
   return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
+function mbToBytes(mb: number): number {
+  return mb * BYTES_PER_MB;
+}
+
+function bytesToMb(bytes: number): number {
+  return Math.round(bytes / BYTES_PER_MB);
 }
 
 async function saveOssConfigAction(formData: FormData) {
@@ -35,6 +49,10 @@ async function saveOssConfigAction(formData: FormData) {
     return;
   }
 
+  // Convert MB to bytes for storage
+  const maxUploadMb = positiveIntegerValue(formData, "maxUploadMb", 25);
+  const maxUploadBytes = mbToBytes(maxUploadMb);
+
   await db.userOssConfig.upsert({
     where: {
       userId: user.id
@@ -42,28 +60,28 @@ async function saveOssConfigAction(formData: FormData) {
     update: {
       accessKeyId,
       accessKeySecret,
-      allowedMimePrefix: stringValue(formData, "allowedMimePrefix") || "image/",
+      allowedMimePrefix: DEFAULT_ALLOWED_MIME_PREFIX,
       bucket,
-      maxUploadBytes: positiveIntegerValue(formData, "maxUploadBytes", 25 * 1024 * 1024),
+      maxUploadBytes,
+      metadataPrefix: DEFAULT_METADATA_PREFIX,
       policyExpiresSeconds: positiveIntegerValue(formData, "policyExpiresSeconds", 300),
       publicBaseUrl,
       region,
       uploadBaseUrl,
-      uploadPrefix: stringValue(formData, "uploadPrefix") || "uploads",
-      metadataPrefix: stringValue(formData, "metadataPrefix") || "metadata"
+      uploadPrefix: DEFAULT_UPLOAD_PREFIX
     },
     create: {
       accessKeyId,
       accessKeySecret,
-      allowedMimePrefix: stringValue(formData, "allowedMimePrefix") || "image/",
+      allowedMimePrefix: DEFAULT_ALLOWED_MIME_PREFIX,
       bucket,
-      maxUploadBytes: positiveIntegerValue(formData, "maxUploadBytes", 25 * 1024 * 1024),
-      metadataPrefix: stringValue(formData, "metadataPrefix") || "metadata",
+      maxUploadBytes,
+      metadataPrefix: DEFAULT_METADATA_PREFIX,
       policyExpiresSeconds: positiveIntegerValue(formData, "policyExpiresSeconds", 300),
       publicBaseUrl,
       region,
       uploadBaseUrl,
-      uploadPrefix: stringValue(formData, "uploadPrefix") || "uploads",
+      uploadPrefix: DEFAULT_UPLOAD_PREFIX,
       userId: user.id
     }
   });
@@ -116,6 +134,9 @@ export default async function DashboardSettingsPage() {
     }
   });
 
+  // Convert bytes to MB for display
+  const maxUploadMb = config ? bytesToMb(config.maxUploadBytes) : 25;
+
   return (
     <div className="space-y-4">
       <section>
@@ -141,7 +162,7 @@ export default async function DashboardSettingsPage() {
         <article className="border border-white/[0.04] p-3">
           <p className="text-[10px] text-white/20">上传大小限制</p>
           <p className="mt-1 text-sm font-medium text-white/50">
-            {config ? `${(config.maxUploadBytes / (1024 * 1024)).toFixed(0)} MB` : "未配置"}
+            {config ? `${maxUploadMb} MB` : "未配置"}
           </p>
           <p className="mt-1 text-[10px] text-white/25">用于上传签名和服务端上传校验。</p>
         </article>
@@ -171,11 +192,8 @@ export default async function DashboardSettingsPage() {
           <InputField name="accessKeySecret" label="AccessKey Secret" type="password" placeholder={savedConfig?.accessKeySecret ? "留空保持原密钥" : "首次配置必须填写"} required={!savedConfig?.accessKeySecret} description="不会回显保存值。" />
           <InputField name="publicBaseUrl" label="公共访问 URL" required defaultValue={config?.publicBaseUrl} placeholder="https://example.com" description="用于生成缩略图、预览和原图 URL。" />
           <InputField name="uploadBaseUrl" label="上传 URL" required defaultValue={config?.uploadBaseUrl} placeholder="https://bucket.oss-cn-shanghai.aliyuncs.com" description="浏览器或服务端上传到此端点。" />
-          <InputField name="uploadPrefix" label="上传前缀" defaultValue={config?.uploadPrefix ?? "uploads"} description="对象 key 前缀，例如 uploads。" />
-          <InputField name="metadataPrefix" label="元数据前缀" defaultValue={config?.metadataPrefix ?? "metadata"} description="图片配置信息备份前缀，例如 metadata。" />
-          <InputField name="maxUploadBytes" label="上传大小上限" type="number" defaultValue={config?.maxUploadBytes ?? 26214400} description="单位字节，默认 26214400。" />
-          <InputField name="policyExpiresSeconds" label="上传策略有效期" type="number" defaultValue={config?.policyExpiresSeconds ?? 300} description="单位秒，默认 300。" />
-          <InputField name="allowedMimePrefix" label="允许 MIME 前缀" defaultValue={config?.allowedMimePrefix ?? "image/"} description="默认 image/。" />
+          <InputField name="maxUploadMb" label="上传大小上限 (MB)" type="number" defaultValue={maxUploadMb} description="单位 MB，默认 25 MB。上传文件超过此大小将被拒绝。" />
+          <InputField name="policyExpiresSeconds" label="上传策略有效期" type="number" defaultValue={config?.policyExpiresSeconds ?? 300} description="单位秒，默认 300（5分钟）。上传签名的有效时间，超过后需要重新获取签名。" />
         </div>
 
         <div className="mt-5 flex justify-end">
@@ -187,6 +205,16 @@ export default async function DashboardSettingsPage() {
           </button>
         </div>
       </form>
+
+      <section className="border-t border-white/[0.04] pt-4">
+        <h3 className="text-sm font-semibold text-white/35">修改密码</h3>
+        <p className="mt-1 text-[10px] leading-4 text-white/20">
+          修改当前账户的登录密码。密码长度至少 5 个字符。
+        </p>
+        <div className="mt-3">
+          <ChangePasswordForm />
+        </div>
+      </section>
     </div>
   );
 }

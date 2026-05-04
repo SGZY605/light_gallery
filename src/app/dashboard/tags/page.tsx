@@ -214,6 +214,8 @@ async function mergeTagsAction(formData: FormData) {
 
 export default async function DashboardTagsPage() {
   const user = await requireUser();
+  
+  // 查询标签，手动统计有效图片数量（排除已删除的图片）
   const tags = await db.tag.findMany({
     where: {
       creatorId: user.id
@@ -224,12 +226,29 @@ export default async function DashboardTagsPage() {
     include: {
       _count: {
         select: {
-          images: true,
           shares: true
         }
       }
     }
   });
+
+  // 为每个标签统计有效图片数量
+  const tagsWithImageCount = await Promise.all(
+    tags.map(async (tag) => {
+      const imageCount = await db.imageTag.count({
+        where: {
+          tagId: tag.id,
+          image: {
+            deletedAt: null
+          }
+        }
+      });
+      return {
+        ...tag,
+        imageCount
+      };
+    })
+  );
 
   return (
     <div className="space-y-4">
@@ -257,7 +276,7 @@ export default async function DashboardTagsPage() {
 
       <section className="border-t border-white/[0.04] pt-4">
         <div className="space-y-2">
-          {tags.map((tag) => (
+          {tagsWithImageCount.map((tag) => (
             <div
               key={tag.id}
               className="flex flex-wrap items-end gap-2 p-1 border-b border-white/[0.02]"
@@ -275,7 +294,7 @@ export default async function DashboardTagsPage() {
                 <div className="text-center">
                   <span className="text-[10px] text-white/20">图片</span>
                   <p className="text-xs font-medium text-white/30">
-                    {tag._count.images}
+                    {tag.imageCount}
                   </p>
                 </div>
                 <div className="text-center">
@@ -294,7 +313,7 @@ export default async function DashboardTagsPage() {
               <DeleteTagForm
                 tagId={tag.id}
                 tagName={tag.name}
-                imageCount={tag._count.images}
+                imageCount={tag.imageCount}
                 shareCount={tag._count.shares}
                 serverAction={deleteTagAction}
               />
@@ -319,7 +338,7 @@ export default async function DashboardTagsPage() {
               <option value="" disabled>
                 选择源标签
               </option>
-              {tags.map((tag) => (
+              {tagsWithImageCount.map((tag) => (
                 <option key={tag.id} value={tag.id}>
                   {tag.name}
                 </option>
@@ -337,7 +356,7 @@ export default async function DashboardTagsPage() {
               <option value="" disabled>
                 选择目标标签
               </option>
-              {tags.map((tag) => (
+              {tagsWithImageCount.map((tag) => (
                 <option key={tag.id} value={tag.id}>
                   {tag.name}
                 </option>

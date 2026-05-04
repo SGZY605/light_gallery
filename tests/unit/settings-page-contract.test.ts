@@ -20,15 +20,23 @@ describe("OSS settings page contract", () => {
     expect(content).toContain('name="accessKeySecret"');
     expect(content).toContain('name="publicBaseUrl"');
     expect(content).toContain('name="uploadBaseUrl"');
-    expect(content).toContain('name="uploadPrefix"');
-    expect(content).toContain('name="metadataPrefix"');
-    expect(content).toContain('name="maxUploadBytes"');
+    expect(content).toContain('name="maxUploadMb"');
     expect(content).toContain('name="policyExpiresSeconds"');
-    expect(content).toContain('name="allowedMimePrefix"');
     expect(content).toContain("existing?.accessKeySecret");
     expect(content).not.toContain('defaultValue={config?.accessKeySecret');
     expect(content).toContain('<SyncButton disabled={!config} />');
     expect(content).toContain("当前仅支持阿里云 OSS");
+    // Removed fields should not be present as input names
+    expect(content).not.toContain('name="uploadPrefix"');
+    expect(content).not.toContain('name="metadataPrefix"');
+    expect(content).not.toContain('name="allowedMimePrefix"');
+    // Should have MB conversion functions
+    expect(content).toContain("mbToBytes");
+    expect(content).toContain("bytesToMb");
+    // Should have default constants for removed fields
+    expect(content).toContain('DEFAULT_UPLOAD_PREFIX = "uploads"');
+    expect(content).toContain('DEFAULT_METADATA_PREFIX = "metadata"');
+    expect(content).toContain('DEFAULT_ALLOWED_MIME_PREFIX = "image/"');
   });
 
   it("SyncButton component has sync UI with progress", () => {

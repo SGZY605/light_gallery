@@ -4,6 +4,7 @@ import type { ResolvedOssConfig } from "@/lib/oss/user-config";
 
 const imageFindManyMock = vi.fn();
 const imageUpdateMock = vi.fn();
+const tagFindManyMock = vi.fn();
 const tagFindUniqueMock = vi.fn();
 const tagCreateMock = vi.fn();
 const txTagFindUniqueMock = vi.fn();
@@ -59,6 +60,7 @@ vi.mock("@/lib/db", () => ({
     },
     tag: {
       create: tagCreateMock,
+      findMany: tagFindManyMock,
       findUnique: tagFindUniqueMock
     },
     imageLocationOverride: {
@@ -89,6 +91,7 @@ describe("metadata OSS synchronization", () => {
     vi.clearAllMocks();
     resolveUserOssConfigMock.mockResolvedValue(config);
     auditLogCreateMock.mockResolvedValue({ id: "audit-1" });
+    tagFindManyMock.mockResolvedValue([]);
     txTagFindUniqueMock.mockResolvedValue(null);
     txTagCreateMock.mockImplementation(async ({ data }) => ({
       id: `tag-${String(data.slug).replace(/-tag$/, "")}`,

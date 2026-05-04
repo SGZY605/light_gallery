@@ -27,13 +27,16 @@ type ImageMetadataJson = {
   description: string | null;
   exif: ExifMetadata | null;
   featured: boolean;
+  filename: string | null;
   height: number | null;
   location: {
     label: string | null;
     latitude: number;
     longitude: number;
   } | null;
+  mimeType: string | null;
   objectKey: string;
+  sizeBytes: number | null;
   syncedAt: string;
   tags: string[];
   width: number | null;
@@ -44,6 +47,12 @@ export type MetadataSyncResult = {
   importedCount: number;
   mergedCount: number;
   skippedDeletedCount: number;
+  syncedTagsCount: number;
+};
+
+type TagsMetadataJson = {
+  tags: Array<{ color: string | null; name: string }>;
+  syncedAt: string;
 };
 
 type LocalImageWithMetadata = {
@@ -67,6 +76,7 @@ type LocalImageWithMetadata = {
     width: number | null;
   } | null;
   featured: boolean;
+  filename: string;
   height: number | null;
   id: string;
   location: {
@@ -74,7 +84,9 @@ type LocalImageWithMetadata = {
     latitude: number;
     longitude: number;
   } | null;
+  mimeType: string;
   objectKey: string;
+  sizeBytes: number;
   tags: { tag: { name: string } }[];
   updatedAt: Date;
   width: number | null;
@@ -82,6 +94,10 @@ type LocalImageWithMetadata = {
 
 export function buildMetadataOssKey(metadataPrefix: string, objectKey: string): string {
   return `${metadataPrefix}/${objectKey}.json`;
+}
+
+export function buildTagsOssKey(metadataPrefix: string): string {
+  return `${metadataPrefix}/tags.json`;
 }
 
 function buildExifJson(exif: LocalImageWithMetadata["exif"]): ExifMetadata | null {
@@ -112,9 +128,12 @@ function buildMetadataJson(image: LocalImageWithMetadata): ImageMetadataJson {
     description: image.description,
     exif: buildExifJson(image.exif),
     featured: image.featured,
+    filename: image.filename,
     height: image.height,
     location: image.location,
+    mimeType: image.mimeType,
     objectKey: image.objectKey,
+    sizeBytes: image.sizeBytes,
     syncedAt: new Date().toISOString(),
     tags: image.tags.map((t) => t.tag.name),
     width: image.width
@@ -187,11 +206,18 @@ function mergeMetadataForExport(
     exif: mergeExifForExport(local.exif, oss.exif),
     // featured: true wins (either side)
     featured: local.featured || oss.featured,
+    // filename: prefer local, fallback to OSS.
+    // Note: resolveFilenameForSync is applied AFTER this merge to handle timestamp-based priority.
+    filename: local.filename ?? oss.filename,
     // dimensions: prefer local, fallback to OSS
     height: local.height ?? oss.height,
     // location: prefer local, fallback to OSS
     location: local.location ?? oss.location,
+    // mimeType: prefer local, fallback to OSS
+    mimeType: local.mimeType ?? oss.mimeType,
     objectKey: local.objectKey,
+    // sizeBytes: prefer local, fallback to OSS
+    sizeBytes: local.sizeBytes ?? oss.sizeBytes,
     syncedAt: new Date().toISOString(),
     // tags: union
     tags: [...new Set([...local.tags, ...oss.tags])],
@@ -199,14 +225,57 @@ function mergeMetadataForExport(
   };
 }
 
+/**
+ * 解决文件名同步冲突：用户手动命名的名称优先级最高。
+ *
+ * 策略：
+ * 1. OSS 没有文件名 → 保留本地文件名
+ * 2. 两侧文件名相同 → 无冲突
+ * 3. OSS 有用户自定义名称，且 OSS 元数据更新时间晚于本地图片更新时间
+ *    → 使用 OSS 的用户自定义名称（其他用户重命名了）
+ * 4. 本地更新时间更晚 → 保留本地文件名（当前用户重命名了）
+ * 5. 时间相同 → 保留本地文件名
+ */
+function resolveFilenameForSync(args: {
+  localFilename: string;
+  localUpdatedAt: Date;
+  ossFilename: string | null;
+  ossSyncedAt: string;
+}): string {
+  const { localFilename, localUpdatedAt, ossFilename, ossSyncedAt } = args;
+
+  // OSS 没有文件名记录 → 保留本地
+  if (!ossFilename) {
+    return localFilename;
+  }
+
+  // 两侧文件名相同 → 无冲突
+  if (ossFilename === localFilename) {
+    return localFilename;
+  }
+
+  // 两侧文件名不同 → 用时间戳决定谁更新
+  const ossDate = new Date(ossSyncedAt);
+  if (ossDate > localUpdatedAt) {
+    // OSS 元数据更新时间更晚 → 其他用户最近重命名了，使用 OSS 的名称
+    return ossFilename;
+  }
+
+  // 本地更新时间更晚或相同 → 保留本地文件名
+  return localFilename;
+}
+
 function buildComparableMetadataJson(metadata: ImageMetadataJson) {
   return {
     description: metadata.description,
     exif: metadata.exif,
     featured: metadata.featured,
+    filename: metadata.filename,
     height: metadata.height,
     location: metadata.location,
+    mimeType: metadata.mimeType,
     objectKey: metadata.objectKey,
+    sizeBytes: metadata.sizeBytes,
     tags: metadata.tags,
     width: metadata.width
   };
@@ -217,13 +286,19 @@ type MergedImportData = {
   exifCreateData: ExifMetadata | null;
   exifUpdateData: Prisma.ImageExifUpdateInput;
   featured: boolean;
+  filename: string | null;
   height: number | null;
   location: ImageMetadataJson["location"];
+  mimeType: string | null;
   shouldUpdateDescription: boolean;
   shouldUpdateDimensions: boolean;
   shouldUpdateExif: boolean;
   shouldUpdateFeatured: boolean;
+  shouldUpdateFilename: boolean;
   shouldUpdateLocation: boolean;
+  shouldUpdateMimeType: boolean;
+  shouldUpdateSizeBytes: boolean;
+  sizeBytes: number | null;
   tagNames: string[];
   width: number | null;
 };
@@ -237,16 +312,41 @@ function mergeMetadataForImport(
     exifCreateData: null,
     exifUpdateData: {},
     featured: image.featured,
+    filename: image.filename,
     height: image.height,
     location: image.location,
+    mimeType: image.mimeType,
     shouldUpdateDescription: false,
     shouldUpdateDimensions: false,
     shouldUpdateExif: false,
     shouldUpdateFeatured: false,
+    shouldUpdateFilename: false,
     shouldUpdateLocation: false,
+    shouldUpdateMimeType: false,
+    shouldUpdateSizeBytes: false,
+    sizeBytes: image.sizeBytes,
     tagNames: image.tags.map((t) => t.tag.name),
     width: image.width
   };
+
+  // filename: import if resolved filename differs from local.
+  // resolved filename is determined by resolveFilenameForSync (timestamp-based priority).
+  if (oss.filename && oss.filename !== image.filename) {
+    result.filename = oss.filename;
+    result.shouldUpdateFilename = true;
+  }
+
+  // mimeType: import if OSS has value and local is different
+  if (oss.mimeType && oss.mimeType !== image.mimeType) {
+    result.mimeType = oss.mimeType;
+    result.shouldUpdateMimeType = true;
+  }
+
+  // sizeBytes: import if OSS has value and local is different
+  if (oss.sizeBytes && oss.sizeBytes !== image.sizeBytes) {
+    result.sizeBytes = oss.sizeBytes;
+    result.shouldUpdateSizeBytes = true;
+  }
 
   // description: import if local is null/empty and OSS has value
   if (!image.description && oss.description) {
@@ -448,6 +548,30 @@ async function importMetadataToLocal(
       });
     }
 
+    // Update filename if changed
+    if (merged.shouldUpdateFilename && merged.filename) {
+      await tx.image.update({
+        where: { id: image.id },
+        data: { filename: merged.filename }
+      });
+    }
+
+    // Update mimeType if changed
+    if (merged.shouldUpdateMimeType && merged.mimeType) {
+      await tx.image.update({
+        where: { id: image.id },
+        data: { mimeType: merged.mimeType }
+      });
+    }
+
+    // Update sizeBytes if changed
+    if (merged.shouldUpdateSizeBytes && merged.sizeBytes) {
+      await tx.image.update({
+        where: { id: image.id },
+        data: { sizeBytes: merged.sizeBytes }
+      });
+    }
+
     // Update dimensions
     if (merged.shouldUpdateDimensions) {
       await tx.image.update({
@@ -497,6 +621,120 @@ export async function deleteMetadataSidecar(
 ): Promise<void> {
   const sidecarKey = buildMetadataOssKey(config.metadataPrefix, objectKey);
   await deleteOssObject(config, sidecarKey);
+}
+
+/**
+ * 同步孤立标签（没有绑定图片的标签）到 OSS。
+ * 策略：本地和 OSS 的标签取并集，同步到两侧。
+ */
+async function syncOrphanTags(
+  user: User,
+  config: { metadataPrefix: string } & Parameters<typeof getOssObject>[0] & Parameters<typeof putOssObject>[0],
+  onProgress?: (progress: SyncProgress) => void
+): Promise<number> {
+  // 获取用户所有标签
+  const allTags = await db.tag.findMany({
+    where: { creatorId: user.id },
+    select: { color: true, name: true }
+  });
+
+  // 读取 OSS 上的标签数据
+  const tagsOssKey = buildTagsOssKey(config.metadataPrefix);
+  let ossTagsData: TagsMetadataJson | null = null;
+  try {
+    const ossJson = await getOssObject(config, tagsOssKey);
+    if (ossJson) {
+      const parsed = JSON.parse(ossJson);
+      // 验证数据格式：必须有 tags 数组，且每个元素有 name 属性
+      if (
+        parsed &&
+        Array.isArray(parsed.tags) &&
+        parsed.tags.every((t: unknown) => t && typeof t === "object" && "name" in t)
+      ) {
+        ossTagsData = parsed as TagsMetadataJson;
+      }
+    }
+  } catch {
+    // OSS 上没有标签数据或解析失败
+  }
+
+  // 构建本地标签集合（以名称为 key）
+  const localTagMap = new Map(allTags.map((t) => [normalizeTagName(t.name), t]));
+  const ossTagMap = new Map(
+    (ossTagsData?.tags ?? [])
+      .filter((t) => normalizeTagName(t.name))
+      .map((t) => [normalizeTagName(t.name)!, t])
+  );
+
+  // 取并集：本地 + OSS
+  const mergedTagMap = new Map([...ossTagMap, ...localTagMap]);
+
+  const mergedTags = [...mergedTagMap.values()];
+  const mergedTagNames = new Set(mergedTagMap.keys());
+
+  // 检查是否有变化
+  const ossTagNames = new Set(ossTagMap.keys());
+  const localTagNames = new Set(localTagMap.keys());
+  const hasChanges =
+    mergedTagNames.size !== ossTagNames.size ||
+    mergedTagNames.size !== localTagNames.size ||
+    [...mergedTagNames].some((name) => !ossTagNames.has(name) || !localTagNames.has(name));
+
+  if (!hasChanges) {
+    return 0;
+  }
+
+  // 在本地创建 OSS 上有但本地没有的标签
+  const reservedSlugs = new Set(allTags.map((t) => slugifyTagName(t.name)));
+
+  for (const ossTag of ossTagMap.values()) {
+    const normalizedName = normalizeTagName(ossTag.name);
+    if (!normalizedName || localTagMap.has(normalizedName)) {
+      continue;
+    }
+
+    const baseSlug = slugifyTagName(ossTag.name);
+    let slug = baseSlug;
+    let suffix = 2;
+
+    while (
+      reservedSlugs.has(slug) ||
+      (await db.tag.findUnique({
+        where: {
+          creatorId_slug: { creatorId: user.id ?? "", slug }
+        }
+      }))
+    ) {
+      reservedSlugs.add(slug);
+      slug = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+
+    reservedSlugs.add(slug);
+    await db.tag.create({
+      data: {
+        color: ossTag.color,
+        creatorId: user.id,
+        name: ossTag.name,
+        slug
+      }
+    });
+  }
+
+  // 将合并后的标签写回 OSS
+  const tagsMetadata: TagsMetadataJson = {
+    tags: mergedTags.map((t) => ({ color: t.color, name: t.name })).sort((a, b) => a.name.localeCompare(b.name)),
+    syncedAt: new Date().toISOString()
+  };
+  await putOssObject(config, tagsOssKey, JSON.stringify(tagsMetadata));
+
+  onProgress?.({
+    message: `已同步 ${mergedTags.length} 个标签（含孤立标签）到云端。`,
+    percent: 100,
+    phase: "metadata"
+  });
+
+  return mergedTags.length;
 }
 
 export async function syncUserMetadataWithOss(
@@ -569,6 +807,16 @@ export async function syncUserMetadataWithOss(
 
     // Always build a fully merged result from both sides
     const mergedJson = mergeMetadataForExport(localJson, ossMetadata);
+
+    // 文件名同步策略：用户手动命名的名称优先级最高。
+    // 用时间戳决定文件名归属：OSS 元数据更新时间更晚则用 OSS 文件名，否则保留本地文件名。
+    mergedJson.filename = resolveFilenameForSync({
+      localFilename: image.filename,
+      localUpdatedAt,
+      ossFilename: ossMetadata.filename,
+      ossSyncedAt: ossMetadata.syncedAt
+    });
+
     const localNeedsImport = mergeMetadataForImport(image, mergedJson);
     const hasLocalGaps =
       localNeedsImport.shouldUpdateDescription ||
@@ -576,6 +824,9 @@ export async function syncUserMetadataWithOss(
       localNeedsImport.shouldUpdateLocation ||
       localNeedsImport.shouldUpdateExif ||
       localNeedsImport.shouldUpdateDimensions ||
+      localNeedsImport.shouldUpdateFilename ||
+      localNeedsImport.shouldUpdateMimeType ||
+      localNeedsImport.shouldUpdateSizeBytes ||
       localNeedsImport.tagNames.length !== image.tags.length;
     const hasOssGaps =
       JSON.stringify(buildComparableMetadataJson(mergedJson)) !==
@@ -617,7 +868,19 @@ export async function syncUserMetadataWithOss(
     exported: exportedCount,
     imported: importedCount,
     merged: mergedCount,
-    message: `元数据同步完成：导出 ${exportedCount}，导入 ${importedCount}，合并 ${mergedCount}，跳过 ${skippedDeletedCount}。`,
+    message: `图片元数据同步完成：导出 ${exportedCount}，导入 ${importedCount}，合并 ${mergedCount}，跳过 ${skippedDeletedCount}。`,
+    percent: 90,
+    phase: "metadata"
+  });
+
+  // 同步孤立标签（没有绑定图片的标签）
+  const syncedTagsCount = await syncOrphanTags(user, config, onProgress);
+
+  onProgress?.({
+    exported: exportedCount,
+    imported: importedCount,
+    merged: mergedCount,
+    message: `元数据同步完成：导出 ${exportedCount}，导入 ${importedCount}，合并 ${mergedCount}，跳过 ${skippedDeletedCount}，标签 ${syncedTagsCount} 个。`,
     percent: 100,
     phase: "metadata"
   });
@@ -631,7 +894,8 @@ export async function syncUserMetadataWithOss(
       importedCount,
       mergedCount,
       operation: "metadata_sync",
-      skippedDeletedCount
+      skippedDeletedCount,
+      syncedTagsCount
     }
   });
 
@@ -639,6 +903,7 @@ export async function syncUserMetadataWithOss(
     exportedCount,
     importedCount,
     mergedCount,
-    skippedDeletedCount
+    skippedDeletedCount,
+    syncedTagsCount
   };
 }

@@ -24,7 +24,7 @@ describe("image detail sidebar layout", () => {
 
     expect(sidebarContent).toContain("downloadUrl");
     expect(sidebarContent).toContain("download={filename}");
-    expect(detailViewContent).toContain("buildOssImageUrl(image.objectKey, \"original\"");
+    expect(detailViewContent).toContain('buildOssImageUrl(image.objectKey, "original"');
   });
 
   it("shows the detail image without an extra framed shadow treatment", () => {
@@ -46,22 +46,26 @@ describe("image detail sidebar layout", () => {
     expect(detailViewContent).toContain("router.replace(returnUrlRef.current || DEFAULT_RETURN_URL, { scroll: false })");
   });
 
-  it("keeps deletion in the top-right toolbar behind a second and final destructive confirmation", () => {
+  it("has a single delete dialog with filename input for confirmation", () => {
     const detailViewContent = readProjectFile("src/components/image-detail-view.tsx");
-    const deleteButtonIndex = detailViewContent.indexOf('aria-label="删除图片"');
-    const zoomToolbarIndex = detailViewContent.indexOf("Math.round(transform.scale * 100)");
-    const deleteDialogIndex = detailViewContent.indexOf("showDeleteDialog");
-    const finalDeleteDialogIndex = detailViewContent.indexOf("showFinalDeleteDialog");
 
-    expect(deleteButtonIndex).toBeGreaterThan(zoomToolbarIndex);
-    expect(finalDeleteDialogIndex).toBeGreaterThan(deleteDialogIndex);
-    expect(detailViewContent).toContain("setShowFinalDeleteDialog(true)");
-    expect(detailViewContent).toContain("setShowDeleteDialog(false)");
-    expect(detailViewContent).toContain("这一步会删除 OSS 中的原图/预览图，并删除本机数据库记录。请慎重操作！");
-    expect(detailViewContent).toContain("deleteConfirmationName === image.filename");
+    // Should have delete dialog but no final delete dialog
+    expect(detailViewContent).toContain("showDeleteDialog");
+    expect(detailViewContent).not.toContain("showFinalDeleteDialog");
+
+    // Delete dialog should contain filename input
     expect(detailViewContent).toContain('placeholder="输入图片名以确认删除"');
-    expect(detailViewContent).toMatch(/showFinalDeleteDialog[\s\S]*onClick=\{\(\) => void confirmDelete\(\)\}/);
-    expect(detailViewContent).toMatch(/showFinalDeleteDialog[\s\S]*disabled=\{isDeleting \|\| !canConfirmImageDelete\}/);
+    expect(detailViewContent).toContain("deleteConfirmationName === image.filename");
+
+    // Delete button should directly call confirmDelete
+    expect(detailViewContent).toMatch(/showDeleteDialog[\s\S]*onClick=\{\(\) => void confirmDelete\(\)\}/);
+    expect(detailViewContent).toMatch(/showDeleteDialog[\s\S]*disabled=\{isDeleting \|\| !canConfirmImageDelete\}/);
+
+    // Should have delete warning text
+    expect(detailViewContent).toContain("这会同时删除本地记录和 OSS 中的对应图片");
+
+    // Should support Enter key to confirm
+    expect(detailViewContent).toContain('event.key === "Enter" && canConfirmImageDelete');
   });
 
   it("adds a favorite heart before the destructive delete action", () => {
