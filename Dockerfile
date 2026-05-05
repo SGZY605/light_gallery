@@ -25,7 +25,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
+ENV PORT=13000
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends openssl \
@@ -41,6 +41,6 @@ COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN sed -i 's/\r$//' ./docker-entrypoint.sh \
     && chmod +x ./docker-entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 13000
 
 CMD ["./docker-entrypoint.sh"]

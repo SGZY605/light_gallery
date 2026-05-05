@@ -10,7 +10,11 @@
       "Bash(taskkill //F //PID 19316)",
       "Bash(rm -rf E:/Docker_Projects/apps/.next)",
       "Bash(npx vitest *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(docker network inspect *)",
+      "Bash(docker network connect *)",
+      "Bash(docker stop jchatmind-postgres *)",
+      "Bash(git checkout *)"
     ]
   }
 }
